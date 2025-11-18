@@ -1,0 +1,17 @@
+/* Movement item specific overrides (optional). 
+   Most layout styles come from the parent page. */
+
+/* Ensure edit row controls align nicely */
+:host select,
+:host input[type="date"],
+:host input[type="number"],
+:host input[type="text"] {
+  min-height: 36px;
+}
+
+
+
+:host .actions { display: inline-flex; gap: 8px; }
+:host .actions > * { margin: 0; }
+:host .icon-btn { width: 42px; height: 42px; font-size: 24px; }
+:host .icon-btn .icon { width: 26px; height: 26px; }

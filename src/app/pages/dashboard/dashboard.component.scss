@@ -1,0 +1,19 @@
+.search {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.search input { width: 100%; max-width: 480px; }
+.count { color: var(--muted); font-size: 0.95rem; }
+
+.results { margin-top: 8px; }
+.results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+@media (max-width: 1200px) {
+  .results { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 720px) {
+  .results { grid-template-columns: 1fr; }
+}
+

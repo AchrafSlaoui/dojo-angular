@@ -1,0 +1,32 @@
+<ng-container *ngIf="!editMode; else editRow">
+  <span class="badge" [class.debit]="movement().type === 'debit'" [class.credit]="movement().type === 'credit'">{{ movement().type }}</span>
+  <span class="date">{{ movement().date }}</span>
+  <span class="amount">{{ movement().amount | formatValue:"currency" }}</span>
+  <span class="desc">{{ movement().description  | formatValue }}</span>
+  <span class="actions">
+    <button class="icon-btn lg" title="Modifier" aria-label="Modifier" (click)="startEdit()">
+      <span class="icon i-edit icon-lg"></span>
+    </button>
+    <button class="icon-btn lg danger" title="Supprimer" aria-label="Supprimer" (click)="onRemove()">
+      <span class="icon i-trash icon-lg"></span>
+    </button>
+  </span>
+</ng-container>
+
+<ng-template #editRow>
+  <select [(ngModel)]="editModel.type">
+    <option value="debit">Débit</option>
+    <option value="credit">Crédit</option>
+  </select>
+  <input type="date" [(ngModel)]="editModel.date" />
+  <input type="number" [(ngModel)]="editModel.amount" min="0" step="0.01" />
+  <input type="text" [(ngModel)]="editModel.description" placeholder="Description" />
+  <span class="actions">
+    <button class="icon-btn lg" title="Enregistrer" aria-label="Enregistrer" (click)="save()">
+      <span class="icon i-check icon-lg"></span>
+    </button>
+    <button class="icon-btn lg danger" title="Annuler" aria-label="Annuler" (click)="cancel()">
+      <span class="icon i-close icon-lg"></span>
+    </button>
+  </span>
+</ng-template>

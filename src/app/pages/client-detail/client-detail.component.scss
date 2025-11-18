@@ -1,0 +1,72 @@
+.info {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 14px 20px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.info .cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info .cell strong {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.cell-name { grid-column: 1; grid-row: 1; }
+.cell-email { grid-column: 2; grid-row: 1; }
+.cell-phone { grid-column: 3; grid-row: 1; }
+.cell-address { grid-column: 4; grid-row: 1; }
+.cell-balance {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.movements .add-form {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr 2fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.movements .add-form .icon-btn.plus {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  font-size: 26px;
+  justify-self: end;
+  margin-right: 12px;
+}
+
+.movements .add-form .icon-btn.plus .icon {
+  width: 32px;
+  height: 32px;
+}
+
+.movements .list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.movements .item {
+  display: grid;
+  grid-template-columns: 120px 140px 1fr 2fr auto;
+  gap: 12px;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}

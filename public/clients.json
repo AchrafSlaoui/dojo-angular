@@ -1,0 +1,38 @@
+[
+  {
+    "id": "c1",
+    "firstName": "Amina",
+    "lastName": "Diallo",
+    "email": "amina.diallo@example.com",
+    "phone": "+221700000001",
+    "address": "Dakar, Sénégal",
+    "movements": [
+      { "id": "m1", "date": "2025-10-06", "type": "credit", "amount": 1200, "description": "Salaire" },
+      { "id": "m2", "date": "2025-10-08", "type": "debit", "amount": 200, "description": "Courses" }
+    ]
+  },
+  {
+    "id": "c2",
+    "firstName": "Karim",
+    "lastName": "Benali",
+    "email": "karim.benali@example.com",
+    "phone": "+212600000002",
+    "address": "Casablanca, Maroc",
+    "movements": [
+      { "id": "m3", "date": "2025-10-05", "type": "debit", "amount": 150, "description": "Restaurant" },
+      { "id": "m4", "date": "2025-09-29", "type": "credit", "amount": 500, "description": "Vente" }
+    ]
+  },
+  {
+    "id": "c3",
+    "firstName": "Nadia",
+    "lastName": "Kone",
+    "email": "nadia.kone@example.com",
+    "phone": "+225010000003",
+    "address": "Abidjan, Côte d'Ivoire",
+    "movements": [
+      { "id": "m5", "date": "2025-10-07", "type": "credit", "amount": 300, "description": "Remboursement" }
+    ]
+  }
+]
+

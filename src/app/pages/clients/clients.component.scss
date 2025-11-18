@@ -1,0 +1,77 @@
+.search {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.search input { width: 100%; max-width: 480px; }
+
+.results { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 16px; }
+
+.pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pagination .icon-btn {
+  width: auto;
+  min-width: 0;
+  padding: 6px 12px;
+  text-decoration: none;
+}
+
+.pagination .page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination .page-size label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.client-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.row-actions { display: inline-flex; gap: 8px; align-items: center; }
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.icon-btn.danger { background: var(--danger); }
+
+.add-client {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr) auto;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.add-client .actions { display: inline-flex; gap: 8px; align-items: center; }
+
+.edit {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr) auto;
+  gap: 10px;
+}
+.edit .actions { display: inline-flex; gap: 8px; align-items: center; }

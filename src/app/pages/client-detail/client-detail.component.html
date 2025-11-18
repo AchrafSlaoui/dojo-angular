@@ -1,0 +1,43 @@
+<ng-container *ngIf="client() as client; else loading">
+  <h2>Détail Client</h2>
+
+  <section class="info">
+    <div class="cell cell-name"><strong>Nom:</strong> {{ client.firstName }} {{ client.lastName | formatValue:"text":true }}</div>
+    <div class="cell cell-email"><strong>Email:</strong> {{ client.email | formatValue }}</div>
+    <div class="cell cell-phone"><strong>Téléphone:</strong> {{ client.phone | formatValue:"phone" }}</div>
+    <div class="cell cell-address"><strong>Adresse:</strong> {{ client.address | formatValue }}</div>
+    <div class="cell cell-balance"><strong>Solde:</strong> {{ clientBalance() | formatValue:"currency" }}</div>
+  </section>
+
+  <section class="movements">
+    <h3>Mouvements</h3>
+
+    <form class="add-form" (ngSubmit)="addMovement(client.id)">
+      <select [(ngModel)]="newMovement.type" name="type">
+        <option value="debit">Débit</option>
+        <option value="credit">Crédit</option>
+      </select>
+      <input type="date" [(ngModel)]="newMovement.date" name="date" />
+      <input type="number" [(ngModel)]="newMovement.amount" name="amount" placeholder="Montant" min="0" step="0.01" required />
+      <input type="text" [(ngModel)]="newMovement.description" name="description" placeholder="Description" />
+      <button type="submit" class="icon-btn plus" title="Ajouter" aria-label="Ajouter">
+        <span class="icon i-plus icon-lg"></span>
+      </button>
+    </form>
+
+    <ng-template #empty>
+      <div>Aucun mouvement.</div>
+    </ng-template>
+    <ul class="list" *ngIf="client.movements?.length; else empty">
+      <li class="item" *ngFor="let m of client.movements; trackBy: trackByMovementId"
+          app-movement-item
+          [movement]="m"
+          (update)="updateMovement(client.id, $event)"
+          (remove)="deleteMovement(client.id, $event)"></li>
+    </ul>
+  </section>
+</ng-container>
+<ng-template #loading>
+  <div>Chargement...</div>
+</ng-template>
+

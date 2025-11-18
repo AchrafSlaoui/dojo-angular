@@ -1,0 +1,53 @@
+<a class="card"
+   [class.clickable]="!editMode"
+   [attr.href]="cardHref"
+   (click)="onCardClick($event)">
+
+  <ng-container *ngIf="!editMode; else editTpl">
+    <div class="row">
+      <div class="name">
+        <div class="first">{{ client().firstName }}</div>
+        <div class="last">{{ client().lastName | formatValue:'text':true }}</div>
+      </div>
+      <div class="contact" *ngIf="client().email || client().phone">
+        <div *ngIf="client().email"><span class="icon i-mail icon-sm"></span> {{ client().email }}</div>
+        <div *ngIf="client().phone"><span class="icon i-phone icon-sm"></span> {{ client().phone | formatValue:'phone' }}</div>
+      </div>
+    </div>
+
+    <div class="row address-row">
+      <div class="address" *ngIf="client().address">{{ client().address }}</div>
+      <div class="actions">
+        <button *ngIf="editable()" class="icon-btn lg" title="Modifier le client" aria-label="Modifier" (click)="$event.stopPropagation(); startEdit()">
+          <span class="icon i-edit icon-lg"></span>
+        </button>
+        <button *ngIf="editable()" class="icon-btn lg danger" title="Supprimer le client" aria-label="Supprimer" (click)="$event.stopPropagation(); onDelete()">
+          <span class="icon i-trash icon-lg"></span>
+        </button>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #editTpl>
+    <div class="row">
+      <input type="text" [(ngModel)]="editModel!.firstName" placeholder="Prenom" />
+      <input type="text" [(ngModel)]="editModel!.lastName" placeholder="Nom" />
+    </div>
+    <div class="row">
+      <input type="email" [(ngModel)]="editModel!.email" placeholder="Email" />
+      <input type="text" [(ngModel)]="editModel!.phone" placeholder="Telephone" />
+    </div>
+    <div class="row address-row">
+      <input class="address" type="text" [(ngModel)]="editModel!.address" placeholder="Adresse" />
+      <div class="actions">
+        <button class="icon-btn lg" title="Enregistrer" aria-label="Enregistrer" (click)="$event.stopPropagation(); saveEdit()">
+          <span class="icon i-check icon-lg"></span>
+        </button>
+        <button class="icon-btn lg" title="Annuler" aria-label="Annuler" (click)="$event.stopPropagation(); cancelEdit()">
+          <span class="icon i-close icon-lg"></span>
+        </button>
+      </div>
+    </div>
+  </ng-template>
+
+</a>

@@ -1,0 +1,22 @@
+<h2>Dashboard</h2>
+<div class="search">
+  <input
+    type="text"
+    [ngModel]="store.search()"
+    (ngModelChange)="store.setSearch($event)"
+    placeholder="Rechercher par nom..."
+  />
+  <small>Liste des clients ayant des mouvements cette semaine</small>
+
+  <div class="status" *ngIf="loading()">Chargement en cours...</div>
+  <div class="status error" *ngIf="error() as message">{{ message }}</div>
+
+  @if (weeklyClients(); as weekly) {
+    <div class="count">{{ weekly.length }} résultat(s)</div>
+    <div class="results">
+      @for (client of weekly; track client.id) {
+        <app-client-card [client]="client"></app-client-card>
+      }
+    </div>
+  }
+</div>
