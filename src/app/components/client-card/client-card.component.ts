@@ -29,6 +29,11 @@ export class ClientCardComponent {
     return `/clients/${current.id}`;
   }
 
+  suppressNavigation(event: Event) {
+    if (event?.preventDefault) event.preventDefault();
+    if (event?.stopPropagation) event.stopPropagation();
+  }
+
   onCardClick(event: Event): void {
     if (this.editMode) {
       event.preventDefault();
@@ -45,19 +50,22 @@ export class ClientCardComponent {
     this.deleteRequested.emit(this.client());
   }
 
-  startEdit() {
+  startEdit(event?: Event) {
+    if (event) this.suppressNavigation(event);
     if (!this.editable()) return;
     const c = this.client();
     this.editModel = { id: c.id, firstName: c.firstName, lastName: c.lastName, email: c.email, phone: c.phone, address: c.address };
     this.editMode = true;
   }
 
-  cancelEdit() {
+  cancelEdit(event?: Event) {
+    if (event) this.suppressNavigation(event);
     this.editMode = false;
     this.editModel = null;
   }
 
-  saveEdit() {
+  saveEdit(event?: Event) {
+    if (event) this.suppressNavigation(event);
     if (!this.editModel) return;
     const firstName = this.editModel.firstName?.trim();
     const lastName = this.editModel.lastName?.trim();

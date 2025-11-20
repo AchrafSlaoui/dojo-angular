@@ -18,10 +18,10 @@
     <div class="row address-row">
       <div class="address" *ngIf="client().address">{{ client().address }}</div>
       <div class="actions">
-        <button *ngIf="editable()" class="icon-btn lg" title="Modifier le client" aria-label="Modifier" (click)="$event.stopPropagation(); startEdit()">
+        <button *ngIf="editable()" class="icon-btn lg" title="Modifier le client" aria-label="Modifier" (click)="startEdit($event)">
           <span class="icon i-edit icon-lg"></span>
         </button>
-        <button *ngIf="editable()" class="icon-btn lg danger" title="Supprimer le client" aria-label="Supprimer" (click)="$event.stopPropagation(); onDelete()">
+        <button *ngIf="editable()" class="icon-btn lg danger" title="Supprimer le client" aria-label="Supprimer" (click)="suppressNavigation($event); onDelete()">
           <span class="icon i-trash icon-lg"></span>
         </button>
       </div>
@@ -40,10 +40,10 @@
     <div class="row address-row">
       <input class="address" type="text" [(ngModel)]="editModel!.address" placeholder="Adresse" />
       <div class="actions">
-        <button class="icon-btn lg" title="Enregistrer" aria-label="Enregistrer" (click)="$event.stopPropagation(); saveEdit()">
+        <button class="icon-btn lg" title="Enregistrer" aria-label="Enregistrer" (click)="saveEdit($event)">
           <span class="icon i-check icon-lg"></span>
         </button>
-        <button class="icon-btn lg" title="Annuler" aria-label="Annuler" (click)="$event.stopPropagation(); cancelEdit()">
+        <button class="icon-btn lg" title="Annuler" aria-label="Annuler" (click)="cancelEdit($event)">
           <span class="icon i-close icon-lg"></span>
         </button>
       </div>
