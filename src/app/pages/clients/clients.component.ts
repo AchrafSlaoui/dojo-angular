@@ -1,14 +1,15 @@
-import { Component, ChangeDetectionStrategy, Signal, inject, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Signal, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { firstValueFrom } from 'rxjs';
 import { Client } from '@app/models/client';
 import { ClientUpdate } from '@clients/types/client.types';
 import { ClientCardComponent } from '@app/components/client-card/client-card.component';
-import { ClientsStore } from '@app/stores/clients.store';
 import { NotificationService } from '@shared/services/notification.service';
-import { firstValueFrom } from 'rxjs';
 import { ConfirmService } from '@shared/services/confirm.service';
+import { ClientsApiService } from '@app/services/clients-api.service';
+import { listClients, paginateClients } from '@app/utils/clients-collection.util';
 
 @Component({
   selector: 'app-clients',
@@ -19,24 +20,60 @@ import { ConfirmService } from '@shared/services/confirm.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClientsComponent {
-  readonly store = inject(ClientsStore);
+  private readonly clientsApi = inject(ClientsApiService);
   private readonly notifications = inject(NotificationService);
-  clients: Signal<Client[]> = this.store.paginatedClients;
-  readonly loading = this.store.loading;
-  readonly error = this.store.error;
-  readonly mutating = this.store.mutating;
-  readonly totalClients = this.store.totalClients;
-  readonly totalPages = this.store.totalPages;
-  readonly page = this.store.page;
-  readonly pageSize = this.store.pageSize;
-  readonly allClients = this.store.filteredClients;
+  private readonly confirm = inject(ConfirmService);
+
+  private readonly clientsState = signal<Client[]>([]);
+  readonly search = signal('');
+  readonly page = signal(1);
+  readonly pageSize = signal(20);
+  readonly loading = signal(false);
+  readonly mutating = signal(false);
+  readonly error = signal<string | null>(null);
+
+  private readonly pageSlice = computed(() =>
+    paginateClients({
+      clients: this.clientsState(),
+      search: this.search(),
+      page: this.page(),
+      pageSize: this.pageSize(),
+    })
+  );
+
+  clients: Signal<Client[]> = computed(() => this.pageSlice().items);
+  readonly totalClients = computed(() => this.pageSlice().total);
+  readonly totalPages = computed(() => this.pageSlice().totalPages);
+  readonly allClients = computed(() => listClients(this.clientsState(), this.search()));
   readonly useVirtualScroll = computed(() => this.totalClients() > 100);
   adding = false;
   newClient: Omit<Client, 'id' | 'movements'> = { firstName: '', lastName: '', email: '', phone: '', address: '' };
 
-  private readonly confirm = inject(ConfirmService);
+  constructor() {
+    effect(() => {
+      const clamped = this.pageSlice().page;
+      if (clamped !== this.page()) {
+        this.page.set(clamped);
+      }
+    });
+    this.loadClients();
+  }
 
-  constructor() {}
+  private async loadClients(): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+    try {
+      const data = await firstValueFrom(this.clientsApi.getAll());
+      this.clientsState.set(data);
+      this.page.set(1);
+    } catch (err) {
+      this.clientsState.set([]);
+      const message = err instanceof Error ? err.message : 'Impossible de charger les clients.';
+      this.error.set(message);
+    } finally {
+      this.loading.set(false);
+    }
+  }
 
   startAdd(): void {
     this.adding = true;
@@ -49,11 +86,16 @@ export class ClientsComponent {
     if (!firstName || !lastName) return;
     const { email, phone, address } = this.newClient;
     try {
-      await firstValueFrom(this.store.addClient({ firstName, lastName, email, phone, address }));
+      this.mutating.set(true);
+      const created = await firstValueFrom(this.clientsApi.add({ firstName, lastName, email, phone, address }));
+      this.clientsState.update((list) => [created, ...list.filter((c) => c.id !== created.id)]);
+      this.page.set(1);
       this.notifications.success(`Client ${firstName} ${lastName} cree.`);
       this.adding = false;
     } catch {
       this.notifications.error("Impossible d'ajouter le client.");
+    } finally {
+      this.mutating.set(false);
     }
   }
 
@@ -63,10 +105,14 @@ export class ClientsComponent {
 
   async onSaveClient(update: ClientUpdate): Promise<void> {
     try {
-      await firstValueFrom(this.store.updateClient(update));
+      this.mutating.set(true);
+      const updated = await firstValueFrom(this.clientsApi.update(update));
+      this.clientsState.update((list) => list.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)));
       this.notifications.success('Client mis a jour.');
     } catch {
       this.notifications.error('La mise a jour du client a echoue.');
+    } finally {
+      this.mutating.set(false);
     }
   }
 
@@ -78,10 +124,14 @@ export class ClientsComponent {
     });
     if (!approved) return;
     try {
-      await firstValueFrom(this.store.deleteClient(client.id));
+      this.mutating.set(true);
+      await firstValueFrom(this.clientsApi.remove(client.id));
+      this.clientsState.update((list) => list.filter((c) => c.id !== client.id));
       this.notifications.success('Client supprime.');
     } catch {
       this.notifications.error('La suppression du client a echoue.');
+    } finally {
+      this.mutating.set(false);
     }
   }
 
@@ -90,17 +140,26 @@ export class ClientsComponent {
   }
 
   nextPage(): void {
-    this.store.nextPage();
+    this.page.set(Math.min(this.page() + 1, this.totalPages()));
   }
 
   previousPage(): void {
-    this.store.previousPage();
+    this.page.set(Math.max(this.page() - 1, 1));
   }
 
   onPageSizeChange(size: string): void {
     const parsed = Number(size);
     if (!Number.isNaN(parsed)) {
-      this.store.setPageSize(parsed);
+      const nextSize = Math.max(1, Math.floor(parsed));
+      if (nextSize !== this.pageSize()) {
+        this.pageSize.set(nextSize);
+        this.page.set(1);
+      }
     }
+  }
+
+  setSearch(term: string): void {
+    this.search.set(term ?? '');
+    this.page.set(1);
   }
 }

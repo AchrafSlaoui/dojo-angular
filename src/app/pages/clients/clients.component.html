@@ -1,6 +1,6 @@
 <h2>Clients</h2>
 <div class="search">
-  <input type="text" [ngModel]="store.search()" (ngModelChange)="store.setSearch($event)" placeholder="Rechercher par nom..." />
+  <input type="text" [ngModel]="search()" (ngModelChange)="setSearch($event)" placeholder="Rechercher par nom..." />
   <button class="icon-btn plus" (click)="startAdd()" *ngIf="!adding" title="Ajouter un client" aria-label="Ajouter">
     <span class="icon i-plus icon-lg"></span>
   </button>
@@ -16,10 +16,10 @@
 <div class="status" *ngIf="mutating()">Traitement en cours...</div>
 
 <form class="add-client card" *ngIf="adding" (ngSubmit)="saveAdd()">
-  <input type="text" [(ngModel)]="newClient.firstName" name="firstName" placeholder="Prénom" required />
+  <input type="text" [(ngModel)]="newClient.firstName" name="firstName" placeholder="Prenom" required />
   <input type="text" [(ngModel)]="newClient.lastName" name="lastName" placeholder="Nom" required />
   <input type="email" [(ngModel)]="newClient.email" name="email" placeholder="Email" />
-  <input type="text" [(ngModel)]="newClient.phone" name="phone" placeholder="Téléphone" />
+  <input type="text" [(ngModel)]="newClient.phone" name="phone" placeholder="Telephone" />
   <input type="text" [(ngModel)]="newClient.address" name="address" placeholder="Adresse" />
   <div class="actions">
     <button type="submit" class="icon-btn" title="Enregistrer" aria-label="Enregistrer" [disabled]="mutating()">
@@ -38,7 +38,7 @@
         <app-client-card [client]="client" [editable]="true" (saveRequested)="onSaveClient($event)" (deleteRequested)="deleteClient(client)"></app-client-card>
       </div>
     </cdk-virtual-scroll-viewport>
-    <div class="hint">Mode liste virtuelle activé pour {{ totalClients() }} clients.</div>
+    <div class="hint">Mode liste virtuelle active pour {{ totalClients() }} clients.</div>
   </ng-container>
 </ng-container>
 
@@ -47,17 +47,17 @@
     <div class="client-row" *ngFor="let client of list; trackBy: trackByClientId">
       <app-client-card [client]="client" [editable]="true" (saveRequested)="onSaveClient($event)" (deleteRequested)="deleteClient(client)"></app-client-card>
     </div>
-    <div *ngIf="list.length === 0">Aucun client trouvé.</div>
+    <div *ngIf="list.length === 0">Aucun client trouve.</div>
   </div>
 
   <div class="pagination" *ngIf="totalPages() > 1">
-    <button class="icon-btn" type="button" (click)="previousPage()" [disabled]="page() === 1 || loading() || mutating()">Précédent</button>
+    <button class="icon-btn" type="button" (click)="previousPage()" [disabled]="page() === 1 || loading() || mutating()">Precedent</button>
     <span>Page {{ page() }} / {{ totalPages() }}</span>
     <button class="icon-btn" type="button" (click)="nextPage()" [disabled]="page() === totalPages() || loading() || mutating()">Suivant</button>
     <div class="page-size">
       <label>
         Par page
-        <select [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange($event)" aria-label="Résultats par page">
+        <select [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange($event)" aria-label="Resultats par page">
           <option [ngValue]="10">10</option>
           <option [ngValue]="20">20</option>
           <option [ngValue]="50">50</option>
@@ -69,6 +69,6 @@
 
 <ng-template #empty>
   <div class="results">
-    <div>Aucun client trouvé.</div>
+    <div>Aucun client trouve.</div>
   </div>
 </ng-template>

@@ -1,72 +1,52 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal, WritableSignal } from '@angular/core';
 import { DashboardComponent } from './dashboard.component';
-import { ClientsStore } from '@app/stores/clients.store';
 import { Client } from '@app/models/client';
+import { ClientsApiService } from '@app/services/clients-api.service';
+import { of, throwError } from 'rxjs';
 
+const today = new Date().toISOString().slice(0, 10);
 const mockClients: Client[] = [
-  { id: '1', firstName: 'Ada', lastName: 'Lovelace', movements: [] },
-  { id: '2', firstName: 'Grace', lastName: 'Hopper', movements: [] },
+  { id: '1', firstName: 'Ada', lastName: 'Lovelace', movements: [{ id: 'm1', date: today, type: 'credit', amount: 10, description: '' }] },
+  { id: '2', firstName: 'Grace', lastName: 'Hopper', movements: [{ id: 'm2', date: today, type: 'debit', amount: 5, description: '' }] },
 ];
 
-class ClientsStoreStub {
-  weeklyFilteredClients: WritableSignal<Client[]>;
-  loading = signal(false);
-  error = signal<string | null>(null);
-  search: WritableSignal<string>;
-  setSearch = jest.fn();
-
-  constructor(clients: Client[]) {
-    this.weeklyFilteredClients = signal(clients);
-    this.search = signal('');
-  }
+class ClientsApiServiceStub {
+  getAll = jest.fn(() => of(mockClients));
 }
 
 describe('DashboardComponent', () => {
   let fixture: ComponentFixture<DashboardComponent>;
   let component: DashboardComponent;
-  let storeStub: ClientsStoreStub;
+  let api: ClientsApiServiceStub;
 
-  beforeEach(() => {
-    storeStub = new ClientsStoreStub(mockClients);
+  beforeEach(async () => {
+    api = new ClientsApiServiceStub();
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [DashboardComponent],
-      providers: [{ provide: ClientsStore, useValue: storeStub }],
-    });
+      providers: [{ provide: ClientsApiService, useValue: api }],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(DashboardComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
   });
 
-  it('reflects the weekly clients provided by the facade', () => {
-    // Given the facade supplies weekly filtered clients
+  it('loads and exposes weekly clients from the API', () => {
     expect(component.weeklyClients()).toEqual(mockClients);
-    // When the facade updates the list
-    storeStub.weeklyFilteredClients.set([mockClients[0]]);
-    // Then the component exposes the new list
-    expect(component.weeklyClients()).toEqual([mockClients[0]]);
   });
 
-  it('reads loading and error state directly from the facade', () => {
-    // Given the initial facade state
-    expect(component.loading()).toBe(false);
-    expect(component.error()).toBeNull();
-
-    // When the facade updates loading and error flags
-    storeStub.loading.set(true);
-    storeStub.error.set('oops');
-
-    // Then the component exposes the updated flags
-    expect(component.loading()).toBe(true);
+  it('surfaces loading and error state', async () => {
+    api.getAll.mockReturnValueOnce(throwError(() => new Error('oops')));
+    (component as any)['loadClients']();
+    await fixture.whenStable();
     expect(component.error()).toBe('oops');
   });
 
   it('returns the client id from trackByClientId', () => {
-    // Given a client entry
     const client = mockClients[0];
-    // When trackByClientId is invoked
     expect(component.trackByClientId(0, client)).toBe(client.id);
   });
 });
