@@ -51,9 +51,6 @@ export class ClientDetailComponent {
     return Math.round(total * 100) / 100;
   });
 
-  editingId: string | null = null;
-  editMovement: Movement | null = null;
-
   newMovement: Omit<Movement, 'id'> = {
     date: todayISO(),
     type: 'debit',
@@ -86,34 +83,11 @@ export class ClientDetailComponent {
     }
   }
 
-  startEdit(m: Movement): void {
-    this.editingId = m.id;
-    this.editMovement = { ...m };
-  }
-
-  cancelEdit(): void {
-    this.editingId = null;
-    this.editMovement = null;
-  }
-
-  async saveEdit(clientId: string): Promise<void> {
-    if (!this.editMovement) return;
-    try {
-      const updated = await firstValueFrom(this.movementsApi.update(clientId, this.editMovement));
-      this.updateMovementInClient(clientId, updated);
-      this.notifications.success('Mouvement mis a jour.');
-      this.cancelEdit();
-    } catch {
-      this.notifications.error('La mise a jour du mouvement a echoue.');
-    }
-  }
-
   async updateMovement(clientId: string, movement: Movement): Promise<void> {
     try {
       const updated = await firstValueFrom(this.movementsApi.update(clientId, movement));
       this.updateMovementInClient(clientId, updated);
       this.notifications.success('Mouvement mis a jour.');
-      this.cancelEdit();
     } catch {
       this.notifications.error('La mise a jour du mouvement a echoue.');
     }
@@ -135,7 +109,6 @@ export class ClientDetailComponent {
       this.clientState.update((current) =>
         current ? { ...current, movements: (current.movements ?? []).filter((m) => m.id !== movementId) } : current
       );
-      if (this.editingId === movementId) this.cancelEdit();
       this.notifications.success('Mouvement supprime.');
     } catch {
       this.notifications.error('La suppression du mouvement a echoue.');

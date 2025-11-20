@@ -110,37 +110,7 @@ describe('ClientDetailComponent', () => {
     expect(component.newMovement.description).toBe('');
   });
 
-  it('clones the movement when startEdit is invoked', () => {
-    component.startEdit(baseMovement);
-    expect(component.editingId).toBe(baseMovement.id);
-    expect(component.editMovement).toEqual(baseMovement);
-    expect(component.editMovement).not.toBe(baseMovement);
-  });
-
-  it('resets the editing state on cancelEdit', () => {
-    component.startEdit(baseMovement);
-    component.cancelEdit();
-    expect(component.editingId).toBeNull();
-    expect(component.editMovement).toBeNull();
-  });
-
-  it('persists edits and clears state when saveEdit succeeds', async () => {
-    component.editingId = baseMovement.id;
-    component.editMovement = { ...baseMovement, amount: 200 };
-    const updatePayload = component.editMovement;
-    movements.update.mockReturnValue(of({ ...updatePayload }));
-
-    await component.saveEdit(clientId);
-
-    expect(movements.update).toHaveBeenCalledWith(clientId, updatePayload);
-    expect(notifications.success).toHaveBeenCalled();
-    expect(component.client()?.movements?.find((m) => m.id === baseMovement.id)?.amount).toBe(200);
-    expect(component.editingId).toBeNull();
-    expect(component.editMovement).toBeNull();
-  });
-
-  it('updates a movement and clears editing state when updateMovement succeeds', async () => {
-    component.editingId = baseMovement.id;
+  it('updates a movement when updateMovement succeeds', async () => {
     const movementToUpdate: Movement = { ...baseMovement, amount: 75 };
     movements.update.mockReturnValue(of(movementToUpdate));
 
@@ -149,8 +119,6 @@ describe('ClientDetailComponent', () => {
     expect(movements.update).toHaveBeenCalledWith(clientId, movementToUpdate);
     expect(notifications.success).toHaveBeenCalled();
     expect(component.client()?.movements?.find((m) => m.id === baseMovement.id)?.amount).toBe(75);
-    expect(component.editingId).toBeNull();
-    expect(component.editMovement).toBeNull();
   });
 
   it('keeps the movement untouched when the confirmation is rejected', async () => {
@@ -162,17 +130,12 @@ describe('ClientDetailComponent', () => {
   it('deletes the movement and clears editing state when confirmation succeeds', async () => {
     confirm.confirm.mockResolvedValueOnce(true);
     movements.remove.mockReturnValue(of(undefined));
-    component.editingId = baseMovement.id;
-    component.editMovement = { ...baseMovement };
-
     await component.deleteMovement(clientId, baseMovement.id);
 
     expect(confirm.confirm).toHaveBeenCalled();
     expect(movements.remove).toHaveBeenCalledWith(clientId, baseMovement.id);
     expect(component.client()?.movements?.find((m) => m.id === baseMovement.id)).toBeUndefined();
     expect(notifications.success).toHaveBeenCalled();
-    expect(component.editingId).toBeNull();
-    expect(component.editMovement).toBeNull();
   });
 
   it('returns the identifier in trackByMovementId', () => {
