@@ -1,5 +1,4 @@
 import { Component, ChangeDetectionStrategy, input, output, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Client } from '@clients/models/client';
@@ -9,7 +8,7 @@ import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
 @Component({
   selector: 'app-client-card',
   standalone: true,
-  imports: [CommonModule, FormsModule, FormatValuePipe],
+  imports: [FormsModule, FormatValuePipe],
   templateUrl: './client-card.component.html',
   styleUrl: './client-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

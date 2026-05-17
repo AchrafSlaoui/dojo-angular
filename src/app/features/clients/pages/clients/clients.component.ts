@@ -1,9 +1,9 @@
 import { Component, ChangeDetectionStrategy, Signal, computed, effect, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { firstValueFrom } from 'rxjs';
 import { Client } from '@clients/models/client';
+import { ClientActivity } from '@clients/models/client-activity';
 import { ClientUpdate } from '@clients/types/client.types';
 import { ClientCardComponent } from '@clients/components/client-card/client-card.component';
 import { NotificationService } from '@shared/services/notification.service';
@@ -14,7 +14,7 @@ import { listClients, paginateClients } from '@clients/utils/clients-collection.
 @Component({
   selector: 'app-clients',
   standalone: true,
-  imports: [CommonModule, FormsModule, ClientCardComponent, ScrollingModule],
+  imports: [FormsModule, ClientCardComponent, ScrollingModule],
   templateUrl: './clients.component.html',
   styleUrl: './clients.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,7 +24,7 @@ export class ClientsComponent {
   private readonly notifications = inject(NotificationService);
   private readonly confirm = inject(ConfirmService);
 
-  private readonly clientsState = signal<Client[]>([]);
+  private readonly clientsState = signal<ClientActivity[]>([]);
   readonly search = signal('');
   readonly page = signal(1);
   readonly pageSize = signal(20);
@@ -41,13 +41,13 @@ export class ClientsComponent {
     })
   );
 
-  clients: Signal<Client[]> = computed(() => this.pageSlice().items);
+  clients: Signal<ClientActivity[]> = computed(() => this.pageSlice().items);
   readonly totalClients = computed(() => this.pageSlice().total);
   readonly totalPages = computed(() => this.pageSlice().totalPages);
   readonly allClients = computed(() => listClients(this.clientsState(), this.search()));
   readonly useVirtualScroll = computed(() => this.totalClients() > 100);
   adding = false;
-  newClient: Omit<Client, 'id' | 'movements'> = { firstName: '', lastName: '', email: '', phone: '', address: '' };
+  newClient: Omit<Client, 'id'> = { firstName: '', lastName: '', email: '', phone: '', address: '' };
 
   constructor() {
     effect(() => {
@@ -88,7 +88,7 @@ export class ClientsComponent {
     try {
       this.mutating.set(true);
       const created = await firstValueFrom(this.clientsApi.add({ firstName, lastName, email, phone, address }));
-      this.clientsState.update((list) => [created, ...list.filter((c) => c.id !== created.id)]);
+      this.clientsState.update((list) => [{ ...created, recentMovements: [] }, ...list.filter((c) => c.id !== created.id)]);
       this.page.set(1);
       this.notifications.success(`Client ${firstName} ${lastName} cree.`);
       this.adding = false;

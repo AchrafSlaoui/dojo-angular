@@ -1,11 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { NotificationService } from '@shared/services/notification.service';
 
 @Component({
   selector: 'app-notification',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     @if (notification(); as notif) {
       <div class="notification" [class.success]="notif.kind === 'success'" [class.error]="notif.kind === 'error'" [class.info]="notif.kind === 'info'">

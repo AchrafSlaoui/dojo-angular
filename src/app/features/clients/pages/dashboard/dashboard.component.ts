@@ -1,8 +1,7 @@
 import { Component, ChangeDetectionStrategy, Signal, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClientCardComponent } from '@clients/components/client-card/client-card.component';
-import { Client } from '@clients/models/client';
+import { ClientActivity } from '@clients/models/client-activity';
 import { ClientsApiService } from '@clients/services/clients-api.service';
 import { getWeeklyClients } from '@clients/utils/clients-collection.util';
 import { firstValueFrom } from 'rxjs';
@@ -10,29 +9,29 @@ import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ClientCardComponent],
+  imports: [FormsModule, ClientCardComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent {
   private readonly clientsApi = inject(ClientsApiService);
-  private readonly clientsState = signal<Client[]>([]);
+  private readonly clientsState = signal<ClientActivity[]>([]);
   readonly search = signal('');
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
-  weeklyClients: Signal<Client[]> = computed(() => getWeeklyClients(this.clientsState(), this.search()));
+  weeklyClients: Signal<ClientActivity[]> = computed(() => getWeeklyClients(this.clientsState(), this.search()));
 
   constructor() {
-    this.loadClients();
+    this.reload();
   }
 
   setSearch(term: string): void {
     this.search.set(term ?? '');
   }
 
-  private async loadClients(): Promise<void> {
+  async reload(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     try {
@@ -45,9 +44,5 @@ export class DashboardComponent {
     } finally {
       this.loading.set(false);
     }
-  }
-  
-  trackByClientId(index: number, client: Client): string {
-    return client.id;
   }
 }

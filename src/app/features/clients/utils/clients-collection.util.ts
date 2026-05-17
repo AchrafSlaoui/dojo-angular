@@ -1,27 +1,27 @@
-import { Client } from '@clients/models/client';
+import { ClientActivity } from '@clients/models/client-activity';
 import { matchesSearchTerm, sortByLatestMovement, sortWeeklyByLatestMovement } from '@clients/utils/client.util';
 
-export function listClients(clients: Client[], search?: string): Client[] {
+export function listClients(clients: ClientActivity[], search?: string): ClientActivity[] {
   const sorted = sortByLatestMovement(clients);
   const term = (search ?? '').trim();
   return term ? sorted.filter((c) => matchesSearchTerm(c, term)) : sorted;
 }
 
-export function getWeeklyClients(clients: Client[], search?: string, referenceDate?: Date): Client[] {
+export function getWeeklyClients(clients: ClientActivity[], search?: string, referenceDate?: Date): ClientActivity[] {
   const sorted = sortWeeklyByLatestMovement(clients, referenceDate);
   const term = (search ?? '').trim();
   return term ? sorted.filter((c) => matchesSearchTerm(c, term)) : sorted;
 }
 
 export interface ClientsPageParams {
-  clients: Client[];
+  clients: ClientActivity[];
   page: number;
   pageSize: number;
   search?: string;
 }
 
 export interface ClientsPageResult {
-  items: Client[];
+  items: ClientActivity[];
   total: number;
   page: number;
   pageSize: number;

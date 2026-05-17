@@ -1,11 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ConfirmService } from '@shared/services/confirm.service';
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     @if (state().visible) {
       <div class="backdrop" role="presentation"></div>

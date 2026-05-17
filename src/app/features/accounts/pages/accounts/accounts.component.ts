@@ -1,0 +1,99 @@
+import { ChangeDetectionStrategy, Component, Signal, effect, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+import { Account, AccountCreate, AccountUpdate } from '@accounts/models/account';
+import { AccountCardComponent } from '@accounts/components/account-card/account-card.component';
+import { AccountsFacade } from '@accounts/services/accounts.facade';
+import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
+
+@Component({
+  selector: 'app-accounts',
+  standalone: true,
+  imports: [FormsModule, RouterLink, AccountCardComponent, FormatValuePipe],
+  templateUrl: './accounts.component.html',
+  styleUrl: './accounts.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [AccountsFacade],
+})
+export class AccountsComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly accountsFacade = inject(AccountsFacade);
+
+  readonly search = this.accountsFacade.search;
+  readonly typeFilter = this.accountsFacade.typeFilter;
+  readonly loading = this.accountsFacade.loading;
+  readonly mutating = this.accountsFacade.mutating;
+  readonly error = this.accountsFacade.error;
+  readonly accounts = this.accountsFacade.filteredAccounts;
+  readonly totalBalance = this.accountsFacade.totalBalance;
+  readonly clientId: Signal<string | null> = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get('id'))),
+    { initialValue: null }
+  );
+  adding = false;
+  editingAccountId: string | null = null;
+  newAccount: AccountCreate = { label: '', type: 'checking', status: 'active' };
+  editAccount: AccountUpdate = { id: '', label: '', type: 'checking', status: 'active' };
+
+  constructor() {
+    effect(() => {
+      this.accountsFacade.load(this.clientId());
+    });
+  }
+
+  setSearch(term: string): void {
+    this.accountsFacade.setSearch(term);
+  }
+
+  setTypeFilter(type: string): void {
+    this.accountsFacade.setTypeFilter(type);
+  }
+
+  startAdd(): void {
+    this.adding = true;
+    this.newAccount = { label: '', type: 'checking', status: 'active' };
+  }
+
+  cancelAdd(): void {
+    this.adding = false;
+  }
+
+  async saveAdd(): Promise<void> {
+    const created = await this.accountsFacade.add(this.newAccount);
+    if (created) {
+      this.adding = false;
+    }
+  }
+
+  startEdit(account: Account): void {
+    this.editingAccountId = account.id;
+    this.editAccount = {
+      id: account.id,
+      label: account.label,
+      type: account.type,
+      status: account.status,
+    };
+  }
+
+  cancelEdit(): void {
+    this.editingAccountId = null;
+  }
+
+  async saveEdit(): Promise<void> {
+    const updated = await this.accountsFacade.update(this.editAccount);
+    if (updated) {
+      this.editingAccountId = null;
+    }
+  }
+
+  async deleteAccount(account: Account): Promise<void> {
+    const removed = await this.accountsFacade.remove(account);
+    if (removed) {
+      if (this.editingAccountId === account.id) {
+        this.editingAccountId = null;
+      }
+    }
+  }
+}

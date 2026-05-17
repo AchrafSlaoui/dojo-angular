@@ -1,0 +1,17 @@
+<a class="account-card"
+   [routerLink]="['/clients', clientId(), 'accounts', account().id]"
+   [class.blocked]="account().status === 'blocked'"
+   [class.closed]="account().status === 'closed'">
+  <div class="heading">
+    <div>
+      <h3>{{ account().label }}</h3>
+      <span>{{ typeLabel() }}</span>
+    </div>
+    <strong>{{ account().balance | formatValue:"currency" }}</strong>
+  </div>
+
+  <div class="meta">
+    <span>{{ statusLabel() }}</span>
+    <span></span>
+  </div>
+</a>

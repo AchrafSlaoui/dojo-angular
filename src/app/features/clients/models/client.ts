@@ -1,5 +1,3 @@
-import { Movement } from './movement';
-
 export interface Client {
   id: string;
   firstName: string;
@@ -7,6 +5,4 @@ export interface Client {
   email?: string;
   phone?: string;
   address?: string;
-  movements: Movement[];
 }
-

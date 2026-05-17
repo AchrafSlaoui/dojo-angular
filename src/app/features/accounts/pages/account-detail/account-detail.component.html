@@ -1,0 +1,86 @@
+@if (error(); as message) {
+  <div class="status error">{{ message }}</div>
+} @else {
+  @if (account(); as account) {
+    <a class="back-link" [routerLink]="['/clients', clientId(), 'accounts']">Retour aux comptes</a>
+
+    <header class="account-header">
+      <div>
+        <h2>{{ account.label }}</h2>
+        <p>{{ account.type }} · {{ account.status }}</p>
+      </div>
+      <strong>{{ account.balance | formatValue:"currency" }}</strong>
+    </header>
+
+    <section class="movements">
+      <div class="section-header">
+        <div>
+          <h3>Mouvements du compte</h3>
+          <p class="muted">{{ movementCount() }} mouvement(s)</p>
+        </div>
+      </div>
+
+      <section class="movement-filters">
+        <input type="text" [ngModel]="movementSearch()" (ngModelChange)="setMovementSearch($event)" placeholder="Rechercher un mouvement..." />
+        <select [ngModel]="movementTypeFilter()" (ngModelChange)="setMovementTypeFilter($event)" aria-label="Filtrer par type">
+          <option value="all">Tous les types</option>
+          <option value="credit">Credit</option>
+          <option value="debit">Debit</option>
+        </select>
+        @if (!addingMovement) {
+          <button class="icon-btn plus" type="button" (click)="startAddMovement()" title="Ajouter un mouvement" aria-label="Ajouter un mouvement">
+            <span class="icon i-plus icon-lg"></span>
+          </button>
+        }
+      </section>
+
+      @if (mutating()) {
+        <div class="status">Traitement en cours...</div>
+      }
+
+      @if (addingMovement) {
+        <form class="movement-form card" (ngSubmit)="addMovement()">
+          <select [(ngModel)]="newMovement.type" name="type" aria-label="Type de mouvement">
+            <option value="credit">Credit</option>
+            <option value="debit">Debit</option>
+          </select>
+          <input type="date" [(ngModel)]="newMovement.date" name="date" required />
+          <input type="number" [(ngModel)]="newMovement.amount" name="amount" min="0.01" step="0.01" required />
+          <input type="text" [(ngModel)]="newMovement.description" name="description" placeholder="Description" />
+          <span class="actions">
+            <button class="icon-btn lg" type="submit" title="Enregistrer" aria-label="Enregistrer" [disabled]="mutating()">
+              <span class="icon i-check icon-lg"></span>
+            </button>
+            <button class="icon-btn lg danger" type="button" title="Annuler" aria-label="Annuler" (click)="cancelAddMovement()" [disabled]="mutating()">
+              <span class="icon i-close icon-lg"></span>
+            </button>
+          </span>
+        </form>
+      }
+
+      @if (filteredMovements().length) {
+        <ul class="list">
+          @for (movement of filteredMovements(); track movement.id) {
+            <li
+              class="item"
+              app-movement-item
+              [movement]="movement"
+              [editable]="true"
+              [removable]="true"
+              (update)="updateMovement($event)"
+              (remove)="deleteMovement($event)"
+            ></li>
+          }
+        </ul>
+      } @else {
+        <div>Aucun mouvement trouve.</div>
+      }
+    </section>
+  } @else {
+    @if (loading()) {
+      <div>Chargement...</div>
+    } @else {
+      <div>Aucun compte trouve.</div>
+    }
+  }
+}

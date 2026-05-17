@@ -1,4 +1,4 @@
-/* Movement item specific overrides (optional). 
+/* Movement item specific overrides.
    Most layout styles come from the parent page. */
 
 /* Ensure edit row controls align nicely */
@@ -13,5 +13,3 @@
 
 :host .actions { display: inline-flex; gap: 8px; }
 :host .actions > * { margin: 0; }
-:host .icon-btn { width: 42px; height: 42px; font-size: 24px; }
-:host .icon-btn .icon { width: 26px; height: 26px; }

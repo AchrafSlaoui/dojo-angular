@@ -1,20 +1,21 @@
 import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Movement } from '@clients/models/movement';
+import { Movement } from '@accounts/models/movement';
 import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
 
 @Component({
   // Attribute selector so we can attach it to the existing .item div
   selector: '[app-movement-item]',
   standalone: true,
-  imports: [CommonModule, FormsModule,FormatValuePipe],
+  imports: [FormsModule, FormatValuePipe],
   templateUrl: './movement-item.component.html',
   styleUrl: './movement-item.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MovementItemComponent {
   movement = input.required<Movement>();
+  editable = input(false);
+  removable = input(false);
   update = output<Movement>();
   remove = output<string>();
 
@@ -22,6 +23,7 @@ export class MovementItemComponent {
   editModel!: Movement;
 
   startEdit(): void {
+    if (!this.editable()) return;
     this.editModel = { ...this.movement() };
     this.editMode = true;
   }
@@ -36,6 +38,7 @@ export class MovementItemComponent {
   }
 
   onRemove(): void {
+    if (!this.removable()) return;
     this.remove.emit(this.movement().id);
   }
 }

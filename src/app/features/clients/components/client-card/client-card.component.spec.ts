@@ -14,7 +14,7 @@ describe('ClientCardComponent', () => {
     email: 'ada@example.com',
     phone: '0612345678',
     address: 'London',
-    movements: [],
+    recentMovements: [],
   };
 
   beforeEach(() => {

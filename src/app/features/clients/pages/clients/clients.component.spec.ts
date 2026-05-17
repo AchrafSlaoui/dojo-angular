@@ -9,13 +9,13 @@ import { ClientCardComponent } from '@clients/components/client-card/client-card
 import { ClientsApiService } from '@clients/services/clients-api.service';
 
 const mockClients: Client[] = [
-  { id: '1', firstName: 'Ada', lastName: 'Lovelace', email: '', phone: '', address: '', movements: [] },
-  { id: '2', firstName: 'Grace', lastName: 'Hopper', email: '', phone: '', address: '', movements: [] },
+  { id: '1', firstName: 'Ada', lastName: 'Lovelace', email: '', phone: '', address: '', recentMovements: [] },
+  { id: '2', firstName: 'Grace', lastName: 'Hopper', email: '', phone: '', address: '', recentMovements: [] },
 ];
 
 class ClientsApiServiceStub {
   getAll = jest.fn(() => of(mockClients));
-  add = jest.fn((payload: Partial<Client>) => of({ id: '3', movements: [], ...payload } as Client));
+  add = jest.fn((payload: Partial<Client>) => of({ id: '3', recentMovements: [], ...payload } as Client));
   update = jest.fn((payload: Partial<Client>) => of({ ...(mockClients[0] as Client), ...payload } as Client));
   remove = jest.fn(() => of(void 0));
 }

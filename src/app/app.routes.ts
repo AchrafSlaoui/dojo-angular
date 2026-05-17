@@ -19,6 +19,22 @@ export const routes = [
       ),
   },
   {
+    path: 'clients/:clientId/accounts/:accountId',
+    title: 'Detail Compte',
+    loadComponent: () =>
+      import('./features/accounts/pages/account-detail/account-detail.component').then(
+        (m) => m.AccountDetailComponent
+      ),
+  },
+  {
+    path: 'clients/:id/accounts',
+    title: 'Comptes Client',
+    loadComponent: () =>
+      import('./features/accounts/pages/accounts/accounts.component').then(
+        (m) => m.AccountsComponent
+      ),
+  },
+  {
     path: 'clients/:id',
     title: 'Detail Client',
     loadComponent: () =>

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MovementItemComponent } from './movement-item.component';
-import { Movement } from '@clients/models/movement';
+import { Movement } from '@accounts/models/movement';
 
 describe('MovementItemComponent', () => {
   let fixture: ComponentFixture<MovementItemComponent>;
@@ -21,6 +21,8 @@ describe('MovementItemComponent', () => {
     fixture = TestBed.createComponent(MovementItemComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('movement', movement);
+    fixture.componentRef.setInput('editable', true);
+    fixture.componentRef.setInput('removable', true);
     fixture.detectChanges();
   });
 

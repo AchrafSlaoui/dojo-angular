@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ClientsApiService } from './clients-api.service';
 import { Client } from '@clients/models/client';
+import { ClientUpdate } from '@clients/types/client.types';
 
 describe('ClientsApiService', () => {
   let api: ClientsApiService;
@@ -51,7 +52,7 @@ describe('ClientsApiService', () => {
   });
 
   it('PUT /api/clients/:id updates a client', () => {
-    const update = { id: '42', firstName: 'Ada' } as any;
+    const update: ClientUpdate = { id: '42', firstName: 'Ada' };
     const updated = { id: '42', firstName: 'Ada', lastName: 'Lovelace' } as Client;
     api.update(update).subscribe((result) => expect(result).toEqual(updated));
     const req = httpMock.expectOne('/api/clients/42');

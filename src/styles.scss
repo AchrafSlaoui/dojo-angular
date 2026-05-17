@@ -81,6 +81,12 @@ button:hover, .btn:hover { color: var(--primary-600); }
   user-select: none;
 }
 .icon-btn svg { width: 22px; height: 22px; }
+.icon-btn.plus {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+}
 .icon-btn.plus svg { width: 28px; height: 28px; }
 .icon-btn:hover { color: var(--primary-600); }
 .icon-btn.danger { color: var(--danger); }

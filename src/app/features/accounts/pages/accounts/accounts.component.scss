@@ -1,50 +1,39 @@
-.info {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px 20px;
-  padding: 12px 14px;
+.back-link {
+  display: inline-block;
   margin-bottom: 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
 }
 
-.info .cell {
+.page-header {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-.info .cell strong {
-  font-size: 0.9rem;
+.page-header p {
+  margin: 0;
   color: var(--muted);
 }
 
-.accounts-entry {
-  display: grid;
-  gap: 8px;
+.page-header strong {
+  font-size: 1.25rem;
 }
 
-.section-heading {
-  display: flex;
+.header-actions {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 0;
+  gap: 10px;
 }
 
-.section-heading h3 {
-  margin: 0;
-}
-
-.account-filters {
+.filters {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 8px 0 16px;
+  margin-bottom: 16px;
 }
 
-.account-filters input {
+.filters input {
   width: 100%;
   max-width: 480px;
 }
@@ -53,7 +42,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
   gap: 16px;
-  margin-top: 16px;
 }
 
 .account-entry {
@@ -62,14 +50,14 @@
 }
 
 .account-actions,
-.actions {
+.account-form .actions {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  justify-content: flex-end;
 }
 
 .account-actions {
+  justify-content: flex-end;
   position: absolute;
   right: 16px;
   bottom: 6px;
@@ -80,21 +68,28 @@
   grid-column: 1 / -1;
   grid-template-columns: minmax(0, 1fr) 150px 130px auto;
   gap: 10px;
-  align-items: center;
   margin-bottom: 16px;
 }
 
+.empty {
+  color: var(--muted);
+}
+
 @media (max-width: 760px) {
+  .page-header,
+  .filters,
+  .header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .accounts-grid,
-  .account-filters,
   .account-form {
     grid-template-columns: 1fr;
-    flex-direction: column;
-    align-items: stretch;
   }
 
   .account-actions,
-  .actions {
+  .account-form .actions {
     justify-content: flex-start;
   }
 }

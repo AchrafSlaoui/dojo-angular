@@ -32,6 +32,7 @@ module.exports = {
     '^@core/(.*)$': '<rootDir>/src/app/core/$1',
     '^@shared/(.*)$': '<rootDir>/src/app/shared/$1',
     '^@clients/(.*)$': '<rootDir>/src/app/features/clients/$1',
+    '^@accounts/(.*)$': '<rootDir>/src/app/features/accounts/$1',
   },
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
   moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],

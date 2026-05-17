@@ -3,14 +3,20 @@
   <span class="date">{{ movement().date }}</span>
   <span class="amount">{{ movement().amount | formatValue:"currency" }}</span>
   <span class="desc">{{ movement().description | formatValue }}</span>
-  <span class="actions">
-    <button class="icon-btn lg" title="Modifier" aria-label="Modifier" (click)="startEdit()">
-      <span class="icon i-edit icon-lg"></span>
-    </button>
-    <button class="icon-btn lg danger" title="Supprimer" aria-label="Supprimer" (click)="onRemove()">
-      <span class="icon i-trash icon-lg"></span>
-    </button>
-  </span>
+  @if (editable() || removable()) {
+    <span class="actions">
+      @if (editable()) {
+        <button class="icon-btn lg" title="Modifier" aria-label="Modifier" (click)="startEdit()">
+          <span class="icon i-edit icon-lg"></span>
+        </button>
+      }
+      @if (removable()) {
+        <button class="icon-btn lg danger" title="Supprimer" aria-label="Supprimer" (click)="onRemove()">
+          <span class="icon i-trash icon-lg"></span>
+        </button>
+      }
+    </span>
+  }
 } @else {
   <select [(ngModel)]="editModel.type">
     <option value="debit">Debit</option>

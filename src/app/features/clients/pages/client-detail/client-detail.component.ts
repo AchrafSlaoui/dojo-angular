@@ -1,38 +1,39 @@
 import { Component, ChangeDetectionStrategy, Signal, computed, effect, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MovementItemComponent } from '@clients/components/movement-item/movement-item.component';
+import { Account, AccountCreate, AccountUpdate } from '@accounts/models/account';
+import { AccountCardComponent } from '@accounts/components/account-card/account-card.component';
+import { AccountsFacade } from '@accounts/services/accounts.facade';
 import { Client } from '@clients/models/client';
-import { Movement } from '@clients/models/movement';
-import { ClientsApiService } from '@clients/services/clients-api.service';
-import { MovementsApiService } from '@clients/services/movements-api.service';
-import { todayISO } from '@shared/utils/date.util';
+import { ClientAccountsFacade } from '@clients/services/client-accounts.facade';
 import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
-import { NotificationService } from '@shared/services/notification.service';
-import { ConfirmService } from '@shared/services/confirm.service';
 
 @Component({
   selector: 'app-client-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, MovementItemComponent, FormatValuePipe],
+  imports: [FormsModule, AccountCardComponent, FormatValuePipe],
   templateUrl: './client-detail.component.html',
   styleUrl: './client-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [AccountsFacade],
 })
 export class ClientDetailComponent {
   private readonly route = inject(ActivatedRoute);
-  private readonly clientsApi = inject(ClientsApiService);
-  private readonly movementsApi = inject(MovementsApiService);
-  private readonly notifications = inject(NotificationService);
-  private readonly confirm = inject(ConfirmService);
+  private readonly clientAccounts = inject(ClientAccountsFacade);
+  private readonly accountsFacade = inject(AccountsFacade);
 
   private readonly clientState = signal<Client | null>(null);
   readonly loading = signal(false);
+  readonly mutating = this.accountsFacade.mutating;
   readonly error = signal<string | null>(null);
+  readonly accountSearch = this.accountsFacade.search;
+  readonly accountTypeFilter = this.accountsFacade.typeFilter;
+  addingAccount = false;
+  editingAccountId: string | null = null;
+  newAccount: AccountCreate = this.createAccountDraft();
+  editAccount: AccountUpdate = { id: '', label: '', type: 'checking', status: 'active' };
 
   readonly clientId: Signal<string | null> = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('id'))),
@@ -40,23 +41,9 @@ export class ClientDetailComponent {
   );
 
   readonly client: Signal<Client | null> = this.clientState.asReadonly();
-  readonly clientBalance: Signal<number> = computed(() => {
-    const current = this.clientState();
-    if (!current) return 0;
-    const movements = current.movements ?? [];
-    let total = 0;
-    for (const m of movements) {
-      total += m.type === 'credit' ? m.amount : -m.amount;
-    }
-    return Math.round(total * 100) / 100;
-  });
-
-  newMovement: Omit<Movement, 'id'> = {
-    date: todayISO(),
-    type: 'debit',
-    amount: 0,
-    description: '',
-  };
+  readonly accounts: Signal<Account[]> = this.accountsFacade.accounts;
+  readonly filteredAccounts: Signal<Account[]> = this.accountsFacade.filteredAccounts;
+  readonly clientBalance: Signal<number> = this.accountsFacade.clientBalance;
 
   constructor() {
     effect(() => {
@@ -67,66 +54,25 @@ export class ClientDetailComponent {
     });
   }
 
-  async addMovement(clientId: string): Promise<void> {
-    if (!this.newMovement.amount || this.newMovement.amount <= 0) return;
-    try {
-      const created = await firstValueFrom(this.movementsApi.create(clientId, this.newMovement));
-      this.clientState.update((client) =>
-        client
-          ? { ...client, movements: [created, ...((client.movements ?? []).filter((m) => m.id !== created.id))] }
-          : client
-      );
-      this.notifications.success('Mouvement ajoute.');
-      this.newMovement = { date: todayISO(), type: 'debit', amount: 0, description: '' };
-    } catch {
-      this.notifications.error('Impossible d\'ajouter le mouvement.');
-    }
+  setAccountSearch(term: string): void {
+    this.accountsFacade.setSearch(term);
   }
 
-  async updateMovement(clientId: string, movement: Movement): Promise<void> {
-    try {
-      const updated = await firstValueFrom(this.movementsApi.update(clientId, movement));
-      this.updateMovementInClient(clientId, updated);
-      this.notifications.success('Mouvement mis a jour.');
-    } catch {
-      this.notifications.error('La mise a jour du mouvement a echoue.');
-    }
-  }
-
-  async deleteMovement(clientId: string, movementId: string): Promise<void> {
-    const client = this.client();
-    const movement = client?.movements?.find((m) => m.id === movementId);
-    const description = movement?.description ?? '';
-    const approved = await this.confirm.confirm({
-      title: 'Supprimer le mouvement',
-      message: description ? `Supprimer le mouvement "${description}" ?` : 'Supprimer ce mouvement ?',
-      confirmLabel: 'Supprimer',
-    });
-    if (!approved) return;
-
-    try {
-      await firstValueFrom(this.movementsApi.remove(clientId, movementId));
-      this.clientState.update((current) =>
-        current ? { ...current, movements: (current.movements ?? []).filter((m) => m.id !== movementId) } : current
-      );
-      this.notifications.success('Mouvement supprime.');
-    } catch {
-      this.notifications.error('La suppression du mouvement a echoue.');
-    }
-  }
-
-  trackByMovementId(index: number, movement: Movement): string {
-    return movement.id;
+  setAccountTypeFilter(type: string): void {
+    this.accountsFacade.setTypeFilter(type);
   }
 
   private async loadClient(id: string): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const data = await firstValueFrom(this.clientsApi.getById(id));
-      this.clientState.set(data);
+      const { client, accounts } = await this.clientAccounts.getClientAccounts(id);
+      this.clientState.set(client);
+      this.accountsFacade.setClientId(id);
+      this.accountsFacade.setAccounts(accounts);
     } catch (err) {
       this.clientState.set(null);
+      this.accountsFacade.setAccounts([]);
       const message = err instanceof Error ? err.message : 'Impossible de charger le client.';
       this.error.set(message);
     } finally {
@@ -134,14 +80,53 @@ export class ClientDetailComponent {
     }
   }
 
-  private updateMovementInClient(clientId: string, movement: Movement): void {
-    this.clientState.update((client) =>
-      client && client.id === clientId
-        ? {
-            ...client,
-            movements: (client.movements ?? []).map((m) => (m.id === movement.id ? movement : m)),
-          }
-        : client
-    );
+  startAddAccount(): void {
+    this.addingAccount = true;
+    this.newAccount = this.createAccountDraft();
+  }
+
+  cancelAddAccount(): void {
+    this.addingAccount = false;
+  }
+
+  async saveAddAccount(): Promise<void> {
+    const created = await this.accountsFacade.add(this.newAccount);
+    if (created) {
+      this.addingAccount = false;
+    }
+  }
+
+  startEditAccount(account: Account): void {
+    this.editingAccountId = account.id;
+    this.editAccount = {
+      id: account.id,
+      label: account.label,
+      type: account.type,
+      status: account.status,
+    };
+  }
+
+  cancelEditAccount(): void {
+    this.editingAccountId = null;
+  }
+
+  async saveEditAccount(): Promise<void> {
+    const updated = await this.accountsFacade.update(this.editAccount);
+    if (updated) {
+      this.editingAccountId = null;
+    }
+  }
+
+  async deleteAccount(account: Account): Promise<void> {
+    const removed = await this.accountsFacade.remove(account);
+    if (removed) {
+      if (this.editingAccountId === account.id) {
+        this.editingAccountId = null;
+      }
+    }
+  }
+
+  private createAccountDraft(): AccountCreate {
+    return { label: '', type: 'checking', status: 'active' };
   }
 }

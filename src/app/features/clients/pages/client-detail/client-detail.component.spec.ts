@@ -2,74 +2,78 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { ClientDetailComponent } from './client-detail.component';
-import { MovementsApiService } from '@clients/services/movements-api.service';
+import { Account } from '@accounts/models/account';
+import { AccountsApiService } from '@accounts/services/accounts-api.service';
 import { Client } from '@clients/models/client';
-import { Movement } from '@clients/models/movement';
-import { NotificationService } from '@shared/services/notification.service';
+import { ClientAccountsFacade } from '@clients/services/client-accounts.facade';
 import { ConfirmService } from '@shared/services/confirm.service';
-import { ClientsApiService } from '@clients/services/clients-api.service';
+import { NotificationService } from '@shared/services/notification.service';
 
 const clientId = 'c42';
-const baseMovement: Movement = {
-  id: 'm-1',
-  date: '2024-01-10',
-  type: 'debit',
-  amount: 50,
-  description: 'Courses',
-};
 
 const client: Client = {
   id: clientId,
   firstName: 'Ada',
   lastName: 'Lovelace',
-  movements: [baseMovement],
 };
+
+const accounts: Account[] = [
+  {
+    id: 'a1',
+    clientId,
+    label: 'Compte courant Ada',
+    type: 'checking',
+    status: 'active',
+    balance: 120,
+    currency: 'EUR',
+    movements: [],
+  },
+  {
+    id: 'a2',
+    clientId,
+    label: 'Livret Ada',
+    type: 'saving',
+    status: 'active',
+    balance: 250,
+    currency: 'EUR',
+    movements: [],
+  },
+];
 
 class ActivatedRouteStub {
   readonly paramMap = of(convertToParamMap({ id: clientId }));
 }
 
-class ClientsApiServiceStub {
-  getById = jest.fn(() => of(client));
-}
-
-class MovementsApiServiceStub {
-  create = jest.fn();
-  update = jest.fn();
-  remove = jest.fn();
-}
-
-class NotificationServiceStub {
-  success = jest.fn();
-  error = jest.fn();
-}
-
-class ConfirmServiceStub {
-  confirm = jest.fn().mockResolvedValue(true);
+class ClientAccountsFacadeStub {
+  getClientAccounts = jest.fn(() => Promise.resolve({ client, accounts }));
 }
 
 describe('ClientDetailComponent', () => {
   let fixture: ComponentFixture<ClientDetailComponent>;
   let component: ClientDetailComponent;
-  let movements: MovementsApiServiceStub;
-  let notifications: NotificationServiceStub;
-  let confirm: ConfirmServiceStub;
-  let clientsApi: ClientsApiServiceStub;
+  let facade: ClientAccountsFacadeStub;
+  let accountsApi: { add: jest.Mock; update: jest.Mock; remove: jest.Mock };
+  let confirm: { confirm: jest.Mock };
+  let notifications: { success: jest.Mock; error: jest.Mock };
 
   beforeEach(async () => {
-    movements = new MovementsApiServiceStub();
-    notifications = new NotificationServiceStub();
-    confirm = new ConfirmServiceStub();
-    clientsApi = new ClientsApiServiceStub();
+    facade = new ClientAccountsFacadeStub();
+    accountsApi = {
+      add: jest.fn((_clientId, account) => of({ id: 'a3', clientId, balance: 0, currency: 'EUR', movements: [], ...account })),
+      update: jest.fn((_clientId, account) => of({ ...accounts[0], ...account })),
+      remove: jest.fn(() => of(undefined)),
+    };
+    confirm = { confirm: jest.fn(() => Promise.resolve(true)) };
+    notifications = { success: jest.fn(), error: jest.fn() };
 
     await TestBed.configureTestingModule({
       imports: [ClientDetailComponent],
       providers: [
         { provide: ActivatedRoute, useClass: ActivatedRouteStub },
-        { provide: MovementsApiService, useValue: movements },
-        { provide: ClientsApiService, useValue: clientsApi },
-        { provide: NotificationService, useValue: notifications },
+        { provide: ClientAccountsFacade, useValue: facade },
+        { provide: AccountsApiService, useValue: accountsApi },
         { provide: ConfirmService, useValue: confirm },
+        { provide: NotificationService, useValue: notifications },
       ],
     }).compileComponents();
 
@@ -80,66 +84,57 @@ describe('ClientDetailComponent', () => {
     fixture.detectChanges();
   });
 
-  it('exposes the client identifier provided by the route', () => {
+  it('loads the client and its accounts from the route identifier', () => {
     expect(component.clientId()).toBe(clientId);
+    expect(facade.getClientAccounts).toHaveBeenCalledWith(clientId);
+    expect(component.client()).toEqual(client);
+    expect(component.accounts()).toEqual(accounts);
   });
 
-  it('skips movement creation when the amount is not positive', async () => {
-    component.newMovement.amount = 0;
-    await component.addMovement(clientId);
-    expect(movements.create).not.toHaveBeenCalled();
+  it('computes the balance from the client accounts', () => {
+    expect(component.clientBalance()).toBe(370);
   });
 
-  it('creates a movement and resets the form when the use case succeeds', async () => {
-    component.newMovement = {
-      date: '2024-02-15',
-      type: 'credit',
-      amount: 120,
-      description: 'Prime',
-    };
-    const payload = component.newMovement;
-    const createdMovement: Movement = { ...payload, id: 'm-2' };
-    movements.create.mockReturnValue(of(createdMovement));
-
-    await component.addMovement(clientId);
-
-    expect(movements.create).toHaveBeenCalledWith(clientId, payload);
-    expect(notifications.success).toHaveBeenCalled();
-    expect(component.client()?.movements?.[0]).toEqual(createdMovement);
-    expect(component.newMovement.amount).toBe(0);
-    expect(component.newMovement.description).toBe('');
+  it('renders accounts directly on the client detail page', () => {
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Compte courant Ada');
+    expect(text).toContain('Livret Ada');
   });
 
-  it('updates a movement when updateMovement succeeds', async () => {
-    const movementToUpdate: Movement = { ...baseMovement, amount: 75 };
-    movements.update.mockReturnValue(of(movementToUpdate));
-
-    await component.updateMovement(clientId, movementToUpdate);
-
-    expect(movements.update).toHaveBeenCalledWith(clientId, movementToUpdate);
-    expect(notifications.success).toHaveBeenCalled();
-    expect(component.client()?.movements?.find((m) => m.id === baseMovement.id)?.amount).toBe(75);
+  it('renders account CRUD actions on the client detail page', () => {
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[aria-label="Ajouter un compte"]')).not.toBeNull();
+    expect(element.querySelectorAll('[aria-label="Modifier le compte"]').length).toBe(2);
+    expect(element.querySelectorAll('[aria-label="Supprimer le compte"]').length).toBe(2);
   });
 
-  it('keeps the movement untouched when the confirmation is rejected', async () => {
-    confirm.confirm.mockResolvedValueOnce(false);
-    await component.deleteMovement(clientId, baseMovement.id);
-    expect(movements.remove).not.toHaveBeenCalled();
+  it('filters accounts by label and type', () => {
+    component.setAccountSearch('livret');
+    component.setAccountTypeFilter('saving');
+
+    expect(component.filteredAccounts().map((account) => account.id)).toEqual(['a2']);
   });
 
-  it('deletes the movement and clears editing state when confirmation succeeds', async () => {
-    confirm.confirm.mockResolvedValueOnce(true);
-    movements.remove.mockReturnValue(of(undefined));
-    await component.deleteMovement(clientId, baseMovement.id);
+  it('adds an account from the client detail page', async () => {
+    component.newAccount = { label: 'Compte secondaire', type: 'joint', status: 'active' };
+
+    await component.saveAddAccount();
+    fixture.detectChanges();
+
+    expect(accountsApi.add).toHaveBeenCalledWith(clientId, {
+      label: 'Compte secondaire',
+      type: 'joint',
+      status: 'active',
+    });
+    expect(component.accounts()[0].label).toBe('Compte secondaire');
+  });
+
+  it('deletes an account from the client detail page', async () => {
+    await component.deleteAccount(accounts[0]);
+    fixture.detectChanges();
 
     expect(confirm.confirm).toHaveBeenCalled();
-    expect(movements.remove).toHaveBeenCalledWith(clientId, baseMovement.id);
-    expect(component.client()?.movements?.find((m) => m.id === baseMovement.id)).toBeUndefined();
-    expect(notifications.success).toHaveBeenCalled();
-  });
-
-  it('returns the identifier in trackByMovementId', () => {
-    const result = component.trackByMovementId(0, baseMovement);
-    expect(result).toBe(baseMovement.id);
+    expect(accountsApi.remove).toHaveBeenCalledWith(clientId, 'a1');
+    expect(component.accounts().some((account) => account.id === 'a1')).toBe(false);
   });
 });

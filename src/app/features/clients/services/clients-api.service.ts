@@ -2,21 +2,22 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Client } from '@clients/models/client';
+import { ClientActivity } from '@clients/models/client-activity';
 import { ClientUpdate } from '@clients/types/client.types';
 
 @Injectable({ providedIn: 'root' })
 export class ClientsApiService {
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<Client[]> {
-    return this.http.get<Client[]>('/api/clients');
+  getAll(): Observable<ClientActivity[]> {
+    return this.http.get<ClientActivity[]>('/api/clients');
   }
 
   getById(id: string): Observable<Client> {
     return this.http.get<Client>(`/api/clients/${id}`);
   }
 
-  add(client: Omit<Client, 'id' | 'movements'>): Observable<Client> {
+  add(client: Omit<Client, 'id'>): Observable<Client> {
     const payload = { ...client } as Record<string, unknown>;
     return this.http.post<Client>('/api/clients', payload);
   }
