@@ -33,7 +33,7 @@
       <ng-template #empty>
         <div>Aucun mouvement.</div>
       </ng-template>
-      <ul class="list" *ngIf="client.movements?.length; else empty">
+      <ul class="list" *ngIf="client.movements.length; else empty">
         <li class="item" *ngFor="let m of client.movements; trackBy: trackByMovementId"
             app-movement-item
             [movement]="m"

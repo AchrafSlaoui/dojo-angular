@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "dojo-angular-test": {
+    "dojo-angular-2": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -43,7 +43,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/dojo-angular-test",
+            "outputPath": "dist/dojo-angular-2",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -90,10 +90,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "dojo-angular-test:build:production"
+              "buildTarget": "dojo-angular-2:build:production"
             },
             "development": {
-              "buildTarget": "dojo-angular-test:build:development"
+              "buildTarget": "dojo-angular-2:build:development"
             }
           },
           "defaultConfiguration": "development"

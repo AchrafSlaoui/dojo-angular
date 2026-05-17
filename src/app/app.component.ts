@@ -12,5 +12,5 @@ import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confir
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {
-  title = 'dojo-bank';
+  title = 'Dojo Angular 2';
 }

@@ -4,8 +4,8 @@ import { Client } from '@app/models/client';
 import { Movement } from '@app/models/movement';
 
 let DB: Client[] | null = null;
-const STORAGE_KEY = 'dojo-angular-test-mock';
-const STORAGE_VERSION_KEY = 'dojo-angular-test-mock-version';
+const STORAGE_KEY = 'dojo-angular-2-mock';
+const STORAGE_VERSION_KEY = 'dojo-angular-2-mock-version';
 const DATA_VERSION = 2; // bump to force reseed with 10 weekly clients
 
 // French pools for names and cities

@@ -55,7 +55,7 @@ describe('AppComponent', () => {
     // Given the component is initialized
     // When the title getter is read
     // Then it returns the expected application name
-    expect(component.title).toBe('dojo-bank');
+    expect(component.title).toBe('Dojo Angular 2');
   });
 
   it('renders the primary navigation links', () => {
