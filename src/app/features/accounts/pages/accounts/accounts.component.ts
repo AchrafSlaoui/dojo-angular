@@ -4,14 +4,14 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { Account, AccountCreate, AccountUpdate } from '@accounts/models/account';
-import { AccountCardComponent } from '@accounts/components/account-card/account-card.component';
+import { AccountListComponent } from '@accounts/components/account-list/account-list.component';
 import { AccountsFacade } from '@accounts/services/accounts.facade';
 import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
 
 @Component({
   selector: 'app-accounts',
   standalone: true,
-  imports: [FormsModule, RouterLink, AccountCardComponent, FormatValuePipe],
+  imports: [FormsModule, RouterLink, AccountListComponent, FormatValuePipe],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

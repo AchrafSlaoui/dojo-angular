@@ -62,45 +62,17 @@
 }
 
 @if (accounts().length) {
-  <section class="accounts-grid">
-    @for (account of accounts(); track account.id) {
-      <div class="account-entry">
-        @if (editingAccountId === account.id) {
-          <form class="account-form card" (ngSubmit)="saveEdit()">
-            <input type="text" [(ngModel)]="editAccount.label" name="editLabel" placeholder="Libelle du compte" required />
-            <select [(ngModel)]="editAccount.type" name="editType" aria-label="Type de compte">
-              <option value="checking">Compte courant</option>
-              <option value="saving">Epargne</option>
-              <option value="joint">Compte joint</option>
-            </select>
-            <select [(ngModel)]="editAccount.status" name="editStatus" aria-label="Statut du compte">
-              <option value="active">Actif</option>
-              <option value="blocked">Bloque</option>
-              <option value="closed">Cloture</option>
-            </select>
-            <div class="actions">
-              <button type="submit" class="icon-btn lg" title="Enregistrer" aria-label="Enregistrer" [disabled]="mutating()">
-                <span class="icon i-check icon-lg"></span>
-              </button>
-              <button type="button" class="icon-btn lg" (click)="cancelEdit()" title="Annuler" aria-label="Annuler" [disabled]="mutating()">
-                <span class="icon i-close icon-lg"></span>
-              </button>
-            </div>
-          </form>
-        } @else {
-          <app-account-card [account]="account" [clientId]="clientId() ?? ''"></app-account-card>
-          <div class="account-actions">
-            <button class="icon-btn lg" type="button" title="Modifier le compte" aria-label="Modifier" (click)="startEdit(account)" [disabled]="mutating()">
-              <span class="icon i-edit icon-lg"></span>
-            </button>
-            <button class="icon-btn lg danger" type="button" title="Supprimer le compte" aria-label="Supprimer" (click)="deleteAccount(account)" [disabled]="mutating()">
-              <span class="icon i-trash icon-lg"></span>
-            </button>
-          </div>
-        }
-      </div>
-    }
-  </section>
+  <app-account-list
+    [accounts]="accounts()"
+    [clientId]="clientId() ?? ''"
+    [mutating]="mutating()"
+    [editingAccountId]="editingAccountId"
+    [editAccount]="editAccount"
+    (editRequested)="startEdit($event)"
+    (saveRequested)="saveEdit()"
+    (cancelRequested)="cancelEdit()"
+    (deleteRequested)="deleteAccount($event)"
+  ></app-account-list>
 } @else if (!loading()) {
   <div class="empty">Aucun compte trouve.</div>
 }

@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Account, AccountCreate, AccountUpdate } from '@accounts/models/account';
-import { AccountCardComponent } from '@accounts/components/account-card/account-card.component';
+import { AccountListComponent } from '@accounts/components/account-list/account-list.component';
 import { AccountsFacade } from '@accounts/services/accounts.facade';
 import { Client } from '@clients/models/client';
 import { ClientAccountsFacade } from '@clients/services/client-accounts.facade';
@@ -13,7 +13,7 @@ import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
 @Component({
   selector: 'app-client-detail',
   standalone: true,
-  imports: [FormsModule, AccountCardComponent, FormatValuePipe],
+  imports: [FormsModule, AccountListComponent, FormatValuePipe],
   templateUrl: './client-detail.component.html',
   styleUrl: './client-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

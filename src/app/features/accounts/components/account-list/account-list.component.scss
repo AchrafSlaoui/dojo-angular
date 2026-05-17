@@ -1,0 +1,44 @@
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  gap: 16px;
+}
+
+.account-entry {
+  position: relative;
+  display: block;
+}
+
+.account-actions,
+.account-form .actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-actions {
+  justify-content: flex-end;
+  position: absolute;
+  right: 16px;
+  bottom: 6px;
+}
+
+.account-form {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) 150px 130px auto;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 760px) {
+  .accounts-grid,
+  .account-form {
+    grid-template-columns: 1fr;
+  }
+
+  .account-actions,
+  .account-form .actions {
+    justify-content: flex-start;
+  }
+}

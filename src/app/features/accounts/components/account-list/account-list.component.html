@@ -1,0 +1,39 @@
+<section class="accounts-grid">
+  @for (account of accounts(); track account.id) {
+    <div class="account-entry">
+      @if (editingAccountId() === account.id) {
+        <form class="account-form card" (ngSubmit)="saveRequested.emit()">
+          <input type="text" [(ngModel)]="editAccount().label" name="editLabel-{{ account.id }}" placeholder="Libelle du compte" required />
+          <select [(ngModel)]="editAccount().type" name="editType-{{ account.id }}" aria-label="Type de compte">
+            <option value="checking">Compte courant</option>
+            <option value="saving">Epargne</option>
+            <option value="joint">Compte joint</option>
+          </select>
+          <select [(ngModel)]="editAccount().status" name="editStatus-{{ account.id }}" aria-label="Statut du compte">
+            <option value="active">Actif</option>
+            <option value="blocked">Bloque</option>
+            <option value="closed">Cloture</option>
+          </select>
+          <div class="actions">
+            <button type="submit" class="icon-btn lg" title="Enregistrer" aria-label="Enregistrer" [disabled]="mutating()">
+              <span class="icon i-check icon-lg"></span>
+            </button>
+            <button type="button" class="icon-btn lg" (click)="cancelRequested.emit()" title="Annuler" aria-label="Annuler" [disabled]="mutating()">
+              <span class="icon i-close icon-lg"></span>
+            </button>
+          </div>
+        </form>
+      } @else {
+        <app-account-card [account]="account" [clientId]="clientId()"></app-account-card>
+        <div class="account-actions">
+          <button class="icon-btn lg" type="button" title="Modifier le compte" aria-label="Modifier le compte" (click)="editRequested.emit(account)" [disabled]="mutating()">
+            <span class="icon i-edit icon-lg"></span>
+          </button>
+          <button class="icon-btn lg danger" type="button" title="Supprimer le compte" aria-label="Supprimer le compte" (click)="deleteRequested.emit(account)" [disabled]="mutating()">
+            <span class="icon i-trash icon-lg"></span>
+          </button>
+        </div>
+      }
+    </div>
+  }
+</section>

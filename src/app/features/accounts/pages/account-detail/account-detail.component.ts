@@ -1,18 +1,15 @@
-import { ChangeDetectionStrategy, Component, Signal, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
+import { catchError, map, of, switchMap } from 'rxjs';
 import { Account, MovementCreate } from '@accounts/models/account';
 import { AccountsApiService } from '@accounts/services/accounts-api.service';
 import { MovementItemComponent } from '@accounts/components/movement-item/movement-item.component';
 import { Movement } from '@accounts/models/movement';
+import { MovementsFacade } from '@accounts/services/movements.facade';
 import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
-import { ConfirmService } from '@shared/services/confirm.service';
-import { NotificationService } from '@shared/services/notification.service';
 import { todayISO } from '@shared/utils/date.util';
-
-type MovementTypeFilter = Movement['type'] | 'all';
 
 @Component({
   selector: 'app-account-detail',
@@ -21,12 +18,12 @@ type MovementTypeFilter = Movement['type'] | 'all';
   templateUrl: './account-detail.component.html',
   styleUrl: './account-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [MovementsFacade],
 })
 export class AccountDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly accountsApi = inject(AccountsApiService);
-  private readonly confirm = inject(ConfirmService);
-  private readonly notifications = inject(NotificationService);
+  private readonly movementsFacade = inject(MovementsFacade);
 
   private readonly params$ = this.route.paramMap.pipe(
     map((params) => ({
@@ -36,11 +33,10 @@ export class AccountDetailComponent {
   );
 
   readonly loading = signal(false);
-  readonly mutating = signal(false);
+  readonly mutating = this.movementsFacade.mutating;
   readonly error = signal<string | null>(null);
-  readonly movementSearch = signal('');
-  readonly movementTypeFilter = signal<MovementTypeFilter>('all');
-  private readonly updatedAccount = signal<Account | null>(null);
+  readonly movementSearch = this.movementsFacade.search;
+  readonly movementTypeFilter = this.movementsFacade.typeFilter;
   addingMovement = false;
   newMovement: MovementCreate = this.createMovementDraft();
 
@@ -58,7 +54,7 @@ export class AccountDetailComponent {
 
         this.loading.set(true);
         this.error.set(null);
-        this.updatedAccount.set(null);
+        this.movementsFacade.setAccount(null);
 
         return this.accountsApi.getById(clientId, accountId).pipe(
           catchError((err) => {
@@ -76,21 +72,23 @@ export class AccountDetailComponent {
     { initialValue: null as Account | null }
   );
 
-  readonly account = computed(() => this.updatedAccount() ?? this.loadedAccount());
+  readonly account = this.movementsFacade.account;
 
-  readonly movementCount = computed(() => this.account()?.movements.length ?? 0);
-  readonly filteredMovements = computed(() =>
-    this.filterMovements(this.account()?.movements ?? [], this.movementSearch(), this.movementTypeFilter())
-  );
+  readonly movementCount = this.movementsFacade.movementCount;
+  readonly filteredMovements = this.movementsFacade.filteredMovements;
+
+  constructor() {
+    effect(() => {
+      this.movementsFacade.setAccount(this.loadedAccount());
+    });
+  }
 
   setMovementSearch(term: string): void {
-    this.movementSearch.set(term ?? '');
+    this.movementsFacade.setSearch(term);
   }
 
   setMovementTypeFilter(type: string): void {
-    if (type === 'credit' || type === 'debit' || type === 'all') {
-      this.movementTypeFilter.set(type);
-    }
+    this.movementsFacade.setTypeFilter(type);
   }
 
   startAddMovement(): void {
@@ -103,83 +101,19 @@ export class AccountDetailComponent {
   }
 
   async addMovement(): Promise<void> {
-    const clientId = this.clientId();
-    const account = this.account();
-    const amount = Number(this.newMovement.amount);
-    if (!clientId || !account || !this.newMovement.date || amount <= 0) {
-      return;
-    }
-
-    try {
-      this.mutating.set(true);
-      this.error.set(null);
-      const updatedAccount = await firstValueFrom(
-        this.accountsApi.addMovement(clientId, account.id, {
-          ...this.newMovement,
-          amount,
-        })
-      );
-      this.updatedAccount.set(updatedAccount);
+    const updated = await this.movementsFacade.add(this.clientId(), this.newMovement);
+    if (updated) {
       this.addingMovement = false;
       this.newMovement = this.createMovementDraft();
-      this.notifications.success('Mouvement ajoute.');
-    } catch {
-      this.notifications.error("Impossible d'ajouter le mouvement.");
-    } finally {
-      this.mutating.set(false);
     }
   }
 
   async updateMovement(movement: Movement): Promise<void> {
-    const clientId = this.clientId();
-    const account = this.account();
-    if (!clientId || !account || movement.amount <= 0) {
-      return;
-    }
-
-    this.mutating.set(true);
-    this.error.set(null);
-
-    try {
-      const updatedAccount = await firstValueFrom(
-        this.accountsApi.updateMovement(clientId, account.id, movement)
-      );
-      this.updatedAccount.set(updatedAccount);
-      this.notifications.success('Mouvement mis a jour.');
-    } catch {
-      this.notifications.error('Impossible de modifier le mouvement.');
-    } finally {
-      this.mutating.set(false);
-    }
+    await this.movementsFacade.update(this.clientId(), movement);
   }
 
   async deleteMovement(movementId: string): Promise<void> {
-    const clientId = this.clientId();
-    const account = this.account();
-    if (!clientId || !account) {
-      return;
-    }
-
-    const approved = await this.confirm.confirm({
-      title: 'Supprimer le mouvement',
-      message: 'Supprimer ce mouvement ?',
-      confirmLabel: 'Supprimer',
-    });
-    if (!approved) return;
-
-    try {
-      this.mutating.set(true);
-      this.error.set(null);
-      const updatedAccount = await firstValueFrom(
-        this.accountsApi.removeMovement(clientId, account.id, movementId)
-      );
-      this.updatedAccount.set(updatedAccount);
-      this.notifications.success('Mouvement supprime.');
-    } catch {
-      this.notifications.error('La suppression du mouvement a echoue.');
-    } finally {
-      this.mutating.set(false);
-    }
+    await this.movementsFacade.remove(this.clientId(), movementId);
   }
 
   private createMovementDraft(): MovementCreate {
@@ -189,15 +123,5 @@ export class AccountDetailComponent {
       amount: 0,
       description: '',
     };
-  }
-
-  private filterMovements(movements: Movement[], search: string, typeFilter: MovementTypeFilter): Movement[] {
-    const term = search.trim().toLowerCase();
-    return movements.filter((movement) => {
-      const matchesType = typeFilter === 'all' || movement.type === typeFilter;
-      const description = movement.description?.toLowerCase() ?? '';
-      const matchesSearch = !term || description.includes(term) || movement.date.includes(term);
-      return matchesType && matchesSearch;
-    });
   }
 }
