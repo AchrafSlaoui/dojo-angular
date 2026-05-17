@@ -6,7 +6,7 @@ export const routes = [
     path: 'dashboard',
     title: 'Dashboard',
     loadComponent: () =>
-      import('./pages/dashboard/dashboard.component').then(
+      import('./features/clients/pages/dashboard/dashboard.component').then(
         (m) => m.DashboardComponent
       ),
   },
@@ -14,7 +14,7 @@ export const routes = [
     path: 'clients',
     title: 'Clients',
     loadComponent: () =>
-      import('./pages/clients/clients.component').then(
+      import('./features/clients/pages/clients/clients.component').then(
         (m) => m.ClientsComponent
       ),
   },
@@ -22,7 +22,7 @@ export const routes = [
     path: 'clients/:id',
     title: 'Detail Client',
     loadComponent: () =>
-      import('./pages/client-detail/client-detail.component').then(
+      import('./features/clients/pages/client-detail/client-detail.component').then(
         (m) => m.ClientDetailComponent
       ),
   },

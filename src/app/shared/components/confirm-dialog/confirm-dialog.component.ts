@@ -7,15 +7,17 @@ import { ConfirmService } from '@shared/services/confirm.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="backdrop" *ngIf="state().visible" role="presentation"></div>
-    <div class="dialog" *ngIf="state().visible" role="dialog" aria-modal="true" [attr.aria-labelledby]="titleId" [attr.aria-describedby]="messageId">
-      <h2 [id]="titleId">{{ state().title }}</h2>
-      <p [id]="messageId">{{ state().message }}</p>
-      <div class="actions">
-        <button type="button" class="secondary" (click)="onCancel()">{{ state().cancelLabel }}</button>
-        <button type="button" class="primary" (click)="onConfirm()">{{ state().confirmLabel }}</button>
+    @if (state().visible) {
+      <div class="backdrop" role="presentation"></div>
+      <div class="dialog" role="dialog" aria-modal="true" [attr.aria-labelledby]="titleId" [attr.aria-describedby]="messageId">
+        <h2 [id]="titleId">{{ state().title }}</h2>
+        <p [id]="messageId">{{ state().message }}</p>
+        <div class="actions">
+          <button type="button" class="secondary" (click)="onCancel()">{{ state().cancelLabel }}</button>
+          <button type="button" class="primary" (click)="onConfirm()">{{ state().confirmLabel }}</button>
+        </div>
       </div>
-    </div>
+    }
   `,
   styleUrls: ['./confirm-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

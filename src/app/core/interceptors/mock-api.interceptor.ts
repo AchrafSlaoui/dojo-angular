@@ -1,7 +1,7 @@
 import { HttpEvent, HttpHandlerFn, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { Client } from '@app/models/client';
-import { Movement } from '@app/models/movement';
+import { Client } from '@clients/models/client';
+import { Movement } from '@clients/models/movement';
 
 let DB: Client[] | null = null;
 const STORAGE_KEY = 'dojo-angular-2-mock';

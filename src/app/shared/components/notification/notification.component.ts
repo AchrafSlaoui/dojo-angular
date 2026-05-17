@@ -7,10 +7,12 @@ import { NotificationService } from '@shared/services/notification.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="notification" *ngIf="notification() as notif" [class.success]="notif.kind === 'success'" [class.error]="notif.kind === 'error'" [class.info]="notif.kind === 'info'">
-      <span>{{ notif.message }}</span>
-      <button type="button" (click)="dismiss()" aria-label="Fermer">&times;</button>
-    </div>
+    @if (notification(); as notif) {
+      <div class="notification" [class.success]="notif.kind === 'success'" [class.error]="notif.kind === 'error'" [class.info]="notif.kind === 'info'">
+        <span>{{ notif.message }}</span>
+        <button type="button" (click)="dismiss()" aria-label="Fermer">&times;</button>
+      </div>
+    }
   `,
   styleUrls: ['./notification.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
