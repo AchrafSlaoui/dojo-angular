@@ -14,13 +14,13 @@ export const routes = [
     path: 'clients',
     title: 'Clients',
     loadComponent: () =>
-      import('./pages/clients/pages/clients/clients.component').then(
+      import('./pages/clients/clients.component').then(
         (m) => m.ClientsComponent
       ),
   },
   {
     path: 'clients/:id',
-    title: 'Détail Client',
+    title: 'Detail Client',
     loadComponent: () =>
       import('./pages/client-detail/client-detail.component').then(
         (m) => m.ClientDetailComponent
@@ -28,3 +28,4 @@ export const routes = [
   },
   { path: '**', redirectTo: 'dashboard' },
 ] satisfies Routes;
+

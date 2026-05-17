@@ -24,7 +24,6 @@ module.exports = {
       },
     ],
   },
-  resolver: 'jest-preset-angular/build/resolvers/ng-jest-resolver',
   testEnvironment: 'jest-preset-angular/environments/jest-jsdom-env',
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
