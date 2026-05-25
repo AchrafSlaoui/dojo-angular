@@ -24,9 +24,9 @@
           </div>
         </form>
       } @else {
-        <app-account-card [account]="account" [clientId]="clientId()"></app-account-card>
+        <app-account-card [account]="account" [clientId]="clientId()" [showStatus]="true"></app-account-card>
         <div class="account-actions">
-          <button class="icon-btn lg" type="button" title="Modifier le compte" aria-label="Modifier le compte" (click)="editRequested.emit(account)" [disabled]="mutating()">
+          <button class="icon-btn lg" type="button" title="Modifier le compte" aria-label="Modifier le compte" (click)="selectedRequested.emit(account); editRequested.emit(account)" [disabled]="mutating()">
             <span class="icon i-edit icon-lg"></span>
           </button>
           <button class="icon-btn lg danger" type="button" title="Supprimer le compte" aria-label="Supprimer le compte" (click)="deleteRequested.emit(account)" [disabled]="mutating()">

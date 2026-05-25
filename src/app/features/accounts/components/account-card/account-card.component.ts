@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Account } from '@accounts/models/account';
 import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
@@ -14,6 +14,7 @@ import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
 export class AccountCardComponent {
   account = input.required<Account>();
   clientId = input.required<string>();
+  @Input() showStatus = true;
 
   readonly statusLabel = computed(() => {
     switch (this.account().status) {

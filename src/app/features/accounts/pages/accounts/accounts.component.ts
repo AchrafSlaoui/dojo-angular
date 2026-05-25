@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, Signal, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { Account, AccountCreate, AccountUpdate } from '@accounts/models/account';
 import { AccountListComponent } from '@accounts/components/account-list/account-list.component';
@@ -19,7 +19,9 @@ import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
 })
 export class AccountsComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly accountsFacade = inject(AccountsFacade);
+  private readonly clientId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
 
   readonly search = this.accountsFacade.search;
   readonly typeFilter = this.accountsFacade.typeFilter;
@@ -28,19 +30,19 @@ export class AccountsComponent {
   readonly error = this.accountsFacade.error;
   readonly accounts = this.accountsFacade.filteredAccounts;
   readonly totalBalance = this.accountsFacade.totalBalance;
-  readonly clientId: Signal<string | null> = toSignal(
-    this.route.paramMap.pipe(map((params) => params.get('id'))),
-    { initialValue: null }
-  );
+  readonly clientId = signal<string | null>(null);
   adding = false;
   editingAccountId: string | null = null;
   newAccount: AccountCreate = { label: '', type: 'checking', status: 'active' };
   editAccount: AccountUpdate = { id: '', label: '', type: 'checking', status: 'active' };
 
   constructor() {
-    effect(() => {
-      this.accountsFacade.load(this.clientId());
-    });
+    this.clientId$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((clientId) => {
+        this.clientId.set(clientId);
+        this.accountsFacade.load(clientId);
+      });
   }
 
   setSearch(term: string): void {

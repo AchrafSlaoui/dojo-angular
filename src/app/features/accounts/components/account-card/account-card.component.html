@@ -10,8 +10,10 @@
     <strong>{{ account().balance | formatValue:"currency" }}</strong>
   </div>
 
-  <div class="meta">
-    <span>{{ statusLabel() }}</span>
-    <span></span>
-  </div>
+  @if (showStatus) {
+    <div class="meta">
+      <span>{{ statusLabel() }}</span>
+      <span></span>
+    </div>
+  }
 </a>

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Account, AccountUpdate } from '@accounts/models/account';
 import { AccountCardComponent } from '@accounts/components/account-card/account-card.component';
@@ -22,4 +22,5 @@ export class AccountListComponent {
   saveRequested = output<void>();
   cancelRequested = output<void>();
   deleteRequested = output<Account>();
+  @Output() selectedRequested = new EventEmitter<Account>();
 }
