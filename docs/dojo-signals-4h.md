@@ -379,7 +379,7 @@ account = input.required<Account>();
 clientId = input.required<string>();
 ```
 
-Preparation deja faite dans le projet: un input classique `showStatus` a ete ajoute a `AccountCardComponent`. Il sert a masquer ou afficher le statut du compte depuis la liste.
+Preparation deja faite dans le projet: un input classique `showStatus` a ete ajoute a `AccountCardComponent`. Il sert a masquer ou afficher le statut du compte depuis la liste, mais il est maintenant lu dans un `computed()` pour montrer la limite d'un `@Input()` classique dans un graphe signal.
 
 ### Etat prepare avant le dojo - `showStatus` sans signal
 
@@ -396,14 +396,16 @@ account = input.required<Account>();
 clientId = input.required<string>();
 
 @Input() showStatus = true;
+
+readonly visibleStatusLabel = computed(() => this.showStatus ? this.statusLabel() : null);
 ```
 
-Dans `account-card.component.html`, la lecture est une propriete classique:
+Dans `account-card.component.html`, le template lit le `computed()`:
 
 ```html
-@if (showStatus) {
+@if (visibleStatusLabel(); as label) {
   <div class="meta">
-    <span>{{ statusLabel() }}</span>
+    <span>{{ label }}</span>
     <span></span>
   </div>
 }
@@ -418,8 +420,8 @@ Dans `account-list.component.html`, le parent passe explicitement la valeur:
 Ce que cet etat prepare montre:
 
 - `@Input()` fonctionne toujours;
-- dans le template du composant enfant, on lit `showStatus` comme une propriete classique;
-- ce n'est pas une dependance signal, donc on ne peut pas la composer directement dans un `computed()` sans passer par autre chose.
+- `showStatus` peut etre lu dans un `computed()`, mais cette lecture n'est pas une dependance signal;
+- le `computed()` suit bien `account()`, mais pas les changements de `showStatus` tant que `showStatus` reste un `@Input()` classique.
 
 ### Exercice - Transformer `@Input()` en `input()`
 
@@ -439,31 +441,24 @@ Avant:
 
 ```ts
 @Input() showStatus = true;
+
+readonly visibleStatusLabel = computed(() => this.showStatus ? this.statusLabel() : null);
 ```
 
 Apres:
 
 ```ts
 showStatus = input(true);
+
+readonly visibleStatusLabel = computed(() => this.showStatus() ? this.statusLabel() : null);
 ```
 
-Avant dans `account-card.component.html`, version `@Input()`:
+Dans `account-card.component.html`, la lecture du `computed()` ne change pas:
 
 ```html
-@if (showStatus) {
+@if (visibleStatusLabel(); as label) {
   <div class="meta">
-    <span>{{ statusLabel() }}</span>
-    <span></span>
-  </div>
-}
-```
-
-Apres, version signal input:
-
-```html
-@if (showStatus()) {
-  <div class="meta">
-    <span>{{ statusLabel() }}</span>
+    <span>{{ label }}</span>
     <span></span>
   </div>
 }
@@ -487,7 +482,8 @@ npm test -- --runTestsByPath src/app/features/accounts/components/account-card/a
 
 Point a faire verbaliser:
 
-- dans le TypeScript et le template, un input signal se lit avec `showStatus()`;
+- dans le TypeScript, un input signal se lit avec `showStatus()`;
+- une dependance lue dans un `computed()` doit etre un signal pour invalider correctement le calcul;
 - `input(true)` donne une valeur par defaut, contrairement a `input.required<T>()`.
 
 ## 1:45 - 2:15 - Exercice 4: transformer un `@Output()` classique en `output()`
@@ -512,14 +508,14 @@ cancelRequested = output<void>();
 deleteRequested = output<Account>();
 ```
 
-Preparation deja faite dans le projet: un output classique `selectedRequested` a ete ajoute a `AccountListComponent`. Il est emis quand l'utilisateur active l'action de modification d'un compte.
+Preparation deja faite dans le projet: un output classique `selectedRequested` a ete ajoute a `AccountListComponent`. Il est emis quand l'utilisateur active l'action de modification d'un compte. Pour ajouter un cas un peu plus riche, le clic alimente maintenant un signal local, puis un `effect()` emet l'output.
 
 ### Etat prepare avant le dojo - `selectedRequested` sans signal
 
-Dans `AccountListComponent`, l'import contient encore `EventEmitter` et `Output`:
+Dans `AccountListComponent`, l'import contient encore `EventEmitter` et `Output`, ainsi que `effect` et `signal`:
 
 ```ts
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, effect, input, output, signal } from '@angular/core';
 ```
 
 Le composant contient un output classique:
@@ -533,7 +529,7 @@ deleteRequested = output<Account>();
 @Output() selectedRequested = new EventEmitter<Account>();
 ```
 
-Dans `account-list.component.html`, l'evenement est emis depuis une action existante:
+Le clic ne fait plus l'emission directement. Il passe par une intention locale:
 
 ```html
 <button
@@ -541,17 +537,38 @@ Dans `account-list.component.html`, l'evenement est emis depuis une action exist
   type="button"
   title="Modifier le compte"
   aria-label="Modifier le compte"
-  (click)="selectedRequested.emit(account); editRequested.emit(account)"
+  (click)="requestEdit(account)"
   [disabled]="mutating()"
 >
   <span class="icon i-edit icon-lg"></span>
 </button>
 ```
 
+Le composant transforme ensuite ce signal local en output:
+
+```ts
+private readonly selectedAccount = signal<Account | null>(null, { equal: () => false });
+
+constructor() {
+  effect(() => {
+    const account = this.selectedAccount();
+    if (account) {
+      this.selectedRequested.emit(account);
+    }
+  });
+}
+
+requestEdit(account: Account): void {
+  this.selectedAccount.set(account);
+  this.editRequested.emit(account);
+}
+```
+
 Ce que cet etat prepare montre:
 
 - `@Output()` fonctionne toujours;
 - `EventEmitter` impose une API differente de `output()`;
+- emettre un output depuis un `effect()` est un effet de bord explicite;
 - l'evenement est une intention emise par l'enfant, pas une action metier executee dans l'enfant.
 
 ### Exercice - Transformer `@Output()` en `output()`
@@ -559,13 +576,13 @@ Ce que cet etat prepare montre:
 Avant dans `account-list.component.ts`:
 
 ```ts
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, effect, input, output, signal } from '@angular/core';
 ```
 
-Apres, retirer `EventEmitter` et `Output`:
+Apres, retirer `EventEmitter` et `Output`, mais garder `effect` et `signal`:
 
 ```ts
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
 ```
 
 Avant:
@@ -580,10 +597,16 @@ Apres:
 selectedRequested = output<Account>();
 ```
 
-Dans `account-list.component.html`, l'emission ne change pas:
+Dans l'`effect()`, l'emission ne change pas:
+
+```ts
+this.selectedRequested.emit(account);
+```
+
+Dans `account-list.component.html`, le clic continue de passer par la methode:
 
 ```html
-(click)="selectedRequested.emit(account); editRequested.emit(account)"
+(click)="requestEdit(account)"
 ```
 
 Option si on veut suivre l'evenement jusqu'au parent:
@@ -620,6 +643,7 @@ Point a faire verbaliser:
 
 - l'enfant ne connait pas `AccountsFacade`;
 - l'enfant expose une intention, le parent orchestre l'action.
+- `output()` ne rend pas l'evenement observable comme un signal; ici le signal local sert uniquement a declencher l'effet.
 
 ## 2:15 - 2:45 - Exercice 5: transformer une souscription RxJS en `toSignal()`
 

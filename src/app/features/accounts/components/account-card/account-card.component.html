@@ -10,9 +10,9 @@
     <strong>{{ account().balance | formatValue:"currency" }}</strong>
   </div>
 
-  @if (showStatus) {
+  @if (visibleStatusLabel(); as label) {
     <div class="meta">
-      <span>{{ statusLabel() }}</span>
+      <span>{{ label }}</span>
       <span></span>
     </div>
   }

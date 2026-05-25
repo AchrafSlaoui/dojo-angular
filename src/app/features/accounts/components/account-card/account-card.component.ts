@@ -16,6 +16,8 @@ export class AccountCardComponent {
   clientId = input.required<string>();
   @Input() showStatus = true;
 
+  readonly visibleStatusLabel = computed(() => this.showStatus ? this.statusLabel() : null);
+
   readonly statusLabel = computed(() => {
     switch (this.account().status) {
       case 'active':
