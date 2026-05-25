@@ -69,6 +69,17 @@ describe('AccountsComponent', () => {
     expect(fixture.componentInstance.accounts().map((account) => account.id)).toEqual(['a2']);
   });
 
+  it('uses the active filter state in the empty message', async () => {
+    await settleAccounts();
+
+    fixture.componentInstance.setSearch('absent');
+    await settleAccounts();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(fixture.componentInstance.hasActiveFilter()).toBe(true);
+    expect(text).toContain('Aucun compte ne correspond aux filtres.');
+  });
+
   it('exposes an error when accounts cannot be loaded', async () => {
     api.getByClientId.mockReturnValueOnce(throwError(() => new Error('Network error')));
     paramMap$.next(convertToParamMap({ id: 'c2' }));
