@@ -234,35 +234,19 @@ readonly totalBalance = computed(() =>
 );
 ```
 
-Exercice: afficher le nombre de comptes bloques dans l'ecran comptes, d'abord sans `computed()`, puis en transformant ce calcul en signal derive.
+Preparation deja faite dans le projet: le nombre de comptes bloques est deja affiche avec un getter classique dans `AccountsComponent`. Le dojo consiste a transformer ce calcul local en `computed()` expose par `AccountsFacade`.
 
-### Etape A - Ajouter le compteur sans `computed()`
+### Etat prepare avant le dojo - Getter classique
 
-Avant dans `AccountsComponent`:
-
-```ts
-readonly totalBalance = this.accountsFacade.totalBalance;
-```
-
-Apres dans `AccountsComponent`, ajouter un getter classique:
+Dans `AccountsComponent`, le compteur est une propriete calculee classique:
 
 ```ts
-readonly totalBalance = this.accountsFacade.totalBalance;
-
 get blockedAccountsCount(): number {
   return this.accounts().filter((account) => account.status === 'blocked').length;
 }
 ```
 
-Avant dans `accounts.component.html`:
-
-```html
-<div class="header-actions">
-  <strong>Total affiche: {{ totalBalance() | formatValue:"currency" }}</strong>
-</div>
-```
-
-Apres:
+Dans `accounts.component.html`, le template lit une propriete TypeScript:
 
 ```html
 <div class="header-actions">
@@ -271,14 +255,26 @@ Apres:
 </div>
 ```
 
-Ce que cette version montre:
+Dans `accounts.component.spec.ts`, un compte de test est deja bloque:
+
+```ts
+{ id: 'a2', clientId: 'c1', label: 'Livret Ada', type: 'saving', status: 'blocked', balance: 250, currency: 'EUR', movements: [] },
+```
+
+Le test verifie la valeur du getter:
+
+```ts
+expect(fixture.componentInstance.blockedAccountsCount).toBe(1);
+```
+
+Ce que cet etat prepare montre:
 
 - le getter fonctionne;
 - il depend implicitement de `accounts()`;
 - la regle metier reste dans le composant;
 - le template ne lit pas une valeur signal avec `()`, mais une propriete TypeScript classique.
 
-### Etape B - Transformer le getter en `computed()`
+### Exercice - Transformer le getter en `computed()`
 
 Avant dans `AccountsFacade`:
 
@@ -307,13 +303,6 @@ get blockedAccountsCount(): number {
 Puis exposer le `computed()` de la facade:
 
 ```ts
-readonly totalBalance = this.accountsFacade.totalBalance;
-```
-
-Apres dans `AccountsComponent`:
-
-```ts
-readonly totalBalance = this.accountsFacade.totalBalance;
 readonly blockedAccountsCount = this.accountsFacade.blockedAccountsCount;
 ```
 
@@ -335,22 +324,7 @@ Apres, la version signal derive:
 </div>
 ```
 
-Verification possible dans `accounts.component.spec.ts`:
-
-Avant, les donnees de test contiennent deux comptes actifs:
-
-```ts
-{ id: 'a1', status: 'active', ... }
-{ id: 'a2', status: 'active', ... }
-```
-
-Apres, passer un compte en `blocked`:
-
-```ts
-{ id: 'a2', clientId: 'c1', label: 'Livret Ada', type: 'saving', status: 'blocked', balance: 250, currency: 'EUR', movements: [] },
-```
-
-Puis ajouter dans le test `loads accounts from the current client route`:
+Dans le test, transformer l'assertion du getter en lecture de signal:
 
 ```ts
 expect(fixture.componentInstance.blockedAccountsCount()).toBe(1);

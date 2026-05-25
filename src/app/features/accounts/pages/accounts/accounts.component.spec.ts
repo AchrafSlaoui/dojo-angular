@@ -9,7 +9,7 @@ import { NotificationService } from '@shared/services/notification.service';
 
 const accounts: Account[] = [
   { id: 'a1', clientId: 'c1', label: 'Compte courant Ada', type: 'checking', status: 'active', balance: 100, currency: 'EUR', movements: [] },
-  { id: 'a2', clientId: 'c1', label: 'Livret Ada', type: 'saving', status: 'active', balance: 250, currency: 'EUR', movements: [] },
+  { id: 'a2', clientId: 'c1', label: 'Livret Ada', type: 'saving', status: 'blocked', balance: 250, currency: 'EUR', movements: [] },
 ];
 
 describe('AccountsComponent', () => {
@@ -57,6 +57,7 @@ describe('AccountsComponent', () => {
     expect(api.getByClientId).toHaveBeenCalledWith('c1');
     expect(fixture.componentInstance.accounts()).toHaveLength(2);
     expect(fixture.componentInstance.totalBalance()).toBe(350);
+    expect(fixture.componentInstance.blockedAccountsCount).toBe(1);
   });
 
   it('filters accounts by type', async () => {
