@@ -18,7 +18,7 @@ Contraintes du dojo:
 | 0:45 - 1:15 | `computed()` pour l'etat derive | `src/app/features/accounts/services/accounts.facade.ts` |
 | 1:15 - 1:45 | `input()` dans un composant existant | `src/app/features/accounts/components/account-card/account-card.component.ts` |
 | 1:45 - 2:15 | `output()` dans un composant existant | `src/app/features/accounts/components/account-list/account-list.component.ts` |
-| 2:15 - 2:45 | Interop Signals / RxJS | `src/app/features/accounts/pages/accounts/accounts.component.ts` |
+| 2:15 - 2:45 | Interop Signals / RxJS | `src/app/features/clients/services/clients-api.service.ts`, `src/app/features/clients/pages/dashboard/dashboard.component.ts`, `src/app/features/accounts/pages/accounts/accounts.component.ts` |
 | 2:45 - 3:20 | `effect()` et limites | `src/app/features/clients/pages/clients/clients.component.ts`, `src/app/features/accounts/pages/accounts/accounts.component.ts` |
 | 3:20 - 3:45 | Refactoring guide | `src/app/features/accounts/services/accounts.facade.ts` |
 | 3:45 - 4:00 | Debrief et option Angular recent | Toute l'app |
@@ -645,13 +645,188 @@ Point a faire verbaliser:
 - l'enfant expose une intention, le parent orchestre l'action.
 - `output()` ne rend pas l'evenement observable comme un signal; ici le signal local sert uniquement a declencher l'effet.
 
-## 2:15 - 2:45 - Exercice 5: transformer une souscription RxJS en `toSignal()`
+## 2:15 - 2:45 - Exercice 5: consommer un Observable avec `toSignal()`
 
 Notion: tout ne devient pas signal. Certaines APIs Angular exposent encore des Observables. `toSignal()` sert de pont pour exposer la derniere valeur d'un Observable sous forme de signal.
 
+### Partie 1 - Consommer un Observable HTTP expose par un service
+
+Objectif: garder la responsabilite HTTP dans le service, exposer un `Observable`, puis convertir cet Observable en signal dans le composant.
+
+Le service expose deja une methode qui consomme HTTP:
+
+`src/app/features/clients/services/clients-api.service.ts`
+
+```ts
+getAll(): Observable<ClientActivity[]> {
+  return this.http.get<ClientActivity[]>('/api/clients');
+}
+```
+
+Dans `DashboardComponent`, l'etat prepare avant transformation utilise une approche imperative avec `firstValueFrom()`:
+
+`src/app/features/clients/pages/dashboard/dashboard.component.ts`
+
+```ts
+import { Component, ChangeDetectionStrategy, Signal, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+```
+
+```ts
+private readonly clientsApi = inject(ClientsApiService);
+private readonly clientsState = signal<ClientActivity[]>([]);
+readonly search = signal('');
+readonly loading = signal(false);
+readonly error = signal<string | null>(null);
+
+weeklyClients: Signal<ClientActivity[]> = computed(() =>
+  getWeeklyClients(this.clientsState(), this.search())
+);
+
+constructor() {
+  this.reload();
+}
+
+async reload(): Promise<void> {
+  this.loading.set(true);
+  this.error.set(null);
+  try {
+    const data = await firstValueFrom(this.clientsApi.getAll());
+    this.clientsState.set(data);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Impossible de charger les clients.';
+    this.error.set(message);
+    this.clientsState.set([]);
+  } finally {
+    this.loading.set(false);
+  }
+}
+```
+
+Ce que cet etat prepare montre:
+
+- le service garde deja la responsabilite HTTP;
+- `getAll()` retourne un `Observable<ClientActivity[]>`;
+- le composant convertit manuellement cet Observable en Promise avec `firstValueFrom()`;
+- `loading`, `error` et `clientsState` sont synchronises a la main.
+
+#### Exercice - Remplacer `firstValueFrom()` par `toSignal()`
+
+Avant dans les imports:
+
+```ts
+import { Component, ChangeDetectionStrategy, Signal, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+```
+
+Apres:
+
+```ts
+import { Component, ChangeDetectionStrategy, Signal, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, map, of, startWith } from 'rxjs';
+```
+
+Ajouter un type local pour representer l'etat de la lecture HTTP:
+
+```ts
+type DashboardClientsQuery = {
+  clients: ClientActivity[];
+  loading: boolean;
+  error: string | null;
+};
+```
+
+Ajouter une valeur initiale:
+
+```ts
+const initialClientsQuery: DashboardClientsQuery = {
+  clients: [],
+  loading: true,
+  error: null,
+};
+```
+
+Remplacer `clientsState`, `loading`, `error`, le constructeur et `reload()` par un signal issu de l'Observable HTTP:
+
+```ts
+private readonly clientsQuery = toSignal(
+  this.clientsApi.getAll().pipe(
+    map((clients): DashboardClientsQuery => ({ clients, loading: false, error: null })),
+    catchError((err) => {
+      const message = err instanceof Error ? err.message : 'Impossible de charger les clients.';
+      return of({ clients: [], loading: false, error: message });
+    }),
+    startWith(initialClientsQuery)
+  ),
+  { initialValue: initialClientsQuery }
+);
+```
+
+Puis exposer les valeurs utiles avec des `computed()`:
+
+```ts
+readonly loading = computed(() => this.clientsQuery().loading);
+readonly error = computed(() => this.clientsQuery().error);
+
+weeklyClients: Signal<ClientActivity[]> = computed(() =>
+  getWeeklyClients(this.clientsQuery().clients, this.search())
+);
+```
+
+Le template existant continue de lire des signals:
+
+```html
+@if (loading()) {
+  <div class="status">Chargement en cours...</div>
+}
+@if (error(); as message) {
+  <div class="status error">{{ message }}</div>
+}
+```
+
+Adapter le test d'erreur, car il n'y a plus de methode `reload()` a appeler. Avant:
+
+```ts
+api.getAll.mockReturnValueOnce(throwError(() => new Error('oops')));
+await component.reload();
+await fixture.whenStable();
+expect(component.error()).toBe('oops');
+```
+
+Apres, creer le composant apres avoir prepare le mock:
+
+```ts
+it('surfaces loading and error state', async () => {
+  api.getAll.mockReturnValueOnce(throwError(() => new Error('oops')));
+
+  const errorFixture = TestBed.createComponent(DashboardComponent);
+  errorFixture.detectChanges();
+  await errorFixture.whenStable();
+
+  expect(errorFixture.componentInstance.error()).toBe('oops');
+});
+```
+
+Verification:
+
+```bash
+npm test -- --runTestsByPath src/app/features/clients/pages/dashboard/dashboard.component.spec.ts
+```
+
+Point a faire verbaliser:
+
+- le service expose un Observable HTTP, il ne devient pas un signal;
+- le composant decide de convertir cet Observable avec `toSignal()`;
+- RxJS reste utile pour preparer les etats `loading`, succes et erreur;
+- `toSignal()` est cree une seule fois comme propriete du composant;
+- ce pattern est adapte a une lecture HTTP, moins a une commande `POST`, `PUT` ou `DELETE`.
+
+### Partie 2 - Transformer `route.paramMap` vers `toSignal()`
+
 Preparation deja faite dans le projet: `AccountsComponent` utilise une souscription RxJS explicite a `route.paramMap`, puis copie la valeur dans un signal manuel `clientId`.
 
-### Etat prepare avant le dojo - Observable + souscription manuelle
+#### Etat prepare avant le dojo - Observable + souscription manuelle
 
 ```ts
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
@@ -686,7 +861,7 @@ Ce que cet etat prepare montre:
 - on doit injecter `DestroyRef`;
 - on copie manuellement la valeur Observable dans un signal local.
 
-### Exercice - Transformer vers `toSignal()`
+#### Exercice - Transformer vers `toSignal()`
 
 Avant:
 
