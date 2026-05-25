@@ -71,4 +71,15 @@ describe('ClientsComponent (deep)', () => {
 
     expect((fixture.componentInstance as ClientsComponent).search()).toBe('Ada');
   });
+
+  it('clamps the current page when the result set becomes smaller', () => {
+    const component = fixture.componentInstance;
+
+    component.onPageSizeChange('1');
+    component.nextPage();
+    component.setSearch('Ada');
+    fixture.detectChanges();
+
+    expect(component.page()).toBe(1);
+  });
 });
