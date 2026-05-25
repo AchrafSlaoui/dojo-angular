@@ -40,8 +40,11 @@ describe('DashboardComponent', () => {
 
   it('surfaces loading and error state', async () => {
     api.getAll.mockReturnValueOnce(throwError(() => new Error('oops')));
-    await component.reload();
-    await fixture.whenStable();
-    expect(component.error()).toBe('oops');
+
+    const errorFixture = TestBed.createComponent(DashboardComponent);
+    errorFixture.detectChanges();
+    await errorFixture.whenStable();
+
+    expect(errorFixture.componentInstance.error()).toBe('oops');
   });
 });
