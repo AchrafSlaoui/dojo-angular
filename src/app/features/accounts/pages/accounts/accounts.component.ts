@@ -98,4 +98,8 @@ export class AccountsComponent {
       }
     }
   }
+
+  get blockedAccountsCount(): number {
+    return this.accounts().filter((account) => account.status === 'blocked').length;
+  }
 }
