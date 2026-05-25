@@ -33,6 +33,10 @@ export class AccountsFacade {
     Math.round(this.accountsState().reduce((total, account) => total + account.balance, 0) * 100) / 100
   );
 
+  get blockedAccountsCount(): number {
+    return this.filteredAccounts().filter((account) => account.status === 'blocked').length;
+  }
+
   setClientId(clientId: string | null): void {
     this.clientIdState.set(clientId);
   }

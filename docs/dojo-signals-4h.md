@@ -238,11 +238,19 @@ Preparation deja faite dans le projet: le nombre de comptes bloques est deja aff
 
 ### Etat prepare avant le dojo - Getter classique
 
-Dans `AccountsComponent`, le compteur est une propriete calculee classique:
+Dans `AccountsFacade`, le compteur est une propriete calculee classique:
 
 ```ts
 get blockedAccountsCount(): number {
-  return this.accounts().filter((account) => account.status === 'blocked').length;
+  return this.filteredAccounts().filter((account) => account.status === 'blocked').length;
+}
+```
+
+Dans `AccountsComponent`, un getter relaie la valeur exposee par la facade:
+
+```ts
+get blockedAccountsCount(): number {
+  return this.accountsFacade.blockedAccountsCount;
 }
 ```
 
@@ -270,8 +278,8 @@ expect(fixture.componentInstance.blockedAccountsCount).toBe(1);
 Ce que cet etat prepare montre:
 
 - le getter fonctionne;
-- il depend implicitement de `accounts()`;
-- la regle metier reste dans le composant;
+- il depend implicitement de `filteredAccounts()`;
+- la regle metier est deja dans la facade, mais pas encore dans le modele signal;
 - le template ne lit pas une valeur signal avec `()`, mais une propriete TypeScript classique.
 
 ### Exercice - Transformer le getter en `computed()`
@@ -292,15 +300,23 @@ readonly blockedAccountsCount = computed(() =>
 );
 ```
 
-Avant dans `AccountsComponent`, supprimer le getter:
+Avant dans `AccountsFacade`, remplacer le getter:
 
 ```ts
 get blockedAccountsCount(): number {
-  return this.accounts().filter((account) => account.status === 'blocked').length;
+  return this.filteredAccounts().filter((account) => account.status === 'blocked').length;
 }
 ```
 
-Puis exposer le `computed()` de la facade:
+Avant dans `AccountsComponent`, remplacer le getter relais:
+
+```ts
+get blockedAccountsCount(): number {
+  return this.accountsFacade.blockedAccountsCount;
+}
+```
+
+Puis exposer directement le `computed()` de la facade:
 
 ```ts
 readonly blockedAccountsCount = this.accountsFacade.blockedAccountsCount;
