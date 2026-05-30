@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { DashboardComponent } from './dashboard.component';
 import { Client } from '@clients/models/client';
 import { ClientsApiService } from '@clients/services/clients-api.service';
@@ -24,7 +25,7 @@ describe('DashboardComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
-      providers: [{ provide: ClientsApiService, useValue: api }],
+      providers: [{ provide: ClientsApiService, useValue: api }, provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DashboardComponent);
