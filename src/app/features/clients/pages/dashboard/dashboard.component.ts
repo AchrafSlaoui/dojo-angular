@@ -1,10 +1,12 @@
 import { Component, ChangeDetectionStrategy, Signal, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, firstValueFrom } from 'rxjs';
 import { ClientCardComponent } from '@clients/components/client-card/client-card.component';
 import { ClientActivity } from '@clients/models/client-activity';
 import { ClientsApiService } from '@clients/services/clients-api.service';
 import { getWeeklyClients } from '@clients/utils/clients-collection.util';
-import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,7 +18,12 @@ import { firstValueFrom } from 'rxjs';
 })
 export class DashboardComponent {
   private readonly clientsApi = inject(ClientsApiService);
+  private readonly route = inject(ActivatedRoute);
   private readonly clientsState = signal<ClientActivity[]>([]);
+  private readonly searchFromRoute: Signal<string> = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('q') ?? '')),
+    { initialValue: '' }
+  );
   readonly search = signal('');
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -24,6 +31,7 @@ export class DashboardComponent {
   weeklyClients: Signal<ClientActivity[]> = computed(() => getWeeklyClients(this.clientsState(), this.search()));
 
   constructor() {
+    this.search.set(this.searchFromRoute());
     this.reload();
   }
 
