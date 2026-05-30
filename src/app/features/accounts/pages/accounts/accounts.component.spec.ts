@@ -41,7 +41,7 @@ describe('AccountsComponent', () => {
       imports: [AccountsComponent],
       providers: [
         { provide: AccountsApiService, useValue: api },
-        { provide: ActivatedRoute, useValue: { paramMap: paramMap$ } },
+        { provide: ActivatedRoute, useValue: { paramMap: paramMap$, queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
         { provide: ConfirmService, useValue: confirm },
         { provide: NotificationService, useValue: notifications },
       ],

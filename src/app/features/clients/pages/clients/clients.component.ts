@@ -51,6 +51,9 @@ export class ClientsComponent {
 
   constructor() {
     effect(() => {
+      document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';
+    });
+    effect(() => {
       const clamped = this.pageSlice().page;
       if (clamped !== this.page()) {
         this.page.set(clamped);

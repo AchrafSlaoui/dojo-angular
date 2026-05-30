@@ -20,6 +20,10 @@ import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
 export class AccountsComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly accountsFacade = inject(AccountsFacade);
+  private readonly initialTypeFilter: Signal<string> = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('type') ?? 'all')),
+    { initialValue: 'all' }
+  );
 
   readonly search = this.accountsFacade.search;
   readonly typeFilter = this.accountsFacade.typeFilter;
@@ -40,6 +44,7 @@ export class AccountsComponent {
   editAccount: AccountUpdate = { id: '', label: '', type: 'checking', status: 'active' };
 
   constructor() {
+    this.accountsFacade.setTypeFilter(this.initialTypeFilter());
     effect(() => {
       this.accountsFacade.load(this.clientId());
     });
