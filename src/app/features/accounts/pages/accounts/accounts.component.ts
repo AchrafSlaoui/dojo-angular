@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, Signal, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { Account, AccountCreate, AccountUpdate } from '@accounts/models/account';
 import { AccountListComponent } from '@accounts/components/account-list/account-list.component';
@@ -22,6 +22,10 @@ export class AccountsComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly accountsFacade = inject(AccountsFacade);
   private readonly clientId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
+  private readonly initialTypeFilter: Signal<string> = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('type') ?? 'all')),
+    { initialValue: 'all' }
+  );
 
   readonly search = this.accountsFacade.search;
   readonly typeFilter = this.accountsFacade.typeFilter;
@@ -37,6 +41,7 @@ export class AccountsComponent {
   editAccount: AccountUpdate = { id: '', label: '', type: 'checking', status: 'active' };
 
   constructor() {
+    this.accountsFacade.setTypeFilter(this.initialTypeFilter());
     this.clientId$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((clientId) => {

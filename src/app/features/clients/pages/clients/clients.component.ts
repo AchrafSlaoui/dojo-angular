@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, Signal, computed, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Signal, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { firstValueFrom } from 'rxjs';
@@ -50,6 +50,9 @@ export class ClientsComponent {
   newClient: Omit<Client, 'id'> = { firstName: '', lastName: '', email: '', phone: '', address: '' };
 
   constructor() {
+    effect(() => {
+      document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';
+    });
     this.loadClients();
   }
 
