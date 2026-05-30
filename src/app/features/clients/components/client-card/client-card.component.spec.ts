@@ -1,13 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ClientCardComponent } from './client-card.component';
-import { Client } from '@clients/models/client';
-
 describe('ClientCardComponent', () => {
   let fixture: ComponentFixture<ClientCardComponent>;
   let component: ClientCardComponent;
 
-  const client: Client = {
+  const client = {
     id: '1',
     firstName: 'Ada',
     lastName: 'Lovelace',
