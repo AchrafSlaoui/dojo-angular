@@ -7,10 +7,10 @@ import { mockApiInterceptor, resetMockApiStateForTests } from './mock-api.interc
 describe('mockApiInterceptor accounts domain', () => {
   const next: HttpHandlerFn = jest.fn(() => of(new HttpResponse({ status: 599 })));
 
-  async function send<T>(method: string, url: string, body?: unknown): Promise<HttpResponse<T>> {
+  async function send<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', url: string, body?: unknown): Promise<HttpResponse<T>> {
     const request = body === undefined
-      ? new HttpRequest(method, url)
-      : new HttpRequest(method, url, body);
+      ? new HttpRequest(method as 'GET', url)
+      : new HttpRequest(method as 'POST', url, body);
     return lastValueFrom(mockApiInterceptor(request, next)) as Promise<HttpResponse<T>>;
   }
 

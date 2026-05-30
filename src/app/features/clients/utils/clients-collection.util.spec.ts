@@ -1,5 +1,5 @@
 import { listClients, getWeeklyClients, paginateClients } from './clients-collection.util';
-import { Client } from '@clients/models/client';
+import { ClientActivity } from '@clients/models/client-activity';
 
 describe('clients-collection.util', () => {
   describe('listClients', () => {
@@ -9,7 +9,7 @@ describe('clients-collection.util', () => {
         clients: [
           { id: '1', firstName: 'A', lastName: 'A', recentMovements: [{ id: 'm1', date: '2024-02-10', type: 'credit', amount: 1, description: '' }] },
           { id: '2', firstName: 'B', lastName: 'B', recentMovements: [{ id: 'm2', date: '2024-02-12', type: 'credit', amount: 1, description: '' }] },
-        ] as Client[],
+        ] as ClientActivity[],
         expected: ['2', '1'],
       },
       {
@@ -18,7 +18,7 @@ describe('clients-collection.util', () => {
           { id: '1', firstName: 'A', lastName: 'A', recentMovements: [{ id: 'm1', date: '2024-01-01', type: 'credit', amount: 1, description: '' }] },
           { id: '2', firstName: 'B', lastName: 'B', recentMovements: [{ id: 'm2', date: '2024-03-01', type: 'credit', amount: 1, description: '' }] },
           { id: '3', firstName: 'C', lastName: 'C', recentMovements: [{ id: 'm3', date: '2024-02-01', type: 'credit', amount: 1, description: '' }] },
-        ] as Client[],
+        ] as ClientActivity[],
         expected: ['2', '3', '1'],
       },
       {
@@ -27,16 +27,16 @@ describe('clients-collection.util', () => {
           { id: '1', firstName: 'A', lastName: 'A', recentMovements: [] },
           { id: '2', firstName: 'B', lastName: 'B', recentMovements: [{ id: 'm2', date: '2023-01-01', type: 'credit', amount: 1, description: '' }] },
           { id: '3', firstName: 'C', lastName: 'C', recentMovements: [{ id: 'm3', date: '2024-01-01', type: 'credit', amount: 1, description: '' }] },
-        ] as Client[],
+        ] as ClientActivity[],
         expected: ['3', '2', '1'],
       },
-    ])('sorts clients by latest movement date (desc) - $title', ({ clients, expected }: { title: string; clients: Client[]; expected: string[] }) => {
+    ])('sorts clients by latest movement date (desc) - $title', ({ clients, expected }: { title: string; clients: ClientActivity[]; expected: string[] }) => {
       const result = listClients(clients);
       expect(result.map((c) => c.id)).toEqual(expected);
     });
 
     it('filters by search term in name', () => {
-      const clients: Client[] = [
+      const clients: ClientActivity[] = [
         { id: '1', firstName: 'Ada', lastName: 'Lovelace', recentMovements: [] },
         { id: '2', firstName: 'Grace', lastName: 'Hopper', recentMovements: [] },
       ];
@@ -49,7 +49,7 @@ describe('clients-collection.util', () => {
   describe('getWeeklyClients', () => {
     it('keeps only clients with recentMovements in the reference week and sorts by latest movement', () => {
       const ref = new Date('2024-02-14'); // week Mon 12 to Sun 18
-      const clients: Client[] = [
+      const clients: ClientActivity[] = [
         { id: '1', firstName: 'A', lastName: 'A', recentMovements: [{ id: 'm1', date: '2024-02-13', type: 'credit', amount: 1, description: '' }] },
         { id: '2', firstName: 'B', lastName: 'B', recentMovements: [{ id: 'm2', date: '2024-02-10', type: 'credit', amount: 1, description: '' }] },
         { id: '3', firstName: 'C', lastName: 'C', recentMovements: [{ id: 'm3', date: '2024-02-18', type: 'credit', amount: 1, description: '' }] },
@@ -60,7 +60,7 @@ describe('clients-collection.util', () => {
 
     it('applies search filtering on top of weekly selection', () => {
       const ref = new Date('2024-02-14');
-      const clients: Client[] = [
+      const clients: ClientActivity[] = [
         { id: '1', firstName: 'Ada', lastName: 'A', recentMovements: [{ id: 'm1', date: '2024-02-13', type: 'credit', amount: 1, description: '' }] },
         { id: '2', firstName: 'Grace', lastName: 'B', recentMovements: [{ id: 'm2', date: '2024-02-18', type: 'credit', amount: 1, description: '' }] },
       ];
@@ -72,7 +72,7 @@ describe('clients-collection.util', () => {
 
   describe('paginateClients', () => {
     it('returns a page slice with totals and page info', () => {
-      const clients: Client[] = [
+      const clients: ClientActivity[] = [
         { id: '1', firstName: 'A', lastName: 'A', recentMovements: [] },
         { id: '2', firstName: 'B', lastName: 'B', recentMovements: [] },
         { id: '3', firstName: 'C', lastName: 'C', recentMovements: [] },
@@ -91,7 +91,7 @@ describe('clients-collection.util', () => {
     });
 
     it('clamps invalid page and pageSize', () => {
-      const clients: Client[] = [
+      const clients: ClientActivity[] = [
         { id: '1', firstName: 'A', lastName: 'A', recentMovements: [] },
       ];
       const res = paginateClients({ clients, page: -1, pageSize: 0 });
