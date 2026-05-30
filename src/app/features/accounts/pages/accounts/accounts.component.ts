@@ -34,6 +34,7 @@ export class AccountsComponent {
   readonly error = this.accountsFacade.error;
   readonly accounts = this.accountsFacade.filteredAccounts;
   readonly totalBalance = this.accountsFacade.totalBalance;
+  readonly blockedAccountsCount = this.accountsFacade.blockedAccountsCount;
   readonly clientId = signal<string | null>(null);
   adding = false;
   editingAccountId: string | null = null;
@@ -102,9 +103,5 @@ export class AccountsComponent {
         this.editingAccountId = null;
       }
     }
-  }
-
-  get blockedAccountsCount(): number {
-    return this.accountsFacade.blockedAccountsCount;
   }
 }
