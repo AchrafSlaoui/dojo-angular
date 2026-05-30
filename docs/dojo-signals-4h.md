@@ -649,9 +649,136 @@ Point a faire verbaliser:
 
 Notion: tout ne devient pas signal. Certaines APIs Angular exposent encore des Observables. `toSignal()` sert de pont pour exposer la derniere valeur d'un Observable sous forme de signal.
 
-### Partie 1 - Consommer un Observable HTTP expose par un service
+### Partie 1 - Transformer `route.paramMap` vers `toSignal()`
+
+Preparation deja faite dans le projet: `AccountsComponent` utilise une souscription RxJS explicite a `route.paramMap`, puis copie la valeur dans un signal manuel `clientId`.
+
+Exemple deja present dans le fichier: `initialTypeFilter` utilise deja `toSignal()` pour lire un query param - lire cette propriete avant de commencer l'exercice.
+
+#### Etat prepare avant le dojo - Observable + souscription manuelle
+
+```ts
+import { ChangeDetectionStrategy, Component, DestroyRef, Signal, inject, signal } from '@angular/core';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+```
+
+```ts
+private readonly route = inject(ActivatedRoute);
+private readonly destroyRef = inject(DestroyRef);
+private readonly accountsFacade = inject(AccountsFacade);
+private readonly clientId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
+private readonly initialTypeFilter: Signal<string> = toSignal(
+  this.route.queryParamMap.pipe(map((params) => params.get('type') ?? 'all')),
+  { initialValue: 'all' }
+);
+
+readonly clientId = signal<string | null>(null);
+```
+
+```ts
+constructor() {
+  this.accountsFacade.setTypeFilter(this.initialTypeFilter());
+  this.clientId$
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe((clientId) => {
+      this.clientId.set(clientId);
+      this.accountsFacade.load(clientId);
+    });
+}
+```
+
+Ce que cet etat prepare montre:
+
+- `paramMap` reste un Observable;
+- on doit gerer la souscription;
+- on doit injecter `DestroyRef`;
+- on copie manuellement la valeur Observable dans un signal local;
+- `initialTypeFilter` montre deja la syntaxe `toSignal()` dans ce meme fichier.
+
+#### Exercice - Transformer vers `toSignal()`
+
+Avant:
+
+```ts
+import { ChangeDetectionStrategy, Component, DestroyRef, Signal, inject, signal } from '@angular/core';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+```
+
+Apres, retirer `DestroyRef` et `takeUntilDestroyed`, ajouter `effect`:
+
+```ts
+import { ChangeDetectionStrategy, Component, Signal, effect, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+```
+
+Avant:
+
+```ts
+private readonly destroyRef = inject(DestroyRef);
+private readonly clientId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
+
+readonly clientId = signal<string | null>(null);
+```
+
+Apres:
+
+```ts
+readonly clientId: Signal<string | null> = toSignal(
+  this.route.paramMap.pipe(map((params) => params.get('id'))),
+  { initialValue: null }
+);
+```
+
+Avant, la souscription fait deux choses: elle alimente `clientId` et elle charge les comptes.
+
+```ts
+constructor() {
+  this.accountsFacade.setTypeFilter(this.initialTypeFilter());
+  this.clientId$
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe((clientId) => {
+      this.clientId.set(clientId);
+      this.accountsFacade.load(clientId);
+    });
+}
+```
+
+Apres, `toSignal()` alimente `clientId`; le chargement est deplace dans un `effect()`:
+
+```ts
+constructor() {
+  this.accountsFacade.setTypeFilter(this.initialTypeFilter());
+  effect(() => {
+    this.accountsFacade.load(this.clientId());
+  });
+}
+```
+
+Verification dans le template existant:
+
+```html
+<a class="back-link" [routerLink]="['/clients', clientId()]">Retour au client</a>
+```
+
+Verification test:
+
+```bash
+npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
+```
+
+Point a faire verbaliser:
+
+- `paramMap` reste un Observable;
+- `toSignal()` evite la souscription manuelle;
+- `clientId()` reste lisible comme un signal dans le composant et le template;
+- l'appel API reste un effet de bord, donc il est deplace dans `effect()`.
+
+### Partie 2 - Consommer un Observable HTTP expose par un service
 
 Objectif: garder la responsabilite HTTP dans le service, exposer un `Observable`, puis convertir cet Observable en signal dans le composant.
+
+Exemple deja present dans le fichier: `DashboardComponent` expose `searchFromRoute` qui utilise deja `toSignal()` pour lire le parametre `q` depuis l'URL - lire cette propriete avant de commencer l'exercice.
 
 Le service expose deja une methode qui consomme HTTP:
 
@@ -821,121 +948,6 @@ Point a faire verbaliser:
 - RxJS reste utile pour preparer les etats `loading`, succes et erreur;
 - `toSignal()` est cree une seule fois comme propriete du composant;
 - ce pattern est adapte a une lecture HTTP, moins a une commande `POST`, `PUT` ou `DELETE`.
-
-### Partie 2 - Transformer `route.paramMap` vers `toSignal()`
-
-Preparation deja faite dans le projet: `AccountsComponent` utilise une souscription RxJS explicite a `route.paramMap`, puis copie la valeur dans un signal manuel `clientId`.
-
-#### Etat prepare avant le dojo - Observable + souscription manuelle
-
-```ts
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
-```
-
-```ts
-private readonly route = inject(ActivatedRoute);
-private readonly destroyRef = inject(DestroyRef);
-private readonly accountsFacade = inject(AccountsFacade);
-private readonly clientId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
-
-readonly clientId = signal<string | null>(null);
-```
-
-```ts
-constructor() {
-  this.clientId$
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe((clientId) => {
-      this.clientId.set(clientId);
-      this.accountsFacade.load(clientId);
-    });
-}
-```
-
-Ce que cet etat prepare montre:
-
-- `paramMap` reste un Observable;
-- on doit gerer la souscription;
-- on doit injecter `DestroyRef`;
-- on copie manuellement la valeur Observable dans un signal local.
-
-#### Exercice - Transformer vers `toSignal()`
-
-Avant:
-
-```ts
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-```
-
-Apres:
-
-```ts
-import { ChangeDetectionStrategy, Component, Signal, effect, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-```
-
-Avant:
-
-```ts
-private readonly destroyRef = inject(DestroyRef);
-private readonly clientId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
-
-readonly clientId = signal<string | null>(null);
-```
-
-Apres:
-
-```ts
-readonly clientId: Signal<string | null> = toSignal(
-  this.route.paramMap.pipe(map((params) => params.get('id'))),
-  { initialValue: null }
-);
-```
-
-Avant, la souscription fait deux choses: elle alimente `clientId` et elle charge les comptes.
-
-```ts
-constructor() {
-  this.clientId$
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe((clientId) => {
-      this.clientId.set(clientId);
-      this.accountsFacade.load(clientId);
-    });
-}
-```
-
-Apres, `toSignal()` alimente `clientId`; le chargement est deplace dans un `effect()`:
-
-```ts
-constructor() {
-  effect(() => {
-    this.accountsFacade.load(this.clientId());
-  });
-}
-```
-
-Verification dans le template existant:
-
-```html
-<a class="back-link" [routerLink]="['/clients', clientId()]">Retour au client</a>
-```
-
-Verification test:
-
-```bash
-npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
-```
-
-Point a faire verbaliser:
-
-- `paramMap` reste un Observable;
-- `toSignal()` evite la souscription manuelle;
-- `clientId()` reste lisible comme un signal dans le composant et le template;
-- l'appel API reste un effet de bord, donc il est deplace dans `effect()`.
 
 ## 2:45 - 3:20 - Exercice 6: transformer une correction imperative en `effect()`
 
