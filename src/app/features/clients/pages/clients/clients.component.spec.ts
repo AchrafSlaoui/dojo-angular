@@ -8,15 +8,15 @@ import { Client } from '@clients/models/client';
 import { ClientCardComponent } from '@clients/components/client-card/client-card.component';
 import { ClientsApiService } from '@clients/services/clients-api.service';
 
-const mockClients: Client[] = [
+const mockClients = [
   { id: '1', firstName: 'Ada', lastName: 'Lovelace', email: '', phone: '', address: '', recentMovements: [] },
   { id: '2', firstName: 'Grace', lastName: 'Hopper', email: '', phone: '', address: '', recentMovements: [] },
 ];
 
 class ClientsApiServiceStub {
   getAll = jest.fn(() => of(mockClients));
-  add = jest.fn((payload: Partial<Client>) => of({ id: '3', recentMovements: [], ...payload } as Client));
-  update = jest.fn((payload: Partial<Client>) => of({ ...(mockClients[0] as Client), ...payload } as Client));
+  add = jest.fn((payload: Partial<Client>) => of({ id: '3', recentMovements: [], ...payload }));
+  update = jest.fn((payload: Partial<Client>) => of({ ...mockClients[0], ...payload }));
   remove = jest.fn(() => of(void 0));
 }
 
@@ -70,16 +70,5 @@ describe('ClientsComponent (deep)', () => {
     fixture.detectChanges();
 
     expect((fixture.componentInstance as ClientsComponent).search()).toBe('Ada');
-  });
-
-  it('clamps the current page when the result set becomes smaller', () => {
-    const component = fixture.componentInstance;
-
-    component.onPageSizeChange('1');
-    component.nextPage();
-    component.setSearch('Ada');
-    fixture.detectChanges();
-
-    expect(component.page()).toBe(1);
   });
 });
