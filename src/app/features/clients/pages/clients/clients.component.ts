@@ -1,7 +1,8 @@
-import { Component, ChangeDetectionStrategy, Signal, computed, effect, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ElementRef, Signal, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { firstValueFrom } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { debounceTime, firstValueFrom } from 'rxjs';
 import { Client } from '@clients/models/client';
 import { ClientActivity } from '@clients/models/client-activity';
 import { ClientUpdate } from '@clients/types/client.types';
@@ -48,10 +49,15 @@ export class ClientsComponent {
   readonly useVirtualScroll = computed(() => this.totalClients() > 100);
   adding = false;
   newClient: Omit<Client, 'id'> = { firstName: '', lastName: '', email: '', phone: '', address: '' };
+  private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
+  readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
   constructor() {
     effect(() => {
       document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';
+    });
+    effect(() => {
+      this.firstNameInput()?.nativeElement.focus();
     });
     this.loadClients();
   }
