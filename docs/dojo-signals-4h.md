@@ -18,10 +18,10 @@ Contraintes du dojo:
 | 0:45 - 1:15 | `computed()` pour l'etat derive | `src/app/features/accounts/services/accounts.facade.ts` |
 | 1:15 - 1:45 | `input()` dans un composant existant | `src/app/features/accounts/components/account-card/account-card.component.ts` |
 | 1:45 - 2:15 | `output()` dans un composant existant | `src/app/features/accounts/components/account-list/account-list.component.ts` |
-| 2:15 - 2:45 | Interop Signals / RxJS | `src/app/features/clients/services/clients-api.service.ts`, `src/app/features/clients/pages/dashboard/dashboard.component.ts`, `src/app/features/accounts/pages/accounts/accounts.component.ts` |
-| 2:45 - 3:20 | `effect()` et limites | `src/app/features/clients/pages/clients/clients.component.ts`, `src/app/features/accounts/pages/accounts/accounts.component.ts` |
-| 3:20 - 3:45 | Refactoring guide | `src/app/features/accounts/services/accounts.facade.ts` |
-| 3:45 - 4:00 | Debrief et option Angular recent | Toute l'app |
+| 2:15 - 3:00 | Interop Signals / RxJS (`toSignal` + `toObservable`) | `src/app/features/accounts/pages/accounts/accounts.component.ts`, `src/app/features/clients/pages/dashboard/dashboard.component.ts`, `src/app/features/clients/pages/clients/clients.component.ts` |
+| 3:00 - 3:30 | `effect()` + `viewChild()` | `src/app/features/clients/pages/clients/clients.component.ts` |
+| 3:30 - 3:50 | Refactoring guide | `src/app/features/accounts/services/accounts.facade.ts` |
+| 3:50 - 4:00 | Debrief et option Angular recent | Toute l'app |
 
 ## 0:00 - 0:15 - Lecture fonctionnelle de l'app
 
@@ -645,7 +645,7 @@ Point a faire verbaliser:
 - l'enfant expose une intention, le parent orchestre l'action.
 - `output()` ne rend pas l'evenement observable comme un signal; ici le signal local sert uniquement a declencher l'effet.
 
-## 2:15 - 2:45 - Exercice 5: consommer un Observable avec `toSignal()`
+## 2:15 - 3:00 - Exercice 5: interop RxJS ↔ Signals (`toSignal` + `toObservable`)
 
 Notion: tout ne devient pas signal. Certaines APIs Angular exposent encore des Observables. `toSignal()` sert de pont pour exposer la derniere valeur d'un Observable sous forme de signal.
 
@@ -949,11 +949,50 @@ Point a faire verbaliser:
 - `toSignal()` est cree une seule fois comme propriete du composant;
 - ce pattern est adapte a une lecture HTTP, moins a une commande `POST`, `PUT` ou `DELETE`.
 
-## 2:45 - 3:20 - Exercice 6: transformer une correction imperative en `effect()`
+### Partie 3 - `toObservable()` : le pont dans l'autre sens
 
-Notion: `effect()` sert a executer un effet de bord quand des signals changent. Il ne doit pas remplacer systematiquement `computed()`, mais il peut synchroniser un etat mutable avec une contrainte derivee.
+Notion: `toObservable()` est le miroir de `toSignal()`. Il expose la valeur courante d'un signal comme un Observable, ce qui permet de brancher des operateurs RxJS sur un etat signal.
+
+Exemple deja present dans le fichier: `debouncedSearch$` dans `ClientsComponent` — lire cette propriete avant de commencer.
+
+`src/app/features/clients/pages/clients/clients.component.ts`
+
+```ts
+readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
+```
+
+Ce que cet exemple montre:
+
+- `search` est un signal, `debouncedSearch$` est un Observable;
+- chaque fois que `search()` change, l'Observable emet la nouvelle valeur;
+- `debounceTime(300)` ne peut pas s'exprimer avec `signal()` ou `computed()` seuls;
+- `toObservable()` est le bon outil quand un operateur RxJS n'a pas d'equivalent signal.
+
+Cas d'usage typiques de `toObservable()`:
+
+- debounce sur un champ de recherche;
+- combiner deux signals avec `combineLatest()`;
+- partager un etat signal avec un service qui consomme des Observables.
+
+Cet exercice est une demonstration, pas une transformation de code: le groupe lit `debouncedSearch$`, discute quand utiliser `toObservable()` vs rester dans le monde signal, et identifie deux autres candidats dans l'application.
+
+Verification: aucun test a ecrire - verifier visuellement dans le template que la recherche fonctionne.
+
+Point a faire verbaliser:
+
+- `toSignal()` et `toObservable()` sont les deux directions du pont;
+- choisir le bon sens depend de la nature de l'operation (RxJS reste meilleur pour le temps, la combinaison, le multicasting);
+- ne pas bridger systematiquement: si tout est signal, rester signal.
+
+## 3:00 - 3:30 - Exercice 6: `effect()` + `viewChild()`
+
+Notion: `effect()` execute un effet de bord quand des signals changent. `viewChild()` expose un element du template comme un signal, ce qui permet de le lire dans un `effect()` ou un `computed()`.
+
+### Partie 1 - Transformer une correction imperative en `effect()`
 
 Preparation deja faite dans le projet: `ClientsComponent` corrige la pagination de maniere imperative apres suppression d'un client.
+
+Exemples deja presents dans le fichier: le constructeur contient deux `effect()` a lire avant de commencer — `document.title` et l'auto-focus sur `firstNameInput`.
 
 ### Etat prepare avant le dojo - correction imperative
 
@@ -1084,7 +1123,73 @@ Point a faire verbaliser:
 - un total, un filtre ou un libelle doivent rester des `computed()`;
 - un chargement HTTP declenche par une route est un effet de bord acceptable, mais il faut surveiller les appels multiples.
 
-## 3:20 - 3:45 - Exercice 7: refactoring guide dans une facade
+### Partie 2 - Auto-focus avec `viewChild()`
+
+Notion: `viewChild()` remplace `@ViewChild()` en exposant la reference d'un element du template comme un signal. Sa valeur change automatiquement quand l'element apparait ou disparait du DOM.
+
+Exemple deja present dans le fichier: `firstNameInput = viewChild<ElementRef>('firstNameRef')` est declare dans `ClientsComponent` avec un `effect()` de base — lire ces deux elements avant de commencer.
+
+```ts
+private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
+```
+
+```html
+<input #firstNameRef type="text" [(ngModel)]="newClient.firstName" ... />
+```
+
+#### Etat prepare avant le dojo
+
+```ts
+constructor() {
+  // ...
+  effect(() => {
+    this.firstNameInput()?.nativeElement.focus();
+  });
+  // ...
+}
+```
+
+Ce que cet etat prepare montre:
+
+- `firstNameInput()` retourne `undefined` quand le formulaire est masque, l'element DOM quand il est visible;
+- l'effet actuel focus l'input a chaque changement de `firstNameInput()`, sans condition sur `adding()`;
+- la valeur de `viewChild()` est un signal: quand le `@if` rend le DOM, le signal change, l'effet se re-execute.
+
+#### Exercice - Conditionner le focus sur `adding()`
+
+Avant:
+
+```ts
+effect(() => {
+  this.firstNameInput()?.nativeElement.focus();
+});
+```
+
+Apres:
+
+```ts
+effect(() => {
+  if (this.adding()) {
+    this.firstNameInput()?.nativeElement.focus();
+  }
+});
+```
+
+Ce que la transformation montre:
+
+- lire `this.adding()` dans l'effet cree une dependance: l'effet se relance quand `adding()` change;
+- lire `this.firstNameInput()` cree une seconde dependance: l'effet se relance quand le DOM change;
+- les deux dependances doivent etre vraies simultanement pour que le focus se produise.
+
+Verification: lancer l'app, cliquer "Ajouter un client", verifier que le curseur est dans le champ prenom.
+
+Point a faire verbaliser:
+
+- `viewChild()` signal ne fonctionne pas comme `@ViewChild()` classique dans un graphe signal;
+- la valeur retournee est `Signal<ElementRef | undefined>`, pas un `ElementRef` direct;
+- lire un `viewChild()` dans un `computed()` est egalement valide si la logique est pure.
+
+## 3:30 - 3:50 - Exercice 7: refactoring guide dans une facade
 
 Notion: une facade peut exposer des signals et computed pour isoler l'etat metier du composant.
 
@@ -1164,7 +1269,7 @@ Point a faire verbaliser:
 - la regle devient testable;
 - la facade expose l'etat utile, pas seulement les donnees brutes.
 
-## 3:45 - 4:00 - Debrief et option Angular recent
+## 3:50 - 4:00 - Debrief et option Angular recent
 
 Questions de fin:
 

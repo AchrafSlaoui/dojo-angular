@@ -27,7 +27,7 @@
 
 @if (adding()) {
   <form class="add-client card" (ngSubmit)="saveAdd()">
-    <input type="text" [(ngModel)]="newClient.firstName" name="firstName" placeholder="Prenom" required />
+    <input #firstNameRef type="text" [(ngModel)]="newClient.firstName" name="firstName" placeholder="Prenom" required />
     <input type="text" [(ngModel)]="newClient.lastName" name="lastName" placeholder="Nom" required />
     <input type="email" [(ngModel)]="newClient.email" name="email" placeholder="Email" />
     <input type="text" [(ngModel)]="newClient.phone" name="phone" placeholder="Telephone" />
