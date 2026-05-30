@@ -796,12 +796,19 @@ Dans `DashboardComponent`, l'etat prepare avant transformation utilise une appro
 
 ```ts
 import { Component, ChangeDetectionStrategy, Signal, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, firstValueFrom } from 'rxjs';
 ```
 
 ```ts
 private readonly clientsApi = inject(ClientsApiService);
+private readonly route = inject(ActivatedRoute);
 private readonly clientsState = signal<ClientActivity[]>([]);
+private readonly searchFromRoute: Signal<string> = toSignal(
+  this.route.queryParamMap.pipe(map((params) => params.get('q') ?? '')),
+  { initialValue: '' }
+);
 readonly search = signal('');
 readonly loading = signal(false);
 readonly error = signal<string | null>(null);
@@ -811,6 +818,7 @@ weeklyClients: Signal<ClientActivity[]> = computed(() =>
 );
 
 constructor() {
+  this.search.set(this.searchFromRoute());
   this.reload();
 }
 
@@ -1024,30 +1032,36 @@ Ce que cet etat prepare montre:
 
 ### Exercice - Transformer vers `effect()`
 
-Avant dans l'import:
+L'import contient deja `effect` (utilise par les exemples `document.title` et `firstNameInput`):
 
 ```ts
-import { Component, ChangeDetectionStrategy, Signal, computed, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ElementRef, Signal, computed, effect, inject, signal, viewChild } from '@angular/core';
 ```
 
-Apres, ajouter `effect`:
-
-```ts
-import { Component, ChangeDetectionStrategy, Signal, computed, effect, inject, signal } from '@angular/core';
-```
-
-Avant dans le constructeur:
+Avant dans le constructeur — les deux effets baseline sont deja presents:
 
 ```ts
 constructor() {
+  effect(() => {
+    document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';
+  });
+  effect(() => {
+    this.firstNameInput()?.nativeElement.focus();
+  });
   this.loadClients();
 }
 ```
 
-Apres:
+Apres, ajouter l'effet de clamping:
 
 ```ts
 constructor() {
+  effect(() => {
+    document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';
+  });
+  effect(() => {
+    this.firstNameInput()?.nativeElement.focus();
+  });
   effect(() => {
     const clamped = this.pageSlice().page;
     if (clamped !== this.page()) {
