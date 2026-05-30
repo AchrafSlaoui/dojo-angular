@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { DashboardComponent } from './dashboard.component';
-import { Client } from '@clients/models/client';
 import { ClientsApiService } from '@clients/services/clients-api.service';
 import { of, throwError } from 'rxjs';
 
 const today = new Date().toISOString().slice(0, 10);
-const mockClients: Client[] = [
+const mockClients = [
   { id: '1', firstName: 'Ada', lastName: 'Lovelace', recentMovements: [{ id: 'm1', date: today, type: 'credit', amount: 10, description: '' }] },
   { id: '2', firstName: 'Grace', lastName: 'Hopper', recentMovements: [{ id: 'm2', date: today, type: 'debit', amount: 5, description: '' }] },
 ];
@@ -41,11 +40,8 @@ describe('DashboardComponent', () => {
 
   it('surfaces loading and error state', async () => {
     api.getAll.mockReturnValueOnce(throwError(() => new Error('oops')));
-
-    const errorFixture = TestBed.createComponent(DashboardComponent);
-    errorFixture.detectChanges();
-    await errorFixture.whenStable();
-
-    expect(errorFixture.componentInstance.error()).toBe('oops');
+    await component.reload();
+    await fixture.whenStable();
+    expect(component.error()).toBe('oops');
   });
 });
