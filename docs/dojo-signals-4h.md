@@ -9,6 +9,16 @@ Contraintes du dojo:
 - chaque exercice doit rester dans le domaine clients/comptes;
 - chaque changement doit pouvoir etre teste avec Jest ou verifie dans l'ecran existant.
 
+## Intention pedagogique d'architecture
+
+L'architecture du projet montre volontairement deux niveaux d'utilisation des Signals.
+
+Dans `ClientsComponent` et `DashboardComponent`, les Signals sont utilises directement dans les composants. Ce premier pattern sert a comprendre les bases: etat local, valeurs derivees avec `computed()`, effets avec `effect()`, lecture dans le template et reactions aux actions utilisateur.
+
+Dans `AccountsFacade` et `MovementsFacade`, les Signals sont extraits dans des facades injectables. Ce second pattern illustre une etape plus avancee: etat partage, encapsulation de la logique metier, orchestration des appels API et exposition d'un etat en lecture seule avec `asReadonly()`.
+
+Cette asymetrie est intentionnelle. Elle permet de montrer une progression naturelle: commencer simple dans un composant, puis extraire vers une facade lorsque l'etat devient partage, plus riche ou plus proche d'une regle metier. Sans cette explication, la difference entre `ClientsComponent` et `AccountsComponent` peut sembler incoherente; dans le dojo, elle sert au contraire de support de discussion.
+
 ## Deroulement global
 
 | Temps | Sujet | Fichiers principaux |
