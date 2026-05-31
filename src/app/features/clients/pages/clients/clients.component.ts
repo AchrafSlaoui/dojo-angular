@@ -52,7 +52,7 @@ export class ClientsComponent {
   readonly allClients = computed(() => listClients(this.clientsState(), this.search(), this.sort()));
   readonly useVirtualScroll = computed(() => this.totalClients() > 100);
   // EXERCICE 1
-  adding = false;
+  readonly adding = signal(false);
   newClient: Omit<Client, 'id'> = { firstName: '', lastName: '', email: '', phone: '', address: '' };
   // EXERCICE 4
   @ViewChild('firstNameRef') private firstNameInput?: ElementRef;
@@ -86,7 +86,7 @@ export class ClientsComponent {
   }
 
   startAdd(): void {
-    this.adding = true;
+    this.adding.set(true);
     this.newClient = { firstName: '', lastName: '', email: '', phone: '', address: '' };
   }
 
@@ -102,7 +102,7 @@ export class ClientsComponent {
       this.page.set(1);
       // EXERCICE 9
       this.notifications.success(`Client ${firstName} ${lastName} cree.`);
-      this.adding = false;
+      this.adding.set(false);
     } catch {
       this.notifications.error("Impossible d'ajouter le client.");
     } finally {
@@ -111,7 +111,7 @@ export class ClientsComponent {
   }
 
   cancelAdd(): void {
-    this.adding = false;
+    this.adding.set(false);
   }
 
   async onSaveClient(update: ClientUpdate): Promise<void> {
@@ -147,7 +147,7 @@ export class ClientsComponent {
     }
   }
 
-  trackByClientId(_index: number, client: Client): string {
+  trackByClientId(index: number, client: Client): string {
     return client.id;
   }
 

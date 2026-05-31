@@ -10,7 +10,7 @@
     </select>
   </label>
   <!-- EXERCICE 1 -->
-  @if (!adding) {
+  @if (!adding()) {
     <button class="icon-btn plus" (click)="startAdd()" title="Ajouter un client" aria-label="Ajouter">
       <span class="icon i-plus icon-lg"></span>
     </button>
@@ -35,7 +35,7 @@
 }
 
 <!-- EXERCICE 1 -->
-@if (adding) {
+@if (adding()) {
   <form class="add-client card" (ngSubmit)="saveAdd()">
     <input #firstNameRef type="text" [(ngModel)]="newClient.firstName" name="firstName" placeholder="Prenom" required />
     <input type="text" [(ngModel)]="newClient.lastName" name="lastName" placeholder="Nom" required />
