@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, Signal, inject, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, effect, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { Account, AccountCreate, AccountUpdate } from '@accounts/models/account';
 import { AccountListComponent } from '@accounts/components/account-list/account-list.component';
@@ -19,9 +19,7 @@ import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
 })
 export class AccountsComponent {
   private readonly route = inject(ActivatedRoute);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly accountsFacade = inject(AccountsFacade);
-  private readonly clientId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
   // Exemple toSignal()
   private readonly initialTypeFilter: Signal<string> = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get('type') ?? 'all')),
@@ -38,7 +36,11 @@ export class AccountsComponent {
   readonly totalBalance = this.accountsFacade.totalBalance;
   // EXERCICE 2
   readonly blockedAccountsCount = this.accountsFacade.blockedAccountsCount;
-  readonly clientId = signal<string | null>(null);
+  // EXERCICE 8
+  readonly clientId: Signal<string | null> = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get('id'))),
+    { initialValue: null }
+  );
   adding = false;
   readonly editingAccountId = signal<string | null>(null);
   newAccount: AccountCreate = { label: '', type: 'checking', status: 'active' };
@@ -59,12 +61,9 @@ export class AccountsComponent {
   constructor() {
     this.accountsFacade.setTypeFilter(this.initialTypeFilter());
     // EXERCICE 8
-    this.clientId$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((clientId) => {
-        this.clientId.set(clientId);
-        this.accountsFacade.load(clientId);
-      });
+    effect(() => {
+      this.accountsFacade.load(this.clientId());
+    });
   }
 
   setSearch(term: string): void {
