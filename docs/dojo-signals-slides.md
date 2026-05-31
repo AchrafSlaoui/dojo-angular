@@ -23,6 +23,33 @@ RxJS résout    : les flux asynchrones et les combinaisons dans le temps
 
 ---
 
+## Intention d'architecture du dojo
+
+Le projet montre volontairement **deux patterns Signals**.
+
+### 1. Signals directement dans les composants
+
+`ClientsComponent` et `DashboardComponent` montrent les bases :
+
+- `signal()` pour l'état local ;
+- `computed()` pour les valeurs dérivées ;
+- `effect()` pour les effets de bord simples ;
+- lecture directe dans le template avec `signal()`.
+
+### 2. Signals extraits dans une facade
+
+`AccountsFacade` et `MovementsFacade` montrent l'étape avancée :
+
+- état partagé entre plusieurs composants ;
+- logique métier encapsulée ;
+- exposition en lecture seule avec `asReadonly()` ;
+- orchestration API + notifications + confirmations.
+
+> L'asymétrie est intentionnelle : on commence simple dans un composant,
+> puis on extrait vers une facade quand l'état devient plus riche ou partagé.
+
+---
+
 ## Zone.js — Comprendre, limiter, supprimer
 
 ### Ce que fait Zone.js
@@ -98,7 +125,7 @@ sauf si une raison explicite existe**.
 provideZoneChangeDetection({ eventCoalescing: true })
 
 // Après
-provideExperimentalZonelessChangeDetection()
+provideZonelessChangeDetection()
 ```
 
 **2. `angular.json` :**
@@ -118,8 +145,8 @@ provideExperimentalZonelessChangeDetection()
 ```
                   Zone.js présent            Zone.js supprimé
                   ──────────────────────     ────────────────────────
-Sans OnPush   →   Re-render global            Impossible — rien ne
-                  à chaque async              déclencherait de re-render
+Sans OnPush   →   Re-render global       →    Les changements classiques
+                  à chaque async              ne sont plus auto-détectés
 
 Avec OnPush   →   Cycle global lancé,    →   Mode Zoneless
 + Signals         seuls les composants        Seul .set() déclenche
@@ -178,8 +205,8 @@ adding()                          // lire (template ou TS)
 
 | `BehaviorSubject` | `signal()` |
 |---|---|
-| `.subscribe()` obligatoire | Lecture avec `()` |
-| Désabonnement à gérer | Pas de désabonnement |
+| `.subscribe()` ou `async pipe` | Lecture avec `()` |
+| Désabonnement à gérer hors `async pipe` | Pas de désabonnement |
 | Push vers abonnés | Pull au moment du rendu |
 | Adapté aux flux async | Adapté à l'état UI synchrone |
 
@@ -190,7 +217,7 @@ adding()                          // lire (template ou TS)
 | État UI local : booléen, texte, page courante | `signal()` |
 | Valeur calculée à partir d'autres signals | `computed()` — pas `signal()` |
 | Valeur émise par un Observable HTTP ou de route | `toSignal()` |
-| État partagé entre composants sans service | `BehaviorSubject` ou store |
+| État partagé entre composants via service | `BehaviorSubject`, store ou facade Signals |
 
 ---
 
@@ -331,7 +358,7 @@ private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
 |---|---|
 | On doit penser à appeler la méthode | Déclenché automatiquement |
 | Logique dispersée dans plusieurs méthodes | Logique centralisée dans l'effet |
-| Bug si on oublie l'appel | Impossible d'oublier — l'effet observe |
+| Bug si on oublie l'appel | Moins de risque — l'effet observe les dépendances |
 
 ### vs RxJS
 
@@ -459,7 +486,7 @@ this.selectedRequested.emit(account);        // émettre
 | `@Output()` + `EventEmitter` | `output()` |
 |---|---|
 | Hérite de `Subject` RxJS | Pas d'Observable interne |
-| `.subscribe()` possible depuis l'extérieur | Non subscribable depuis l'extérieur |
+| Souvent détourné comme flux RxJS | Contrat pensé pour le parent direct |
 | Zone.js déclenche détection après l'émission | Angular notifie directement le parent |
 
 ### vs RxJS

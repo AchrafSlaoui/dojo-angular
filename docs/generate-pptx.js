@@ -137,7 +137,30 @@ function table(s, rows, x, y, w, colW) {
   });
 }
 
-// ── Slide 3 — Zone.js section ────────────────────────────
+// ── Slide 3 — Intention d'architecture ───────────────────
+{
+  const s = contentSlide('Intention d\'architecture du dojo');
+  s.addText('Le projet montre volontairement deux patterns Signals.', {
+    x: 0.4, y: 1.25, w: 12.5, h: 0.45,
+    fontSize: 15, color: DARK, bold: true,
+  });
+  table(s,
+    [
+      ['Pattern', 'Objectif pédagogique', 'Exemples'],
+      ['Signals dans le composant', 'Comprendre signal(), computed(), effect() sur un état local', 'ClientsComponent, DashboardComponent'],
+      ['Signals dans une facade', 'Partager l\'état, encapsuler les règles métier, exposer asReadonly()', 'AccountsFacade, MovementsFacade'],
+    ],
+    0.4, 2.0, 12.5, [3.0, 5.5, 4.0]
+  );
+  s.addText('L\'asymétrie est intentionnelle : on commence simple dans un composant, puis on extrait vers une facade quand l\'état devient plus riche ou partagé.', {
+    x: 0.4, y: 5.0, w: 12.5, h: 0.8,
+    fontSize: 13, color: '333333',
+    fill: { color: AMBER }, margin: 0.1,
+    line: { color: AMBERBORDER, pt: 1 },
+  });
+}
+
+// ── Slide 4 — Zone.js section ────────────────────────────
 sectionSlide(null, 'Zone.js');
 
 // ── Slide 4 — Ce que fait Zone.js ────────────────────────
@@ -188,7 +211,7 @@ sectionSlide(null, 'Zone.js');
 {
   const s = contentSlide('Mode Zoneless — Angular 18+');
   codeBlock(s,
-    `// app.config.ts\n// Avant  : provideZoneChangeDetection({ eventCoalescing: true })\n// Après  : provideExperimentalZonelessChangeDetection()\n\n` +
+    `// app.config.ts\n// Avant  : provideZoneChangeDetection({ eventCoalescing: true })\n// Après  : provideZonelessChangeDetection()\n\n` +
     `// angular.json\n// Avant  : "polyfills": ["zone.js"]\n// Après  : "polyfills": []`,
     0.4, 1.3, 12.5, 2.8
   );
@@ -235,8 +258,8 @@ sectionSlide(1, 'signal()');
   table(s,
     [
       ['BehaviorSubject', 'signal()'],
-      ['.subscribe() obligatoire', 'Lecture directe avec ()'],
-      ['Désabonnement à gérer', 'Pas de désabonnement'],
+      ['.subscribe() ou async pipe', 'Lecture directe avec ()'],
+      ['Désabonnement à gérer hors async pipe', 'Pas de désabonnement'],
       ['Adapté aux flux async', 'Adapté à l\'état UI synchrone'],
     ],
     6.6, 1.3, 6.3, [3.15, 3.15]
@@ -380,7 +403,7 @@ sectionSlide(4, 'output()');
     [
       ['@Output() + EventEmitter', 'output()'],
       ['Hérite de Subject RxJS', 'Pas d\'Observable interne'],
-      ['.subscribe() possible depuis l\'extérieur', 'Non subscribable depuis l\'extérieur'],
+      ['Souvent détourné comme flux RxJS', 'Contrat pensé pour le parent direct'],
     ],
     0.4, 1.3, 12.5, [6.25, 6.25]
   );
@@ -476,7 +499,7 @@ sectionSlide(6, 'effect() + viewChild()');
     [
       ['Appel impératif après mutation', 'effect()'],
       ['On doit penser à appeler la méthode', 'Déclenché automatiquement'],
-      ['Bug si on oublie l\'appel', 'Impossible d\'oublier — l\'effet observe'],
+      ['Bug si on oublie l\'appel', 'Moins de risque — l\'effet observe les dépendances'],
     ],
     0.4, 1.3, 12.5, [6.25, 6.25]
   );
