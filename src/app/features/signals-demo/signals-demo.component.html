@@ -1,0 +1,136 @@
+<div class="page-header">
+  <h2>Signals — Démonstration interactive</h2>
+  <p>Modifie les valeurs pour observer le comportement de chaque API. Pose des breakpoints dans le <code>.ts</code> pour inspecter le graphe réactif.</p>
+</div>
+
+<div class="sections-grid">
+
+  <!-- ── 1. signal() ──────────────────────────────────────── -->
+  <section class="card demo-section">
+    <div class="section-header">
+      <span class="api-badge">signal()</span>
+      <span class="section-title">Valeur réactive primitive</span>
+    </div>
+    <p class="hint">
+      Se lit avec <code>()</code>, se modifie avec <code>.set()</code> ou <code>.update(v =&gt; …)</code>.
+    </p>
+    <div class="values">
+      <div class="value-item">
+        <code>balance()</code>
+        <strong>{{ balance() }} €</strong>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn outline" type="button" (click)="balance.update(v => v - 100)">− 100</button>
+      <button class="btn primary" type="button" (click)="balance.update(v => v + 100)">+ 100</button>
+      <button class="btn outline danger" type="button" (click)="balance.set(1000)">Reset</button>
+    </div>
+  </section>
+
+  <!-- ── 2. computed() ────────────────────────────────────── -->
+  <section class="card demo-section">
+    <div class="section-header">
+      <span class="api-badge">computed()</span>
+      <span class="section-title">Valeur dérivée mémorisée</span>
+    </div>
+    <p class="hint">
+      Corps réexécuté uniquement si une dépendance signal a changé.
+      Poser un breakpoint sur <code>fees</code> et <code>net</code> dans le <code>.ts</code>.
+    </p>
+    <div class="values">
+      <div class="value-item">
+        <code>balance()</code>
+        <strong>{{ balance() }} €</strong>
+      </div>
+      <div class="value-item">
+        <code>fees()</code>
+        <strong>{{ fees() }} €</strong>
+      </div>
+      <div class="value-item">
+        <code>net()</code>
+        <strong>{{ net() }} €</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 3. effect() ──────────────────────────────────────── -->
+  <section class="card demo-section">
+    <div class="section-header">
+      <span class="api-badge">effect()</span>
+      <span class="section-title">Effet de bord automatique</span>
+    </div>
+    <p class="hint">
+      S'exécute quand un signal lu dans son corps change.
+      Ici il observe <code>balance()</code> et enregistre chaque changement.
+    </p>
+    <ul class="log">
+      @for (entry of changeLog(); track entry) {
+        <li>{{ entry }}</li>
+      } @empty {
+        <li class="empty">Aucun changement enregistré</li>
+      }
+    </ul>
+  </section>
+
+  <!-- ── 4. input() + output() ───────────────────────────── -->
+  <section class="card demo-section">
+    <div class="section-header">
+      <span class="api-badge">input()</span>
+      <span class="api-badge">output()</span>
+      <span class="section-title">Communication parent → enfant</span>
+    </div>
+    <p class="hint">
+      Le composant enfant reçoit <code>balance()</code> via <code>input.required()</code>
+      et émet une intention de remise à zéro via <code>output()</code>.
+      Le parent exécute l'action.
+    </p>
+    <app-balance-card
+      [amount]="balance()"
+      (resetRequested)="onResetRequested()"
+    />
+  </section>
+
+  <!-- ── 5. viewChild() ───────────────────────────────────── -->
+  <section class="card demo-section">
+    <div class="section-header">
+      <span class="api-badge">viewChild()</span>
+      <span class="section-title">Référence DOM comme signal</span>
+    </div>
+    <p class="hint">
+      <code>amountInput()</code> vaut <code>undefined</code> si l'élément est absent du DOM,
+      <code>ElementRef</code> quand il est présent.
+    </p>
+    <div class="input-row">
+      <input
+        #amountRef
+        type="number"
+        [value]="balance()"
+        (change)="balance.set(+$any($event.target).value)"
+        placeholder="Saisir un solde"
+      />
+      <button class="btn primary" type="button" (click)="focusInput()">
+        Focus via viewChild()
+      </button>
+    </div>
+  </section>
+
+  <!-- ── 6. toSignal() ────────────────────────────────────── -->
+  <section class="card demo-section">
+    <div class="section-header">
+      <span class="api-badge">toSignal()</span>
+      <span class="section-title">Observable → Signal</span>
+    </div>
+    <p class="hint">
+      Convertit un Observable en signal. L'abonnement est géré automatiquement —
+      pas de <code>takeUntilDestroyed</code>, pas de <code>.subscribe()</code>.
+      Ici <code>interval(1000)</code> émet toutes les secondes.
+    </p>
+    <div class="values">
+      <div class="value-item">
+        <code>tick()</code>
+        <span class="tick">{{ tick() }}</span>
+      </div>
+    </div>
+  </section>
+
+</div>

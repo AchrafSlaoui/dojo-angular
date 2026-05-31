@@ -53,12 +53,17 @@ export class ClientsComponent {
   readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
   constructor() {
+    // exemples à lire avant l'exercice 6
     effect(() => {
       document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';
     });
+
+    // EXERCICE 3b — ajouter la condition if (this.adding()) autour du focus
     effect(() => {
       this.firstNameInput()?.nativeElement.focus();
     });
+
+    // EXERCICE 3a — ajouter un effect() qui remplace clampCurrentPage()
     this.loadClients();
   }
 
@@ -130,7 +135,7 @@ export class ClientsComponent {
       this.mutating.set(true);
       await firstValueFrom(this.clientsApi.remove(client.id));
       this.clientsState.update((list) => list.filter((c) => c.id !== client.id));
-      this.clampCurrentPage();
+      this.clampCurrentPage(); // EXERCICE 3a — supprimer cet appel une fois l'effect() ajouté
       this.notifications.success('Client supprime.');
     } catch {
       this.notifications.error('La suppression du client a echoue.');
@@ -139,7 +144,7 @@ export class ClientsComponent {
     }
   }
 
-  trackByClientId(index: number, client: Client): string {
+  trackByClientId(_index: number, client: Client): string {
     return client.id;
   }
 
@@ -167,6 +172,7 @@ export class ClientsComponent {
     this.page.set(1);
   }
 
+  // EXERCICE 3a — supprimer cette méthode une fois l'effect() ajouté dans le constructeur
   private clampCurrentPage(): void {
     const clamped = this.pageSlice().page;
     if (clamped !== this.page()) {

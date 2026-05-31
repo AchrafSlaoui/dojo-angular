@@ -42,6 +42,14 @@ export const routes = [
         (m) => m.ClientDetailComponent
       ),
   },
+  {
+    path: 'signals-demo',
+    title: 'Signals Demo',
+    loadComponent: () =>
+      import('./features/signals-demo/signals-demo.component').then(
+        (m) => m.SignalsDemoComponent
+      ),
+  },
   { path: '**', redirectTo: 'dashboard' },
 ] satisfies Routes;
 
