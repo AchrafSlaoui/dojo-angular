@@ -37,9 +37,7 @@ export class AccountsComponent {
   // EXERCICE 10
   readonly totalBalance = this.accountsFacade.totalBalance;
   // EXERCICE 2
-  get blockedAccountsCount(): number {
-    return this.accountsFacade.blockedAccountsCount;
-  }
+  readonly blockedAccountsCount = this.accountsFacade.blockedAccountsCount;
   readonly clientId = signal<string | null>(null);
   adding = false;
   editingAccountId: string | null = null;

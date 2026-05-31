@@ -58,7 +58,7 @@ describe('AccountsComponent', () => {
     expect(fixture.componentInstance.accounts()).toHaveLength(2);
     expect(fixture.componentInstance.totalBalance()).toBe(350);
     // EXERCICE 2
-    expect(fixture.componentInstance.blockedAccountsCount).toBe(1);
+    expect(fixture.componentInstance.blockedAccountsCount()).toBe(1);
   });
 
   it('filters accounts by type', async () => {
