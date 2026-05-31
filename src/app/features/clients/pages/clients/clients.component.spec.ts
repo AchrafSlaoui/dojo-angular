@@ -78,12 +78,12 @@ describe('ClientsComponent (deep)', () => {
     component.newClient = { firstName: 'Old', lastName: 'Value', email: 'old@example.com', phone: '1', address: 'Paris' };
     component.startAdd();
 
-    expect(component.adding()).toBe(true);
+    expect(component.adding).toBe(true);
     expect(component.newClient).toEqual({ firstName: '', lastName: '', email: '', phone: '', address: '' });
 
     component.cancelAdd();
 
-    expect(component.adding()).toBe(false);
+    expect(component.adding).toBe(false);
   });
 
   it('ignores client creation when required names are missing', async () => {
@@ -118,7 +118,7 @@ describe('ClientsComponent (deep)', () => {
     });
     expect(component.clients()[0]).toMatchObject({ id: '3', firstName: 'Alan', lastName: 'Turing' });
     expect(component.page()).toBe(1);
-    expect(component.adding()).toBe(false);
+    expect(component.adding).toBe(false);
     expect(notifications.success).toHaveBeenCalledWith('Client Alan Turing cree.');
   });
 

@@ -47,7 +47,7 @@ export class ClientsComponent {
   readonly totalPages = computed(() => this.pageSlice().totalPages);
   readonly allClients = computed(() => listClients(this.clientsState(), this.search()));
   readonly useVirtualScroll = computed(() => this.totalClients() > 100);
-  readonly adding = signal(false);
+  adding = false;
   newClient: Omit<Client, 'id'> = { firstName: '', lastName: '', email: '', phone: '', address: '' };
   private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
   readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
@@ -79,7 +79,7 @@ export class ClientsComponent {
   }
 
   startAdd(): void {
-    this.adding.set(true);
+    this.adding = true;
     this.newClient = { firstName: '', lastName: '', email: '', phone: '', address: '' };
   }
 
@@ -94,7 +94,7 @@ export class ClientsComponent {
       this.clientsState.update((list) => [{ ...created, recentMovements: [] }, ...list.filter((c) => c.id !== created.id)]);
       this.page.set(1);
       this.notifications.success(`Client ${firstName} ${lastName} cree.`);
-      this.adding.set(false);
+      this.adding = false;
     } catch {
       this.notifications.error("Impossible d'ajouter le client.");
     } finally {
@@ -103,7 +103,7 @@ export class ClientsComponent {
   }
 
   cancelAdd(): void {
-    this.adding.set(false);
+    this.adding = false;
   }
 
   async onSaveClient(update: ClientUpdate): Promise<void> {

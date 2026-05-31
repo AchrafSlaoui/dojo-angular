@@ -1,7 +1,7 @@
 <h2>Clients</h2>
 <div class="search">
   <input type="text" [ngModel]="search()" (ngModelChange)="setSearch($event)" placeholder="Rechercher par nom..." />
-  @if (!adding()) {
+  @if (!adding) {
     <button class="icon-btn plus" (click)="startAdd()" title="Ajouter un client" aria-label="Ajouter">
       <span class="icon i-plus icon-lg"></span>
     </button>
@@ -25,7 +25,7 @@
   <div class="status">Traitement en cours...</div>
 }
 
-@if (adding()) {
+@if (adding) {
   <form class="add-client card" (ngSubmit)="saveAdd()">
     <input #firstNameRef type="text" [(ngModel)]="newClient.firstName" name="firstName" placeholder="Prenom" required />
     <input type="text" [(ngModel)]="newClient.lastName" name="lastName" placeholder="Nom" required />
