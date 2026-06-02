@@ -1,24 +1,47 @@
-# Angular Signals — Support de présentation dojo
+# Angular 21 Signals — Support de présentation dojo
 
 ---
 
-## Avant de commencer — Le problème que Signals résout
+## Avant de commencer — Zone.js et Signals
 
-Angular avant Signals reposait sur **Zone.js** : une librairie qui patche les APIs du navigateur
-(`setTimeout`, `Promise`, `addEventListener`…) pour détecter automatiquement les changements
-et déclencher un re-render du composant entier.
+Ce dojo se déroule en **Angular 21**. Le projet garde volontairement `zone.js`
+et `OnPush` pour montrer une migration progressive vers Signals, sans basculer
+toute l'application en zoneless dès le départ.
+
+### Rappel Zone.js
+
+**Zone.js** aide Angular à savoir qu'un événement asynchrone a eu lieu.
+Il patche les APIs du navigateur (`setTimeout`, `Promise`, `addEventListener`,
+`XMLHttpRequest`, etc.) puis prévient Angular qu'un cycle de détection doit être lancé.
+
+Zone.js ne modélise pas l'état de l'application : il sert surtout à **déclencher**
+la détection de changement.
+
+- Définition : librairie qui intercepte les APIs async du navigateur.
+- Rôle : prévenir Angular qu'un cycle de détection doit être lancé.
+- Limite : ne décrit pas l'état, il déclenche seulement la vérification.
+
+### Définition de Signal et problème résolu
+
+Un **signal** est une valeur réactive observable par Angular. Il contient une valeur,
+se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()`
+et `effect()` qui l'ont lu.
+
+Le problème résolu par Signals : rendre l'état local explicite et permettre à Angular
+de savoir précisément quelles vues ou valeurs dérivées dépendent de cet état.
+
+- Définition : valeur réactive lue avec `()`.
+- Rôle : mémoriser les lecteurs dépendants.
+- Problème résolu : état explicite et mises à jour plus ciblées.
 
 ```
-Zone.js : un événement se produit → Angular re-rend TOUT le composant
-Signals  : un signal change       → Angular re-rend UNIQUEMENT ce qui lit ce signal
+Zone.js : un événement async se produit → Angular lance la détection
+Signals : une valeur change             → Angular connaît les lecteurs dépendants
 ```
-
-**RxJS** résolvait un autre problème : coordonner des flux de données asynchrones
-(HTTP, WebSocket, timer, combineLatest…). Il reste pertinent pour ces cas.
 
 ```
 Signals résout : l'état réactif local synchrone
-RxJS résout    : les flux asynchrones et les combinaisons dans le temps
+Zone.js résout : le déclenchement automatique de la détection après async
 ```
 
 ---
@@ -48,110 +71,6 @@ Le projet montre volontairement **deux patterns Signals**.
 > L'asymétrie est intentionnelle : on commence simple dans un composant,
 > puis on extrait vers une facade quand l'état devient plus riche ou partagé.
 
----
-
-## Zone.js — Comprendre, limiter, supprimer
-
-### Ce que fait Zone.js
-
-Zone.js remplace les APIs async natives du navigateur par ses propres versions pour
-intercepter chaque appel et prévenir Angular qu'un changement a peut-être eu lieu.
-
-```ts
-// Zone.js remplace silencieusement au démarrage :
-window.setTimeout       → version Zone.js
-window.Promise          → version Zone.js
-window.fetch            → version Zone.js
-window.addEventListener → version Zone.js
-XMLHttpRequest          → version Zone.js
-```
-
-Quand le callback async se termine, Zone.js dit à Angular : *"quelque chose a peut-être changé"*.
-Angular lance un cycle de détection et parcourt **tous les composants**.
-
-```ts
-// Zone.js seul — Angular re-rend TOUT le composant après le setTimeout
-setTimeout(() => {
-  this.name = 'Alice';
-}, 1000);
-
-// Signals + Zone.js encore présent (cas de ce projet, OnPush)
-setTimeout(() => {
-  this.name.set('Alice'); // Zone.js déclenche encore un cycle,
-}, 1000);                 // mais seuls les lecteurs de name() sont re-rendus
-
-// Signals + Zoneless (Angular 18+)
-setTimeout(() => {
-  this.name.set('Alice'); // setTimeout non patché — seul .set() déclenche
-}, 1000);                 // le re-render sur les lecteurs de name()
-```
-
-> Zone.js espionne les APIs pour **deviner** qu'un changement a eu lieu.
-> Signals **annonce** explicitement le changement.
-
----
-
-### Cas 1 — Limiter le re-render par composant avec `OnPush`
-
-`OnPush` dit à Angular : **ignore ce composant pendant un cycle de détection
-sauf si une raison explicite existe**.
-
-```ts
-@Component({
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-```
-
-| Déclencheur | Re-render ? |
-|---|---|
-| Un `input()` signal reçoit une nouvelle valeur | Oui |
-| Un `@Input()` reçoit une nouvelle référence | Oui |
-| Un `async pipe` émet une valeur | Oui |
-| `cdr.markForCheck()` appelé manuellement | Oui |
-| Une propriété de classe classique change | **Non** |
-| Un `@Input()` ou un `input()`  reçoit le même objet muté | **Non** |
-
-> `OnPush` ne supprime pas Zone.js. Zone.js continue de déclencher des cycles globaux —
-> `OnPush` fait juste que ce composant est **sauté** s'il n'est pas marqué dirty.
-
----
-
-### Cas 2 — Supprimer Zone.js avec le mode Zoneless (Angular 18+)
-
-**1. `app.config.ts` :**
-
-```ts
-// Avant
-provideZoneChangeDetection({ eventCoalescing: true })
-
-// Après
-provideZonelessChangeDetection()
-```
-
-**2. `angular.json` :**
-
-```json
-// Avant
-"polyfills": ["zone.js"]
-
-// Après
-"polyfills": []
-```
-
----
-
-### Les 3 états d'une app Angular
-
-```
-                  Zone.js présent            Zone.js supprimé
-                  ──────────────────────     ────────────────────────
-Sans OnPush   →   Re-render global       →    Les changements classiques
-                  à chaque async              ne sont plus auto-détectés
-
-Avec OnPush   →   Cycle global lancé,    →   Mode Zoneless
-+ Signals         seuls les composants        Seul .set() déclenche
-                  dirty sont re-rendus        un re-render ciblé
-```
 ---
 
 ## Exercice 1 — `signal()`
@@ -184,7 +103,15 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 
 ### Définition
 
-> Un signal est une **valeur réactive primitive**. Angular suit qui le lit et ne re-rend que ces lecteurs.
+> Un signal est une **valeur réactive observable par Angular**. Il contient une valeur,
+> se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()`
+> et `effect()` qui l'ont lu.
+
+Quand la valeur change, Angular sait précisément quelles dépendances invalider :
+les valeurs dérivées sont recalculées si nécessaire et les vues concernées sont mises à jour.
+
+`signal()` crée un signal mutable. `computed()` crée un signal dérivé en lecture seule.
+`effect()` observe des signals, mais n'est pas un signal.
 
 ```ts
 readonly adding = signal(false);  // déclarer
@@ -201,23 +128,14 @@ adding()                          // lire (template ou TS)
 | Détection déclenchée par Zone.js après chaque async | Détection déclenchée par `.set()` |
 | Rien à déclarer — Zone.js devine | Déclarer `signal()` — Angular sait exactement |
 
-### vs RxJS
-
-| `BehaviorSubject` | `signal()` |
-|---|---|
-| `.subscribe()` ou `async pipe` | Lecture avec `()` |
-| Désabonnement à gérer hors `async pipe` | Pas de désabonnement |
-| Push vers abonnés | Pull au moment du rendu |
-| Adapté aux flux async | Adapté à l'état UI synchrone |
-
 ### Quand utiliser `signal()` — et quand rester ailleurs
 
 | Situation | Outil |
 |---|---|
 | État UI local : booléen, texte, page courante | `signal()` |
 | Valeur calculée à partir d'autres signals | `computed()` — pas `signal()` |
-| Valeur émise par un Observable HTTP ou de route | `toSignal()` |
-| État partagé entre composants via service | `BehaviorSubject`, store ou facade Signals |
+| Valeur issue d'une route ou d'un appel HTTP | `toSignal()` |
+| État partagé entre composants via service | facade Signals ou store dédié |
 
 ---
 
@@ -280,22 +198,13 @@ blockedAccountsCount()  // lecture
 | Angular ignore si la valeur a changé | Angular mémorise et invalide le cache |
 | Règle dans le composant | Règle dans la facade, partageable |
 
-### vs RxJS
-
-| `combineLatest` + `map` | `computed()` |
-|---|---|
-| Observable qui émet | Valeur synchrone mémorisée |
-| `async pipe` ou `.subscribe()` | Lecture directe avec `()` |
-| Push à chaque changement | Pull — calculé seulement si lu |
-| Adapté aux combinaisons dans le temps | Adapté aux dérivations synchrones pures |
-
 ### Quand utiliser `computed()` — et quand rester ailleurs
 
 | Situation | Outil |
 |---|---|
 | Total, compteur, libellé dérivé d'autres signals | `computed()` |
-| Règle qui dépend du temps (debounce, delay) | `pipe` RxJS — `computed()` est synchrone |
-| Calcul déclenché par un Observable | `pipe(map(...))` RxJS puis `toSignal()` |
+| Règle qui dépend du temps (debounce, delay) | Flux asynchrone — `computed()` est synchrone |
+| Calcul déclenché par une source asynchrone | Source asynchrone puis `toSignal()` |
 | Effet de bord (appel HTTP, log, focus) | `effect()` — pas `computed()` |
 
 ---
@@ -360,23 +269,15 @@ private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
 | Logique dispersée dans plusieurs méthodes | Logique centralisée dans l'effet |
 | Bug si on oublie l'appel | Moins de risque — l'effet observe les dépendances |
 
-### vs RxJS
-
-| `tap()` / `switchMap()` dans un pipe | `effect()` |
-|---|---|
-| Déclenché par une émission Observable | Déclenché par un changement de signal |
-| Reste dans le contexte Observable | Fonctionne directement dans la classe |
-| Adapté aux flux transformés | Adapté aux effets sur état local |
-
 ### Quand utiliser `effect()` — et quand rester ailleurs
 
 | Situation | Outil |
 |---|---|
 | Titre du document, focus, scroll après changement d'état | `effect()` |
 | Correction d'un état cohérent (clamping, reset) | `effect()` |
-| Chargement HTTP déclenché par un signal | `effect()` |
+| Chargement HTTP déclenché par un signal | Possible avec `effect()`, mais à encadrer |
 | Valeur calculée à partir d'autres signals | `computed()` — pas `effect()` |
-| Effet déclenché par un Observable | `tap()` RxJS dans le pipe |
+| Effet déclenché par une source asynchrone | Source asynchrone ou `toSignal()` selon le cas |
 
 ---
 
@@ -426,14 +327,6 @@ showStatus()                           // lecture
 | Lu dans `computed()` sans créer de dépendance | Lu dans `computed()` → dépendance réelle |
 | Zone.js déclenche détection après chaque cycle | Re-render seulement si la valeur change |
 
-### vs RxJS
-
-| `@Input()` + `ngOnChanges` + `Subject` | `input()` |
-|---|---|
-| `ngOnChanges` requis pour détecter le changement | Changement détecté automatiquement |
-| `.next()` manuel sur le Subject | Pas de plomberie |
-| Plusieurs fichiers impliqués | Déclaration en une ligne |
-
 ### Quand utiliser `input()` — et quand rester ailleurs
 
 | Situation | Outil |
@@ -441,7 +334,7 @@ showStatus()                           // lecture
 | Entrée lue dans un `computed()` ou `effect()` | `input()` |
 | Entrée requise sans valeur par défaut | `input.required<T>()` |
 | Entrée legacy dans un composant non migré | `@Input()` acceptable |
-| Valeur bidirectionnelle parent ↔ enfant | `model()` (Angular 17.2+) |
+| Valeur bidirectionnelle parent ↔ enfant | `model()` (disponible en Angular 21) |
 
 ---
 
@@ -485,26 +378,45 @@ this.selectedRequested.emit(account);        // émettre
 
 | `@Output()` + `EventEmitter` | `output()` |
 |---|---|
-| Hérite de `Subject` RxJS | Pas d'Observable interne |
-| Souvent détourné comme flux RxJS | Contrat pensé pour le parent direct |
+| Hérite historiquement d'un mécanisme de flux | Pas d'Observable interne |
+| Souvent détourné comme flux applicatif | Contrat pensé pour le parent direct |
 | Zone.js déclenche détection après l'émission | Angular notifie directement le parent |
-
-### vs RxJS
-
-| `Subject` exposé publiquement | `output()` |
-|---|---|
-| Consommable depuis n'importe où | Consommable uniquement par le parent direct |
-| Couplages implicites possibles | Contrat explicite du composant |
-| Adapté à un bus d'événements global | Adapté à la communication parent-enfant |
 
 ### Quand utiliser `output()` — et quand rester ailleurs
 
 | Situation | Outil |
 |---|---|
 | Événement vers le parent direct | `output()` |
-| Événement global ou cross-composant | `Subject` dans un service |
-| Flux avec opérateurs RxJS (debounce, merge…) | `Subject` dans le composant |
-| Valeur bidirectionnelle entrée + sortie | `model()` (Angular 17.2+) |
+| Événement global ou cross-composant | Service dédié |
+| Flux avec opérateurs temporels | Flux dédié, pas `output()` |
+| Valeur bidirectionnelle entrée + sortie | `model()` (disponible en Angular 21) |
+
+---
+
+## Rappel RxJS — Avant `toSignal()`
+
+**RxJS** sert à modéliser et composer des flux de données dans le temps :
+HTTP, WebSocket, événements, `debounceTime`, `switchMap`, `combineLatest`, etc.
+
+RxJS ne remplace pas Zone.js. RxJS organise les flux asynchrones ; Zone.js déclenche
+la détection de changement ; Signals rend l'état et ses dépendances explicites.
+
+`toSignal()` ne remplace pas RxJS : il permet de **consommer la dernière valeur
+d'un Observable sous forme de signal** dans un composant.
+
+```
+RxJS    : un flux émet dans le temps → on compose/transforme ce flux
+toSignal: Observable → Signal        → on lit la dernière valeur avec ()
+```
+
+```ts
+readonly clientId = toSignal(
+  this.route.paramMap.pipe(map(params => params.get('id'))),
+  { initialValue: null }
+);
+
+clientId() // lecture côté composant/template
+```
 
 ---
 
@@ -666,6 +578,156 @@ Signal → toObservable() → pipe(debounceTime) → toSignal()
 Observable HTTP         → pipe(map, catchError, startWith) → toSignal()
 ```
 
+---
+
+## Fin de dojo — Limiter ou supprimer Zone.js
+
+### Ce que fait Zone.js
+
+Zone.js remplace les APIs async natives du navigateur par ses propres versions pour
+intercepter chaque appel et prévenir Angular qu'un changement a peut-être eu lieu.
+
+```ts
+// Zone.js remplace silencieusement au démarrage :
+window.setTimeout       → version Zone.js
+window.Promise          → version Zone.js
+window.fetch            → version Zone.js
+window.addEventListener → version Zone.js
+XMLHttpRequest          → version Zone.js
+```
+
+Quand le callback async se termine, Zone.js dit à Angular : *"quelque chose a peut-être changé"*.
+Angular lance alors un cycle de détection global. Avec `OnPush`, les composants
+non marqués dirty sont sautés, ce qui limite déjà le travail.
+
+```ts
+// Zone.js seul — Angular lance un cycle après le setTimeout
+setTimeout(() => {
+  this.name = 'Alice';
+}, 1000);
+
+// Signals + Zone.js encore présent (cas de ce projet, OnPush)
+setTimeout(() => {
+  this.name.set('Alice'); // Zone.js déclenche encore un cycle,
+}, 1000);                 // mais seuls les lecteurs de name() sont re-rendus
+
+// Signals + Zoneless (possible en Angular 21)
+setTimeout(() => {
+  this.name.set('Alice'); // setTimeout non patché — seul .set() déclenche
+}, 1000);                 // le re-render sur les lecteurs de name()
+```
+
+> Zone.js espionne les APIs pour **deviner** qu'un changement a eu lieu.
+> Signals **annonce** explicitement le changement.
+
+---
+
+### Cas 1 — Limiter le re-render par composant avec `OnPush`
+
+`OnPush` dit à Angular : **ignore ce composant pendant un cycle de détection
+sauf si une raison explicite existe**.
+
+```ts
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+```
+
+| Déclencheur | Re-render ? |
+|---|---|
+| Un `input()` signal reçoit une nouvelle valeur | Oui |
+| Un `@Input()` reçoit une nouvelle référence | Oui |
+| Un `async pipe` émet une valeur | Oui |
+| `cdr.markForCheck()` appelé manuellement | Oui |
+| Une propriété de classe classique change | **Non** |
+| Un `@Input()` ou un `input()`  reçoit le même objet muté | **Non** |
+
+> `OnPush` ne supprime pas Zone.js. Zone.js continue de déclencher des cycles globaux —
+> `OnPush` fait juste que ce composant est **sauté** s'il n'est pas marqué dirty.
+
+### Comment un composant est marqué dirty
+
+**Dirty** = Angular doit réévaluer ce composant lors du prochain cycle de détection.
+
+| Déclencheur | Qui marque dirty ? | Mécanisme |
+|---|---|---|
+| `@Input()` reçoit une nouvelle référence | Angular (interne) | Comparaison par référence à chaque cycle Zone.js |
+| `input()` signal change | Angular (graphe signals) | `.set()` invalide les vues qui lisent ce signal |
+| `async pipe` émet une valeur | `async pipe` lui-même | Appelle `cdr.markForCheck()` à chaque émission |
+| `cdr.markForCheck()` | Le développeur | Marque le composant **et tous ses ancêtres** |
+| Signal lu dans le template change | Angular (graphe signals) | `.set()` cible directement les vues concernées |
+
+```
+Zone.js + OnPush :
+  Zone.js détecte un async → cycle global → Angular parcourt l'arbre
+  → saute les composants non dirty → re-rend les dirty
+
+Signals + OnPush :
+  .set() → Angular sait exactement quelles vues lisent ce signal
+  → marque ces vues dirty ; avec Zone.js, le cycle global peut encore exister
+```
+
+---
+
+### Cas 2 — Supprimer Zone.js avec le mode Zoneless en Angular 21
+
+Ce n'est pas l'objectif de ce dojo, mais c'est la suite logique une fois l'état
+principal piloté par Signals.
+
+**1. `app.config.ts` :**
+
+```ts
+// Avant
+provideZoneChangeDetection({ eventCoalescing: true })
+
+// Après
+provideZonelessChangeDetection()
+```
+
+**2. `angular.json` :**
+
+```json
+// Avant
+"polyfills": ["zone.js"]
+
+// Après
+"polyfills": []
+```
+
+En zoneless, Signals ne sont pas obligatoires partout, mais chaque changement
+doit passer par un déclencheur connu d'Angular : `signal().set()`, `input()`,
+événement template, `async pipe`, `markForCheck()`, router/forms, etc.
+
+```ts
+// Fragile en zoneless : propriété classique modifiée dans un callback async
+name = 'Alice';
+
+setTimeout(() => {
+  this.name = 'Bob';
+}, 1000);
+
+// Robuste en zoneless : le signal notifie Angular explicitement
+name = signal('Alice');
+
+setTimeout(() => {
+  this.name.set('Bob');
+}, 1000);
+```
+
+---
+
+### Les 3 états d'une app Angular
+
+```
+                  Zone.js présent            Zone.js supprimé
+                  ──────────────────────     ────────────────────────
+Sans OnPush   →   Re-render global       →    Les changements classiques
+                  à chaque async              ne sont plus auto-détectés
+
+Avec OnPush   →   Cycle global lancé,    →   Mode Zoneless
++ Signals         seuls les composants        Seul .set() déclenche
+                  dirty sont re-rendus        un re-render ciblé
+```
 ---
 
 ## Règles à retenir pendant le dojo
