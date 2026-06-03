@@ -1,29 +1,29 @@
-# ADR 0001 - Architecture pedagogique du dojo Angular Signals
+# ADR 0001 - Architecture pédagogique du dojo Angular Signals
 
 ## Statut
 
-Accepte.
+Accepté.
 
 ## Contexte
 
 Le dojo enseigne Angular Signals dans une application Angular 21 existante.
-L'objectif n'est pas de montrer une application totalement migree, mais une
-migration progressive et realiste depuis un projet Angular avec `zone.js`,
+L'objectif n'est pas de montrer une application totalement migrée, mais une
+migration progressive et réaliste depuis un projet Angular avec `zone.js`,
 `OnPush`, RxJS et des composants standalone.
 
-Le support de presentation doit rester centre sur les exercices. Les intentions
-d'architecture du projet sont documentees ici pour eviter d'alourdir les slides.
+Le support de présentation doit rester centré sur les exercices. Les intentions
+d'architecture du projet sont documentées ici pour éviter d'alourdir les slides.
 
-## Decisions
+## Décisions
 
 ### Garder `zone.js` et `OnPush` pendant le dojo
 
-Le projet conserve `zone.js` et `OnPush` pour montrer que Signals peut etre
-introduit progressivement. Le dojo ne force pas un passage immediat en mode
+Le projet conserve `zone.js` et `OnPush` pour montrer que Signals peut être
+introduit progressivement. Le dojo ne force pas un passage immédiat en mode
 zoneless.
 
-`zone.js` continue de declencher la detection de changement apres les evenements
-asynchrones. Signals rend l'etat et ses dependances plus explicites.
+`zone.js` continue de déclencher la détection de changement après les événements
+asynchrones. Signals rend l'état et ses dépendances plus explicites.
 
 ### Montrer deux patterns Signals
 
@@ -31,55 +31,55 @@ Le projet montre volontairement deux styles :
 
 - Signals directement dans les composants pour les bases : `signal()`,
   `computed()`, `effect()`.
-- Signals dans des facades pour l'etat partage et les regles metier derivees.
+- Signals dans des façades pour l'état partagé et les règles métier dérivées.
 
-Cette asymetrie est intentionnelle. Elle sert de progression pedagogique :
-d'abord un composant simple, puis une extraction vers une facade quand l'etat
-devient partage ou plus riche.
+Cette asymétrie est intentionnelle. Elle sert de progression pédagogique :
+d'abord un composant simple, puis une extraction vers une façade quand l'état
+devient partagé ou plus riche.
 
 ### Accepter un code mixte pendant la migration
 
-Le projet contient a la fois :
+Le projet contient à la fois :
 
 - des signals ;
-- des proprietes classiques ;
-- des facades ;
+- des propriétés classiques ;
+- des façades ;
 - des flux RxJS.
 
-Ce melange est volontaire. Tous les etats locaux transitoires ne doivent pas etre
-convertis mecaniquement en signals. Une propriete classique reste acceptable si
-elle est locale, simple, manipulee par des handlers de template et sans besoin
-d'etre lue par un `computed()` ou un `effect()`.
+Ce mélange est volontaire. Tous les états locaux transitoires ne doivent pas
+être convertis mécaniquement en signals. Une propriété classique reste acceptable
+si elle est locale, simple, manipulée par des handlers de template et sans besoin
+d'être lue par un `computed()` ou un `effect()`.
 
-### Scoper les facades stateful au composant
+### Scoper les façades stateful au composant
 
-Le projet contient deux types de facades qui n'ont pas le meme role :
+Le projet contient deux types de façades qui n'ont pas le même rôle :
 
-**Facades stateful** (`AccountsFacade`, `MovementsFacade`) : declarees dans
+**Façades stateful** (`AccountsFacade`, `MovementsFacade`) : déclarées dans
 `providers` du composant consommateur, pas dans `root`. Chaque page obtient sa
-propre instance. L'etat ne fuit pas entre navigations et le cycle de vie est lie
+propre instance. L'état ne fuit pas entre navigations et le cycle de vie est lié
 au composant.
 
 ```ts
 @Component({ providers: [AccountsFacade] })
 ```
 
-**Facade d'orchestration** (`ClientAccountsFacade`) : `providedIn: 'root'`,
-sans etat, orchestre uniquement des appels paralleles et retourne le resultat.
-Stateless, donc sans risque a etre globale.
+**Façade d'orchestration** (`ClientAccountsFacade`) : `providedIn: 'root'`,
+sans état, orchestre uniquement des appels parallèles et retourne le résultat.
+Stateless, donc sans risque à être globale.
 
-Regle : une facade qui porte de l'etat doit etre scopee au composant. Une
-facade sans etat peut etre globale.
+Règle : une façade qui porte de l'état doit être scopée au composant. Une
+façade sans état peut être globale.
 
 ### Garder RxJS pour les flux temporels
 
-RxJS reste l'outil adapte pour les flux dans le temps : debounce, combinaison de
+RxJS reste l'outil adapté pour les flux dans le temps : debounce, combinaison de
 flux, WebSocket, polling, orchestration d'Observables.
 
-`toSignal()` est un pont vers le monde Signals. Il expose la derniere valeur d'un
+`toSignal()` est un pont vers le monde Signals. Il expose la dernière valeur d'un
 Observable sous forme de signal. Il ne remplace pas RxJS.
 
-### Organiser les branches d'exercices de maniere cumulative
+### Organiser les branches d'exercices de manière cumulative
 
 Les branches d'exercices sont cumulatives :
 
@@ -95,15 +95,15 @@ init
                             └── exercice-8
 ```
 
-Chaque branche ajoute uniquement la correction de son exercice par rapport a la
-branche precedente.
+Chaque branche ajoute uniquement la correction de son exercice par rapport à la
+branche précédente.
 
-## Consequences
+## Conséquences
 
-- Les participants voient une migration progressive, pas une reecriture totale.
-- Les proprietes classiques et les signals peuvent coexister dans le meme projet.
-- Les facades restent pertinentes pour l'etat partage.
-- RxJS garde son role sur les flux temporels.
-- Le mode zoneless reste un sujet avance et separe des exercices principaux.
-- Le support principal peut rester concentre sur les definitions, consignes et
-  exemples, pendant que cet ADR porte les decisions d'architecture.
+- Les participants voient une migration progressive, pas une réécriture totale.
+- Les propriétés classiques et les signals peuvent coexister dans le même projet.
+- Les façades restent pertinentes pour l'état partagé.
+- RxJS garde son rôle sur les flux temporels.
+- Le mode zoneless reste un sujet avancé et séparé des exercices principaux.
+- Le support principal peut rester concentré sur les définitions, consignes et
+  exemples, pendant que cet ADR porte les décisions d'architecture.
