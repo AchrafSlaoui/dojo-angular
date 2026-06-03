@@ -5,6 +5,13 @@
 
   @if (!editMode) {
     <div class="row">
+      <div class="avatar">
+        @if (client().photoUrl) {
+          <img [src]="client().photoUrl" [alt]="client().firstName + ' ' + client().lastName" loading="lazy" />
+        } @else {
+          <span>{{ client().firstName.charAt(0) }}{{ client().lastName.charAt(0) }}</span>
+        }
+      </div>
       <div class="name">
         <div class="first">{{ client().firstName }}</div>
         <div class="last">{{ client().lastName | formatValue:'text':true }}</div>

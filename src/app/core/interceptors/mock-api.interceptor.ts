@@ -10,7 +10,7 @@ type ClientRecord = Client & { accounts?: Account[]; movements?: Movement[] };
 let DB: ClientRecord[] | null = null;
 const STORAGE_KEY = 'dojo-angular-2-mock';
 const STORAGE_VERSION_KEY = 'dojo-angular-2-mock-version';
-const DATA_VERSION = 3;
+const DATA_VERSION = 4;
 
 export function mockApiInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   const response = handleMockApiRequest(req);
@@ -49,6 +49,7 @@ function handleMockApiRequest(req: HttpRequest<unknown>): Observable<HttpEvent<u
       ),
       phone: String(body.phone ?? ''),
       address: String(body.address ?? ''),
+      photoUrl: String(body.photoUrl ?? mockClientPhotoUrl(DB?.length ?? 0)),
       accounts: [],
     };
     DB = DB ?? [];
@@ -71,6 +72,7 @@ function handleMockApiRequest(req: HttpRequest<unknown>): Observable<HttpEvent<u
       email: patch.email ?? original.email,
       phone: patch.phone ?? original.phone,
       address: patch.address ?? original.address,
+      photoUrl: patch.photoUrl ?? original.photoUrl,
     };
     DB![idx] = updated;
     persist();
@@ -257,6 +259,7 @@ function ensureDb(): void {
     DB = seedData();
   }
   ensureHumanNames(DB);
+  ensureClientPhotos(DB);
   ensureAccounts(DB);
   persist();
 }
@@ -310,6 +313,7 @@ function seedData(): ClientRecord[] {
       email: 'jean.dupont@example.com',
       phone: '+331700000001',
       address: 'Paris, France',
+      photoUrl: mockClientPhotoUrl(0),
       movements: [
         { id: uuid(), date: formatDate(new Date()), type: 'credit', amount: 1200, description: 'Salaire' },
         { id: uuid(), date: formatDate(daysAgo(3)), type: 'debit', amount: 200, description: 'Courses' },
@@ -322,6 +326,7 @@ function seedData(): ClientRecord[] {
       email: 'marie.martin@example.com',
       phone: '+331700000002',
       address: 'Lyon, France',
+      photoUrl: mockClientPhotoUrl(1),
       movements: [
         { id: uuid(), date: formatDate(daysAgo(2)), type: 'debit', amount: 150, description: 'Restaurant' },
         { id: uuid(), date: formatDate(daysAgo(20)), type: 'credit', amount: 500, description: 'Vente' },
@@ -340,11 +345,13 @@ function seedData(): ClientRecord[] {
       email: `${slugName(first)}.${slugName(last)}@example.com`,
       phone: `+3301${String(100000 + idx).slice(-6)}`,
       address: city,
+      photoUrl: mockClientPhotoUrl(clients.length),
       movements: randomMovements(),
     });
   }
 
   ensureHumanNames(clients);
+  ensureClientPhotos(clients);
   ensureMovementsThisWeek(clients);
   ensureAccounts(clients);
   return clients;
@@ -365,8 +372,20 @@ function ensureHumanNames(db: ClientRecord[]): void {
       c.lastName = last;
       c.email = `${slugName(first)}.${slugName(last)}@example.com`;
       c.address = CITY_POOL[i % CITY_POOL.length];
+      c.photoUrl = mockClientPhotoUrl(i);
     }
   }
+}
+
+function ensureClientPhotos(db: ClientRecord[]): void {
+  for (let i = 0; i < db.length; i++) {
+    db[i].photoUrl = db[i].photoUrl || mockClientPhotoUrl(i);
+  }
+}
+
+function mockClientPhotoUrl(index: number): string {
+  const imageId = (index % 70) + 1;
+  return `https://i.pravatar.cc/160?img=${imageId}`;
 }
 
 function ensureMovementsThisWeek(clients: ClientRecord[]): void {

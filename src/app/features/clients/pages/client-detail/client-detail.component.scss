@@ -9,6 +9,51 @@
   border-radius: 12px;
 }
 
+.client-summary {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.client-summary > div:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.client-summary strong {
+  font-size: 1.2rem;
+}
+
+.client-summary span {
+  color: var(--muted);
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--primary) 14%, white);
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .info .cell {
   display: flex;
   flex-direction: column;

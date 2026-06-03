@@ -44,6 +44,38 @@ describe('clients-collection.util', () => {
       expect(result.length).toBe(1);
       expect(result[0].firstName).toBe('Ada');
     });
+
+    it('sorts by total movement amount descending', () => {
+      const clients: ClientActivity[] = [
+        { id: '1', firstName: 'A', lastName: 'A', recentMovements: [{ id: 'm1', date: '2024-02-10', type: 'credit', amount: 50, description: '' }] },
+        {
+          id: '2',
+          firstName: 'B',
+          lastName: 'B',
+          recentMovements: [
+            { id: 'm2', date: '2024-02-11', type: 'credit', amount: 40, description: '' },
+            { id: 'm3', date: '2024-02-12', type: 'debit', amount: 30, description: '' },
+          ],
+        },
+        { id: '3', firstName: 'C', lastName: 'C', recentMovements: [] },
+      ];
+
+      const result = listClients(clients, undefined, 'totalMovementsDesc');
+
+      expect(result.map((client) => client.id)).toEqual(['2', '1', '3']);
+    });
+
+    it('sorts by total movement amount ascending', () => {
+      const clients: ClientActivity[] = [
+        { id: '1', firstName: 'A', lastName: 'A', recentMovements: [{ id: 'm1', date: '2024-02-10', type: 'credit', amount: 50, description: '' }] },
+        { id: '2', firstName: 'B', lastName: 'B', recentMovements: [{ id: 'm2', date: '2024-02-11', type: 'credit', amount: 70, description: '' }] },
+        { id: '3', firstName: 'C', lastName: 'C', recentMovements: [] },
+      ];
+
+      const result = listClients(clients, undefined, 'totalMovementsAsc');
+
+      expect(result.map((client) => client.id)).toEqual(['3', '1', '2']);
+    });
   });
 
   describe('getWeeklyClients', () => {
@@ -98,6 +130,18 @@ describe('clients-collection.util', () => {
       expect(res.page).toBe(1);
       expect(res.pageSize).toBe(1);
       expect(res.totalPages).toBe(1);
+    });
+
+    it('applies sort before slicing the page', () => {
+      const clients: ClientActivity[] = [
+        { id: '1', firstName: 'A', lastName: 'A', recentMovements: [{ id: 'm1', date: '2024-02-10', type: 'credit', amount: 10, description: '' }] },
+        { id: '2', firstName: 'B', lastName: 'B', recentMovements: [{ id: 'm2', date: '2024-02-11', type: 'credit', amount: 30, description: '' }] },
+        { id: '3', firstName: 'C', lastName: 'C', recentMovements: [{ id: 'm3', date: '2024-02-12', type: 'credit', amount: 20, description: '' }] },
+      ];
+
+      const result = paginateClients({ clients, page: 1, pageSize: 2, sort: 'totalMovementsDesc' });
+
+      expect(result.items.map((client) => client.id)).toEqual(['2', '3']);
     });
   });
 });

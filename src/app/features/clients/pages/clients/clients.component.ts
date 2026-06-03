@@ -10,7 +10,7 @@ import { ClientCardComponent } from '@clients/components/client-card/client-card
 import { NotificationService } from '@shared/services/notification.service';
 import { ConfirmService } from '@shared/services/confirm.service';
 import { ClientsApiService } from '@clients/services/clients-api.service';
-import { listClients, paginateClients } from '@clients/utils/clients-collection.util';
+import { ClientSort, listClients, paginateClients } from '@clients/utils/clients-collection.util';
 
 @Component({
   selector: 'app-clients',
@@ -27,6 +27,7 @@ export class ClientsComponent {
 
   private readonly clientsState = signal<ClientActivity[]>([]);
   readonly search = signal('');
+  readonly sort = signal<ClientSort>('latestMovement');
   readonly page = signal(1);
   readonly pageSize = signal(20);
   readonly loading = signal(false);
@@ -37,6 +38,7 @@ export class ClientsComponent {
     paginateClients({
       clients: this.clientsState(),
       search: this.search(),
+      sort: this.sort(),
       page: this.page(),
       pageSize: this.pageSize(),
     })
@@ -45,7 +47,7 @@ export class ClientsComponent {
   clients: Signal<ClientActivity[]> = computed(() => this.pageSlice().items);
   readonly totalClients = computed(() => this.pageSlice().total);
   readonly totalPages = computed(() => this.pageSlice().totalPages);
-  readonly allClients = computed(() => listClients(this.clientsState(), this.search()));
+  readonly allClients = computed(() => listClients(this.clientsState(), this.search(), this.sort()));
   readonly useVirtualScroll = computed(() => this.totalClients() > 100);
   // EXERCICE 1 — convertir en signal(false), puis lire adding() dans le template et les tests.
   adding = false;
@@ -170,6 +172,14 @@ export class ClientsComponent {
 
   setSearch(term: string): void {
     this.search.set(term ?? '');
+    this.page.set(1);
+  }
+
+  setSort(sort: string): void {
+    if (sort !== 'latestMovement' && sort !== 'totalMovementsDesc' && sort !== 'totalMovementsAsc') {
+      return;
+    }
+    this.sort.set(sort);
     this.page.set(1);
   }
 

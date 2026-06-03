@@ -53,7 +53,15 @@ export class ClientCardComponent {
     if (event) this.suppressNavigation(event);
     if (!this.editable()) return;
     const c = this.client();
-    this.editModel = { id: c.id, firstName: c.firstName, lastName: c.lastName, email: c.email, phone: c.phone, address: c.address };
+    this.editModel = {
+      id: c.id,
+      firstName: c.firstName,
+      lastName: c.lastName,
+      email: c.email,
+      phone: c.phone,
+      address: c.address,
+      photoUrl: c.photoUrl,
+    };
     this.editMode = true;
   }
 
@@ -69,8 +77,12 @@ export class ClientCardComponent {
     const firstName = this.editModel.firstName?.trim();
     const lastName = this.editModel.lastName?.trim();
     if (!firstName || !lastName) { this.cancelEdit(); return; }
-    const { id, email, phone, address } = this.editModel;
-    this.saveRequested.emit({ id, firstName, lastName, email, phone, address });
+    const { id, email, phone, address, photoUrl } = this.editModel;
+    const update: ClientUpdate = { id, firstName, lastName, email, phone, address };
+    if (photoUrl !== undefined) {
+      update.photoUrl = photoUrl;
+    }
+    this.saveRequested.emit(update);
     this.cancelEdit();
   }
 }

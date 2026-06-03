@@ -12,6 +12,7 @@ describe('ClientCardComponent', () => {
     email: 'ada@example.com',
     phone: '0612345678',
     address: 'London',
+    photoUrl: 'https://example.com/ada.jpg',
     recentMovements: [],
   };
 
@@ -36,6 +37,15 @@ describe('ClientCardComponent', () => {
     expect(fullName).toContain('Ada');
     expect(fullName).toContain('LOVELACE');
     expect(email).toContain('ada@example.com');
+  });
+
+  it('renders the client photo when a photoUrl is provided', () => {
+    fixture.componentRef.setInput('client', client);
+    fixture.detectChanges();
+
+    const image = fixture.debugElement.query(By.css('.avatar img')).nativeElement as HTMLImageElement;
+    expect(image.getAttribute('src')).toBe('https://example.com/ada.jpg');
+    expect(image.getAttribute('alt')).toBe('Ada Lovelace');
   });
 
   it('switches to edit mode when the edit button is activated', () => {

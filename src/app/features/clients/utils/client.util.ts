@@ -37,6 +37,19 @@ export function sortByLatestMovement(clients: ClientActivity[]): ClientActivity[
   return [...clients].sort((a, b) => latestMovementDate(b) - latestMovementDate(a));
 }
 
+export function totalMovementAmount(client: ClientActivity): number {
+  return (client.recentMovements ?? []).reduce((total, movement) => total + movement.amount, 0);
+}
+
+export function sortByTotalMovementAmount(clients: ClientActivity[], direction: 'asc' | 'desc'): ClientActivity[] {
+  const factor = direction === 'asc' ? 1 : -1;
+  return [...clients].sort((a, b) => {
+    const diff = totalMovementAmount(a) - totalMovementAmount(b);
+    if (diff !== 0) return diff * factor;
+    return latestMovementDate(b) - latestMovementDate(a);
+  });
+}
+
 export function sortWeeklyByLatestMovement(clients: ClientActivity[], ref: Date = new Date()): ClientActivity[] {
   return clients
     .filter((client) => hasMovementThisWeek(client, ref))

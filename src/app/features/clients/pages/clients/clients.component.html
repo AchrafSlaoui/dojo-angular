@@ -1,6 +1,14 @@
 <h2>Clients</h2>
 <div class="search">
   <input type="text" [ngModel]="search()" (ngModelChange)="setSearch($event)" placeholder="Rechercher par nom..." />
+  <label class="sort-control">
+    Trier
+    <select [ngModel]="sort()" (ngModelChange)="setSort($event)" aria-label="Trier les clients">
+      <option value="latestMovement">Mouvement recent</option>
+      <option value="totalMovementsDesc">Montant mouvements decroissant</option>
+      <option value="totalMovementsAsc">Montant mouvements croissant</option>
+    </select>
+  </label>
   @if (!adding) {
     <button class="icon-btn plus" (click)="startAdd()" title="Ajouter un client" aria-label="Ajouter">
       <span class="icon i-plus icon-lg"></span>

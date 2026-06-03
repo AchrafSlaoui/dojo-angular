@@ -1,3 +1,4 @@
+import { WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
@@ -5,6 +6,7 @@ import { ClientsComponent } from './clients.component';
 import { ConfirmService } from '@shared/services/confirm.service';
 import { NotificationService } from '@shared/services/notification.service';
 import { Client } from '@clients/models/client';
+import { ClientActivity } from '@clients/models/client-activity';
 import { ClientCardComponent } from '@clients/components/client-card/client-card.component';
 import { ClientsApiService } from '@clients/services/clients-api.service';
 
@@ -19,6 +21,10 @@ class ClientsApiServiceStub {
   update = jest.fn((payload: Partial<Client>) => of({ ...mockClients[0], ...payload }));
   remove = jest.fn(() => of(void 0));
 }
+
+type ClientsComponentInternals = ClientsComponent & {
+  clientsState: WritableSignal<ClientActivity[]>;
+};
 
 describe('ClientsComponent (deep)', () => {
   let fixture: ComponentFixture<ClientsComponent>;
@@ -70,6 +76,39 @@ describe('ClientsComponent (deep)', () => {
     fixture.detectChanges();
 
     expect((fixture.componentInstance as ClientsComponent).search()).toBe('Ada');
+  });
+
+  it('sorts clients from the dropdown by total movement amount and resets the page', () => {
+    const component = fixture.componentInstance as unknown as ClientsComponentInternals;
+    component.clientsState.set([
+      {
+        id: '1',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: '',
+        phone: '',
+        address: '',
+        recentMovements: [{ id: 'm1', date: '2024-02-12', type: 'credit', amount: 10, description: '' }],
+      },
+      {
+        id: '2',
+        firstName: 'Grace',
+        lastName: 'Hopper',
+        email: '',
+        phone: '',
+        address: '',
+        recentMovements: [{ id: 'm2', date: '2024-02-10', type: 'debit', amount: 200, description: '' }],
+      },
+    ]);
+    component.page.set(2);
+
+    const select = fixture.debugElement.query(By.css('select[aria-label="Trier les clients"]'));
+    select.triggerEventHandler('ngModelChange', 'totalMovementsDesc');
+    fixture.detectChanges();
+
+    expect(component.sort()).toBe('totalMovementsDesc');
+    expect(component.page()).toBe(1);
+    expect(component.clients().map((client) => client.id)).toEqual(['2', '1']);
   });
 
   it('starts and cancels client creation with a fresh draft', () => {

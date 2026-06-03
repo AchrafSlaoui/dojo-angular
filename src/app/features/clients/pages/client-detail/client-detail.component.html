@@ -5,6 +5,19 @@
     <h2>Detail Client</h2>
 
     <section class="info">
+      <div class="client-summary">
+        <div class="avatar">
+          @if (client.photoUrl) {
+            <img [src]="client.photoUrl" [alt]="client.firstName + ' ' + client.lastName" />
+          } @else {
+            <span>{{ client.firstName.charAt(0) }}{{ client.lastName.charAt(0) }}</span>
+          }
+        </div>
+        <div>
+          <strong>{{ client.firstName }} {{ client.lastName | formatValue:"text":true }}</strong>
+          <span>{{ client.email | formatValue }}</span>
+        </div>
+      </div>
       <div class="cell cell-name"><strong>Nom:</strong> {{ client.firstName }} {{ client.lastName | formatValue:"text":true }}</div>
       <div class="cell cell-email"><strong>Email:</strong> {{ client.email | formatValue }}</div>
       <div class="cell cell-phone"><strong>Telephone:</strong> {{ client.phone | formatValue:"phone" }}</div>
