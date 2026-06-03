@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ElementRef, Signal, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ElementRef, Signal, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { toObservable } from '@angular/core/rxjs-interop';
@@ -66,6 +66,13 @@ export class ClientsComponent {
     });
 
     // EXERCICE 3
+    effect(() => {
+      const clamped = this.pageSlice().page;
+      if (clamped !== untracked(this.page)) {
+        this.page.set(clamped);
+      }
+    });
+
     this.loadClients();
   }
 
@@ -138,7 +145,6 @@ export class ClientsComponent {
       this.mutating.set(true);
       await firstValueFrom(this.clientsApi.remove(client.id));
       this.clientsState.update((list) => list.filter((c) => c.id !== client.id));
-      this.clampCurrentPage(); // EXERCICE 3
       this.notifications.success('Client supprime.');
     } catch {
       this.notifications.error('La suppression du client a echoue.');
@@ -183,11 +189,4 @@ export class ClientsComponent {
     this.page.set(1);
   }
 
-  // EXERCICE 3
-  private clampCurrentPage(): void {
-    const clamped = this.pageSlice().page;
-    if (clamped !== this.page()) {
-      this.page.set(clamped);
-    }
-  }
 }
