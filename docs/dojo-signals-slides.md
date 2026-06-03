@@ -40,29 +40,9 @@ Zone.js résout : le déclenchement automatique de la détection après async
 
 ## Intention d'architecture du dojo
 
-Les decisions d'architecture pedagogique sont detaillees dans `docs/adr/0001-architecture-pedagogique-dojo-signals.md`.
+Les décisions d'architecture pédagogique sont détaillées dans `docs/adr/0001-architecture-pedagogique-dojo-signals.md`.
 
-Le projet montre volontairement **deux patterns Signals**.
-
-### 1. Signals directement dans les composants
-
-`ClientsComponent` et `DashboardComponent` montrent les bases :
-
-- `signal()` pour l'état local ;
-- `computed()` pour les valeurs dérivées ;
-- `effect()` pour les effets de bord simples ;
-- lecture directe dans le template avec `signal()`.
-
-### 2. Signals extraits dans une facade
-
-`AccountsFacade` et `MovementsFacade` montrent l'étape avancée :
-
-- état partagé entre plusieurs composants ;
-- logique métier encapsulée ;
-- exposition en lecture seule avec `asReadonly()` ;
-- orchestration API + notifications + confirmations.
-
-> L'asymétrie est intentionnelle : on commence simple dans un composant, puis on extrait vers une facade quand l'état devient plus riche ou partagé.
+Le projet montre volontairement deux patterns : des Signals directement dans les composants pour apprendre les bases, puis des Signals dans des façades pour l'état partagé et les règles métier. L'asymétrie est intentionnelle : on commence simple, puis on extrait quand l'état devient plus riche ou partagé.
 
 ---
 
@@ -94,15 +74,13 @@ Dans les templates, cela donne aussi un mélange visible :
 
 Ce n'est pas une incohérence. C'est le reflet d'une migration progressive :
 
-- `mutating()` vient d'une facade Signals et peut être partagé entre composants ;
+- `mutating()` vient d'une façade Signals et peut être partagé entre composants ;
 - `addingAccount`, `adding`, `editMode` et `editModel` sont des états locaux transitoires ;
 - avec `zone.js` + `OnPush`, un clic template marque le composant à vérifier ;
 - convertir en signal devient intéressant quand l'état est lu par `computed()`,
   `effect()`, plusieurs composants, ou quand on veut expliciter ses dépendances.
 
-À retenir : dans ce dojo, on ne convertit pas tout mécaniquement. On convertit les états qui rendent le modèle réactif plus clair.
-
-L'exercice 1 convertit `adding` dans `ClientsComponent` pour apprendre `signal()`. Le `adding` de `AccountsComponent` reste volontairement classique : il illustre qu'une migration peut être progressive quand l'état reste local et simple.
+À retenir : dans ce dojo, on ne convertit pas tout mécaniquement. L'exercice 1 convertit `adding` dans `ClientsComponent` pour apprendre `signal()`, tandis que le `adding` de `AccountsComponent` reste volontairement classique pour illustrer une migration progressive.
 
 ---
 
@@ -111,13 +89,13 @@ L'exercice 1 convertit `adding` dans `ClientsComponent` pour apprendre `signal()
 | Exercice | Branche | Concept | Fichiers principaux |
 |---|---|---|---|
 | 1 | `exercice-1` | `signal()` | `clients.component.ts`, `clients.component.html`, `clients.component.spec.ts` |
-| 2 | `exercice-2` | `computed()` en facade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html`, `accounts.component.spec.ts` |
+| 2 | `exercice-2` | `computed()` en façade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html`, `accounts.component.spec.ts` |
 | 3 | `exercice-3` | `effect()` pour cohérence d'état | `clients.component.ts` |
 | 4 | `exercice-4` | `viewChild()` + `effect()` DOM | `clients.component.ts` |
 | 5 | `exercice-5` | `input()` | `account-card.component.ts` |
 | 6 | `exercice-6` | `output()` | `account-list.component.ts` |
 | 7 | `exercice-7` | `toSignal()` / `toObservable()` | `accounts.component.ts`, `dashboard.component.ts`, `dashboard.component.spec.ts`, `clients.component.ts` |
-| 8 | `exercice-8` | `computed()` en facade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html` |
+| 8 | `exercice-8` | `computed()` en façade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html` |
 
 Les branches sont cumulatives : chaque branche ajoute uniquement la correction de son exercice par rapport à la branche précédente.
 
@@ -182,7 +160,7 @@ adding()                          // lire (template ou TS)
 | État local transitoire manipulé seulement par des handlers template | Propriété classique acceptable pendant la migration |
 | Valeur calculée à partir d'autres signals | `computed()` — pas `signal()` |
 | Valeur issue d'une route ou d'un appel HTTP | `toSignal()` |
-| État partagé entre composants via service | facade Signals ou store dédié |
+| État partagé entre composants via service | façade Signals ou store dédié |
 
 ---
 
@@ -196,7 +174,7 @@ adding()                          // lire (template ou TS)
 
 ### Consigne
 
-Transformer le getter `blockedAccountsCount` en `computed()` dans la facade, puis exposer le signal dans le composant.
+Transformer le getter `blockedAccountsCount` en `computed()` dans la façade, puis exposer le signal dans le composant.
 
 ```ts
 // Avant — AccountsFacade
@@ -242,7 +220,7 @@ blockedAccountsCount()  // lecture
 |---|---|
 | Recalculé à chaque cycle de détection | Recalculé seulement si une dépendance change |
 | Angular ignore si la valeur a changé | Angular mémorise et invalide le cache |
-| Règle dans le composant | Règle dans la facade, partageable |
+| Règle dans le composant | Règle dans la façade, partageable |
 
 ### Quand utiliser `computed()` — et quand rester ailleurs
 
@@ -559,6 +537,15 @@ takeUntilDestroyed
 
 Point d'attention : ici RxJS reste utile. Le `pipe()` construit un petit état de vue unique : données, chargement et erreur.
 
+### Lecture de la pipeline 7b
+
+Dans cette pipeline :
+
+- `startWith(...)` donne l'état initial avant la réponse HTTP ;
+- `map(...)` transforme la réponse HTTP en état de vue réussi ;
+- `catchError(...)` transforme l'erreur HTTP en état de vue en erreur ;
+- `toSignal(...)` expose la dernière version de cet état au template.
+
 ```ts
 private readonly clientsQuery = toSignal(
   this.clientsApi.getAll().pipe(
@@ -620,7 +607,7 @@ readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
 ---
 
-## Exercice 8 — Consolidation facade avec `computed()`
+## Exercice 8 — Consolidation façade avec `computed()`
 
 Cet exercice ne présente pas une nouvelle API. Il sert à consolider l'architecture : une règle métier dérivée doit vivre au bon endroit, avec un nom explicite et une surface testable.
 
@@ -632,7 +619,7 @@ Cet exercice ne présente pas une nouvelle API. Il sert à consolider l'architec
 
 ### Consigne
 
-Ajouter `hasActiveFilter` comme `computed()` dans la facade, l'exposer dans le composant, l'utiliser dans le template.
+Ajouter `hasActiveFilter` comme `computed()` dans la façade, l'exposer dans le composant, l'utiliser dans le template.
 
 ```ts
 // accounts.facade.ts — ajouter après typeFilter
@@ -642,7 +629,7 @@ readonly hasActiveFilter = computed(() =>
 ```
 
 ```ts
-// AccountsComponent — exposer le signal de la facade
+// AccountsComponent — exposer le signal de la façade
 readonly hasActiveFilter = this.accountsFacade.hasActiveFilter;
 ```
 
@@ -657,18 +644,18 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ### Définition
 
-> Exposer une **règle métier dérivée** dans la facade sous forme de `computed()` plutôt que de calculer en ligne dans le template ou le composant.
+> Exposer une **règle métier dérivée** dans la façade sous forme de `computed()` plutôt que de calculer en ligne dans le template ou le composant.
 
 ### Pourquoi terminer par cet exercice
 
-Après l'interop RxJS, on revient à un geste simple mais structurant : placer la logique dérivée dans la facade. C'est le lien avec l'objectif architectural du dojo : des composants plus lisibles, une facade qui porte l'état partagé, et des règles métier nommées.
+Après l'interop RxJS, on revient à un geste simple mais structurant : placer la logique dérivée dans la façade. C'est le lien avec l'objectif architectural du dojo : des composants plus lisibles, une façade qui porte l'état partagé, et des règles métier nommées.
 
 ### vs Zone.js / vs RxJS
 
-| Règle dans le template ou le composant | `computed()` dans la facade |
+| Règle dans le template ou le composant | `computed()` dans la façade |
 |---|---|
 | Logique inline, intention illisible | Nom qui exprime l'intention métier |
-| Dupliquée si plusieurs composants en ont besoin | Partageable depuis la facade |
+| Dupliquée si plusieurs composants en ont besoin | Partageable depuis la façade |
 | Non testable directement | Testable unitairement |
 | Recalculée à chaque cycle Zone.js | Mémorisée, recalculée seulement si nécessaire |
 
@@ -695,6 +682,9 @@ Observable HTTP         → pipe(map, catchError, startWith) → toSignal()
 
 ## Clôture du dojo — Règles à retenir
 
+Les conventions d'usage des primitives Signals et la décision de ne pas migrer vers
+le mode zoneless sont détaillées dans `docs/adr/0002-conventions-usage-signals-et-detection-changement.md`.
+
 ```
 1. computed()   ne fait jamais d'appel HTTP — calcul pur uniquement
 2. effect()     n'expose jamais de valeur    — effets de bord uniquement
@@ -705,148 +695,5 @@ Observable HTTP         → pipe(map, catchError, startWith) → toSignal()
 7. toSignal() gère le désabonnement — ne pas ajouter takeUntilDestroyed en plus
 ```
 
----
-
-## Annexe — Limiter ou supprimer Zone.js
-
-Cette partie est une **annexe de référence**. Elle répond à la question : que devient la détection de changement quand on limite Zone.js ou qu'on passe en mode zoneless ?
-
-### Ce que fait Zone.js
-
-Zone.js remplace les APIs async natives du navigateur par ses propres versions pour intercepter chaque appel et prévenir Angular qu'un changement a peut-être eu lieu.
-
-```ts
-// Zone.js remplace silencieusement au démarrage :
-window.setTimeout       → version Zone.js
-window.Promise          → version Zone.js
-window.fetch            → version Zone.js
-window.addEventListener → version Zone.js
-XMLHttpRequest          → version Zone.js
-```
-
-Quand le callback async se termine, Zone.js dit à Angular : *"quelque chose a peut-être changé"*. Angular lance alors un cycle de détection global. Avec `OnPush`, les composants non marqués dirty sont sautés, ce qui limite déjà le travail.
-
-```ts
-// Zone.js seul — Angular lance un cycle après le setTimeout
-setTimeout(() => {
-  this.name = 'Alice';
-}, 1000);
-
-// Signals + Zone.js encore présent (cas de ce projet, OnPush)
-setTimeout(() => {
-  this.name.set('Alice'); // Zone.js déclenche encore un cycle,
-}, 1000);                 // mais seuls les lecteurs de name() sont re-rendus
-
-// Signals + Zoneless (possible en Angular 21)
-setTimeout(() => {
-  this.name.set('Alice'); // setTimeout non patché — seul .set() déclenche
-}, 1000);                 // le re-render sur les lecteurs de name()
-```
-
-> Zone.js espionne les APIs pour **deviner** qu'un changement a eu lieu. Signals **annonce** explicitement le changement.
-
----
-
-### Cas 1 — Limiter le re-render par composant avec `OnPush`
-
-`OnPush` dit à Angular : **ignore ce composant pendant un cycle de détection sauf si une raison explicite existe**.
-
-```ts
-@Component({
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-```
-
-| Déclencheur | Re-render ? |
-|---|---|
-| Un `input()` signal reçoit une nouvelle valeur | Oui |
-| Un `@Input()` reçoit une nouvelle référence | Oui |
-| Un `async pipe` émet une valeur | Oui |
-| `cdr.markForCheck()` appelé manuellement | Oui |
-| Une propriété de classe classique change | **Non** |
-| Un `@Input()` ou un `input()`  reçoit le même objet muté | **Non** |
-
-> `OnPush` ne supprime pas Zone.js. Zone.js continue de déclencher des cycles globaux — `OnPush` fait juste que ce composant est **sauté** s'il n'est pas marqué dirty.
-
-### Comment un composant est marqué dirty
-
-**Dirty** = Angular doit réévaluer ce composant lors du prochain cycle de détection.
-
-| Déclencheur | Qui marque dirty ? | Mécanisme |
-|---|---|---|
-| `@Input()` reçoit une nouvelle référence | Angular (interne) | Comparaison par référence à chaque cycle Zone.js |
-| `input()` signal change | Angular (graphe signals) | `.set()` invalide les vues qui lisent ce signal |
-| `async pipe` émet une valeur | `async pipe` lui-même | Appelle `cdr.markForCheck()` à chaque émission |
-| `cdr.markForCheck()` | Le développeur | Marque le composant **et tous ses ancêtres** |
-| Signal lu dans le template change | Angular (graphe signals) | `.set()` cible directement les vues concernées |
-
-```
-Zone.js + OnPush :
-  Zone.js détecte un async → cycle global → Angular parcourt l'arbre
-  → saute les composants non dirty → re-rend les dirty
-
-Signals + OnPush :
-  .set() → Angular sait exactement quelles vues lisent ce signal
-  → marque ces vues dirty ; avec Zone.js, le cycle global peut encore exister
-```
-
----
-
-### Cas 2 — Supprimer Zone.js avec le mode Zoneless en Angular 21
-
-Ce n'est pas l'objectif de ce dojo, mais c'est la suite logique une fois l'état principal piloté par Signals.
-
-**1. `app.config.ts` :**
-
-```ts
-// Avant
-provideZoneChangeDetection({ eventCoalescing: true })
-
-// Après
-provideZonelessChangeDetection()
-```
-
-**2. `angular.json` :**
-
-```json
-// Avant
-"polyfills": ["zone.js"]
-
-// Après
-"polyfills": []
-```
-
-En zoneless, Signals ne sont pas obligatoires partout, mais chaque changement doit passer par un déclencheur connu d'Angular : `signal().set()`, `input()`, événement template, `async pipe`, `markForCheck()`, router/forms, etc.
-
-```ts
-// Fragile en zoneless : propriété classique modifiée dans un callback async
-name = 'Alice';
-
-setTimeout(() => {
-  this.name = 'Bob';
-}, 1000);
-
-// Robuste en zoneless : le signal notifie Angular explicitement
-name = signal('Alice');
-
-setTimeout(() => {
-  this.name.set('Bob');
-}, 1000);
-```
-
----
-
-### Les 3 états d'une app Angular
-
-```
-                  Zone.js présent            Zone.js supprimé
-                  ──────────────────────     ────────────────────────
-Sans OnPush   →   Re-render global       →    Les changements classiques
-                  à chaque async              ne sont plus auto-détectés
-
-Avec OnPush   →   Cycle global lancé,    →   Mode Zoneless
-+ Signals         seuls les composants        Seul .set() déclenche
-                  dirty sont re-rendus        un re-render ciblé
-```
 ---
 
