@@ -4,18 +4,13 @@
 
 ## Avant de commencer — Zone.js et Signals
 
-Ce dojo se déroule en **Angular 21**. Le projet garde volontairement `zone.js`
-et `OnPush` pour montrer une migration progressive vers Signals, sans basculer
-toute l'application en zoneless dès le départ.
+Ce dojo se déroule en **Angular 21**. Le projet garde volontairement `zone.js` et `OnPush` pour montrer une migration progressive vers Signals, sans basculer toute l'application en zoneless dès le départ.
 
 ### Rappel Zone.js
 
-**Zone.js** aide Angular à savoir qu'un événement asynchrone a eu lieu.
-Il patche les APIs du navigateur (`setTimeout`, `Promise`, `addEventListener`,
-`XMLHttpRequest`, etc.) puis prévient Angular qu'un cycle de détection doit être lancé.
+**Zone.js** aide Angular à savoir qu'un événement asynchrone a eu lieu. Il patche les APIs du navigateur (`setTimeout`, `Promise`, `addEventListener`, `XMLHttpRequest`, etc.) puis prévient Angular qu'un cycle de détection doit être lancé.
 
-Zone.js ne modélise pas l'état de l'application : il sert surtout à **déclencher**
-la détection de changement.
+Zone.js ne modélise pas l'état de l'application : il sert surtout à **déclencher** la détection de changement.
 
 - Définition : librairie qui intercepte les APIs async du navigateur.
 - Rôle : prévenir Angular qu'un cycle de détection doit être lancé.
@@ -23,12 +18,9 @@ la détection de changement.
 
 ### Définition de Signal et problème résolu
 
-Un **signal** est une valeur réactive observable par Angular. Il contient une valeur,
-se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()`
-et `effect()` qui l'ont lu.
+Un **signal** est une valeur réactive observable par Angular. Il contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lu.
 
-Le problème résolu par Signals : rendre l'état local explicite et permettre à Angular
-de savoir précisément quelles vues ou valeurs dérivées dépendent de cet état.
+Le problème résolu par Signals : rendre l'état local explicite et permettre à Angular de savoir précisément quelles vues ou valeurs dérivées dépendent de cet état.
 
 - Définition : valeur réactive lue avec `()`.
 - Rôle : mémoriser les lecteurs dépendants.
@@ -48,8 +40,7 @@ Zone.js résout : le déclenchement automatique de la détection après async
 
 ## Intention d'architecture du dojo
 
-Les decisions d'architecture pedagogique sont detaillees dans
-`docs/adr/0001-architecture-pedagogique-dojo-signals.md`.
+Les decisions d'architecture pedagogique sont detaillees dans `docs/adr/0001-architecture-pedagogique-dojo-signals.md`.
 
 Le projet montre volontairement **deux patterns Signals**.
 
@@ -71,8 +62,7 @@ Le projet montre volontairement **deux patterns Signals**.
 - exposition en lecture seule avec `asReadonly()` ;
 - orchestration API + notifications + confirmations.
 
-> L'asymétrie est intentionnelle : on commence simple dans un composant,
-> puis on extrait vers une facade quand l'état devient plus riche ou partagé.
+> L'asymétrie est intentionnelle : on commence simple dans un composant, puis on extrait vers une facade quand l'état devient plus riche ou partagé.
 
 ---
 
@@ -80,8 +70,7 @@ Le projet montre volontairement **deux patterns Signals**.
 
 Voir aussi l'ADR 0001 pour la justification de ce choix.
 
-Le projet contient volontairement du code mixte : certains états sont déjà des
-signals, d'autres restent des propriétés classiques.
+Le projet contient volontairement du code mixte : certains états sont déjà des signals, d'autres restent des propriétés classiques.
 
 ```ts
 // ClientCardComponent
@@ -111,12 +100,9 @@ Ce n'est pas une incohérence. C'est le reflet d'une migration progressive :
 - convertir en signal devient intéressant quand l'état est lu par `computed()`,
   `effect()`, plusieurs composants, ou quand on veut expliciter ses dépendances.
 
-À retenir : dans ce dojo, on ne convertit pas tout mécaniquement. On convertit les
-états qui rendent le modèle réactif plus clair.
+À retenir : dans ce dojo, on ne convertit pas tout mécaniquement. On convertit les états qui rendent le modèle réactif plus clair.
 
-L'exercice 1 convertit `adding` dans `ClientsComponent` pour apprendre `signal()`.
-Le `adding` de `AccountsComponent` reste volontairement classique : il illustre
-qu'une migration peut être progressive quand l'état reste local et simple.
+L'exercice 1 convertit `adding` dans `ClientsComponent` pour apprendre `signal()`. Le `adding` de `AccountsComponent` reste volontairement classique : il illustre qu'une migration peut être progressive quand l'état reste local et simple.
 
 ---
 
@@ -133,8 +119,7 @@ qu'une migration peut être progressive quand l'état reste local et simple.
 | 7 | `exercice-7` | `toSignal()` / `toObservable()` | `accounts.component.ts`, `dashboard.component.ts`, `dashboard.component.spec.ts`, `clients.component.ts` |
 | 8 | `exercice-8` | `computed()` en facade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html` |
 
-Les branches sont cumulatives : chaque branche ajoute uniquement la correction de
-son exercice par rapport à la branche précédente.
+Les branches sont cumulatives : chaque branche ajoute uniquement la correction de son exercice par rapport à la branche précédente.
 
 ---
 
@@ -168,15 +153,11 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 
 ### Définition
 
-> Un signal est une **valeur réactive observable par Angular**. Il contient une valeur,
-> se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()`
-> et `effect()` qui l'ont lu.
+> Un signal est une **valeur réactive observable par Angular**. Il contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lu.
 
-Quand la valeur change, Angular sait précisément quelles dépendances invalider :
-les valeurs dérivées sont recalculées si nécessaire et les vues concernées sont mises à jour.
+Quand la valeur change, Angular sait précisément quelles dépendances invalider : les valeurs dérivées sont recalculées si nécessaire et les vues concernées sont mises à jour.
 
-`signal()` crée un signal mutable. `computed()` crée un signal dérivé en lecture seule.
-`effect()` observe des signals, mais n'est pas un signal.
+`signal()` crée un signal mutable. `computed()` crée un signal dérivé en lecture seule. `effect()` observe des signals, mais n'est pas un signal.
 
 ```ts
 readonly adding = signal(false);  // déclarer
@@ -245,8 +226,7 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ### Définition
 
-> Un `computed` est une **valeur dérivée mémorisée**. Le calcul ne se relance que si
-> une dépendance lue a changé depuis la dernière lecture.
+> Un `computed` est une **valeur dérivée mémorisée**. Le calcul ne se relance que si une dépendance lue a changé depuis la dernière lecture.
 
 ```ts
 readonly blockedAccountsCount = computed(() =>
@@ -305,8 +285,7 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 
 ### Définition `effect()`
 
-> `effect()` exécute un **effet de bord** quand les signals lus dans son corps changent.
-> Il s'exécute automatiquement, sans appel explicite.
+> `effect()` exécute un **effet de bord** quand les signals lus dans son corps changent. Il s'exécute automatiquement, sans appel explicite.
 
 ### vs Zone.js
 
@@ -336,14 +315,11 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 
 ### Mise en contexte
 
-Cet exercice montre un deuxième usage de `effect()` : déclencher un effet DOM quand
-une condition UI devient vraie. Ici, on veut placer le focus sur le champ prénom
-quand le formulaire d'ajout est affiché.
+Cet exercice montre un deuxième usage de `effect()` : déclencher un effet DOM quand une condition UI devient vraie. Ici, on veut placer le focus sur le champ prénom quand le formulaire d'ajout est affiché.
 
 ### Définition `viewChild()`
 
-> `viewChild()` expose une **référence DOM comme un signal**. Retourne `undefined` quand
-> l'élément est absent du DOM, `ElementRef` quand il est présent.
+> `viewChild()` expose une **référence DOM comme un signal**. Retourne `undefined` quand l'élément est absent du DOM, `ElementRef` quand il est présent.
 
 ```ts
 private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
@@ -367,9 +343,7 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 
 ### Pourquoi `effect()` ici
 
-Le focus n'est pas une valeur calculée : c'est une interaction avec le DOM.
-`effect()` est adapté parce qu'il réagit à `adding()` et à la présence réelle de
-l'élément exposé par `viewChild()`.
+Le focus n'est pas une valeur calculée : c'est une interaction avec le DOM. `effect()` est adapté parce qu'il réagit à `adding()` et à la présence réelle de l'élément exposé par `viewChild()`.
 
 ---
 
@@ -393,8 +367,7 @@ showStatus = input(true);
 readonly visibleStatusLabel = computed(() => this.showStatus() ? this.statusLabel() : null);
 ```
 
-> Point clé : `@Input()` dans un `computed()` ne crée **pas** de dépendance réelle.
-> `input()` dans un `computed()` **est** une dépendance réelle.
+> Point clé : `@Input()` dans un `computed()` ne crée **pas** de dépendance réelle. `input()` dans un `computed()` **est** une dépendance réelle.
 
 ```bash
 npm test -- --runTestsByPath src/app/features/accounts/components/account-card/account-card.component.spec.ts
@@ -402,8 +375,7 @@ npm test -- --runTestsByPath src/app/features/accounts/components/account-card/a
 
 ### Définition
 
-> `input()` déclare une **entrée de composant sous forme de signal**. La valeur passée
-> par le parent devient une dépendance réelle dans les `computed()` et `effect()`.
+> `input()` déclare une **entrée de composant sous forme de signal**. La valeur passée par le parent devient une dépendance réelle dans les `computed()` et `effect()`.
 
 ```ts
 showStatus = input(true);              // avec valeur par défaut
@@ -447,13 +419,11 @@ cancelRequested = output<void>();
 deleteRequested = output<Account>();
 ```
 
-Elles servent de modèle local. L'exercice consiste à aligner la dernière sortie
-legacy, `selectedRequested`, sur le même style.
+Elles servent de modèle local. L'exercice consiste à aligner la dernière sortie legacy, `selectedRequested`, sur le même style.
 
 ### Consigne
 
-Transformer `@Output() selectedRequested = new EventEmitter<Account>()` en `output()`.
-Retirer `EventEmitter` et `Output` des imports.
+Transformer `@Output() selectedRequested = new EventEmitter<Account>()` en `output()`. Retirer `EventEmitter` et `Output` des imports.
 
 ```ts
 // Avant
@@ -471,8 +441,7 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ### Définition
 
-> `output()` déclare un **événement sortant du composant**. L'enfant émet une intention,
-> le parent décide quoi faire. Ce n'est pas un Observable.
+> `output()` déclare un **événement sortant du composant**. L'enfant émet une intention, le parent décide quoi faire. Ce n'est pas un Observable.
 
 ```ts
 selectedRequested = output<Account>();       // déclarer
@@ -499,9 +468,7 @@ this.selectedRequested.emit(account);        // émettre
 
 ### Parenthèse rapide — `model()`
 
-> `model()` déclare une **valeur bidirectionnelle** entre parent et enfant.
-> Il combine l'idée d'une entrée (`input`) et d'une sortie (`output`) pour des cas
-> comme un composant de formulaire contrôlé.
+> `model()` déclare une **valeur bidirectionnelle** entre parent et enfant. Il combine l'idée d'une entrée (`input`) et d'une sortie (`output`) pour des cas comme un composant de formulaire contrôlé.
 
 ```ts
 value = model('');
@@ -510,21 +477,17 @@ value = model('');
 <app-search-box [(value)]="searchTerm" />
 ```
 
-À retenir dans ce dojo : `input()` sert à recevoir une valeur, `output()` sert à
-émettre une intention, `model()` sert aux échanges bidirectionnels explicites.
+À retenir dans ce dojo : `input()` sert à recevoir une valeur, `output()` sert à émettre une intention, `model()` sert aux échanges bidirectionnels explicites.
 
 ---
 
 ## Rappel RxJS — Avant `toSignal()`
 
-**RxJS** sert à modéliser et composer des flux de données dans le temps :
-HTTP, WebSocket, événements, `debounceTime`, `switchMap`, `combineLatest`, etc.
+**RxJS** sert à modéliser et composer des flux de données dans le temps : HTTP, WebSocket, événements, `debounceTime`, `switchMap`, `combineLatest`, etc.
 
-RxJS ne remplace pas Zone.js. RxJS organise les flux asynchrones ; Zone.js déclenche
-la détection de changement ; Signals rend l'état et ses dépendances explicites.
+RxJS ne remplace pas Zone.js. RxJS organise les flux asynchrones ; Zone.js déclenche la détection de changement ; Signals rend l'état et ses dépendances explicites.
 
-`toSignal()` ne remplace pas RxJS : il permet de **consommer la dernière valeur
-d'un Observable sous forme de signal** dans un composant.
+`toSignal()` ne remplace pas RxJS : il permet de **consommer la dernière valeur d'un Observable sous forme de signal** dans un composant.
 
 ```
 RxJS    : un flux émet dans le temps → on compose/transforme ce flux
@@ -560,8 +523,7 @@ Cet exercice est le plus dense du dojo. Il se découpe en trois marches :
 2. Ajouter l'état `loading/error` autour d'un flux HTTP.
 3. Lire `toObservable()` comme pont inverse, sans demander de modification.
 
-Le but n'est pas de remplacer RxJS. Le but est de savoir où placer la frontière :
-RxJS compose le flux, `toSignal()` expose sa dernière valeur au template signal.
+Le but n'est pas de remplacer RxJS. Le but est de savoir où placer la frontière : RxJS compose le flux, `toSignal()` expose sa dernière valeur au template signal.
 
 ### Consigne
 
@@ -595,8 +557,7 @@ takeUntilDestroyed
 
 **7b** : remplacer `firstValueFrom()` + états manuels par `toSignal()` + pipe RxJS.
 
-Point d'attention : ici RxJS reste utile. Le `pipe()` construit un petit état de vue
-unique : données, chargement et erreur.
+Point d'attention : ici RxJS reste utile. Le `pipe()` construit un petit état de vue unique : données, chargement et erreur.
 
 ```ts
 private readonly clientsQuery = toSignal(
@@ -611,14 +572,11 @@ readonly loading = computed(() => this.clientsQuery().loading);
 readonly error   = computed(() => this.clientsQuery().error);
 ```
 
-La méthode `reload()` disparaît : le chargement initial est porté par le signal
-créé avec `toSignal()`.
+La méthode `reload()` disparaît : le chargement initial est porté par le signal créé avec `toSignal()`.
 
 **7c** : lire et expliquer `debouncedSearch$` dans `ClientsComponent` (pas de modification).
 
-Cette partie sert de consolidation. Elle montre le pont inverse :
-on part d'un signal local, puis on repasse en Observable uniquement parce qu'un
-opérateur temporel (`debounceTime`) est nécessaire.
+Cette partie sert de consolidation. Elle montre le pont inverse : on part d'un signal local, puis on repasse en Observable uniquement parce qu'un opérateur temporel (`debounceTime`) est nécessaire.
 
 ```bash
 npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
@@ -627,8 +585,7 @@ npm test -- --runTestsByPath src/app/features/clients/pages/dashboard/dashboard.
 
 ### Définition
 
-> `toSignal()` convertit un Observable en signal (dernière valeur émise, abonnement géré automatiquement).
-> `toObservable()` expose un signal comme Observable pour brancher des opérateurs RxJS.
+> `toSignal()` convertit un Observable en signal (dernière valeur émise, abonnement géré automatiquement). `toObservable()` expose un signal comme Observable pour brancher des opérateurs RxJS.
 
 ```ts
 // Signal → Observable pour opérateurs RxJS
@@ -665,9 +622,7 @@ readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
 ## Exercice 8 — Consolidation facade avec `computed()`
 
-Cet exercice ne présente pas une nouvelle API. Il sert à consolider l'architecture :
-une règle métier dérivée doit vivre au bon endroit, avec un nom explicite et une
-surface testable.
+Cet exercice ne présente pas une nouvelle API. Il sert à consolider l'architecture : une règle métier dérivée doit vivre au bon endroit, avec un nom explicite et une surface testable.
 
 ### Fichiers à modifier
 
@@ -702,15 +657,11 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ### Définition
 
-> Exposer une **règle métier dérivée** dans la facade sous forme de `computed()` plutôt que
-> de calculer en ligne dans le template ou le composant.
+> Exposer une **règle métier dérivée** dans la facade sous forme de `computed()` plutôt que de calculer en ligne dans le template ou le composant.
 
 ### Pourquoi terminer par cet exercice
 
-Après l'interop RxJS, on revient à un geste simple mais structurant : placer la
-logique dérivée dans la facade. C'est le lien avec l'objectif architectural du dojo :
-des composants plus lisibles, une facade qui porte l'état partagé, et des règles
-métier nommées.
+Après l'interop RxJS, on revient à un geste simple mais structurant : placer la logique dérivée dans la facade. C'est le lien avec l'objectif architectural du dojo : des composants plus lisibles, une facade qui porte l'état partagé, et des règles métier nommées.
 
 ### vs Zone.js / vs RxJS
 
@@ -758,13 +709,11 @@ Observable HTTP         → pipe(map, catchError, startWith) → toSignal()
 
 ## Annexe — Limiter ou supprimer Zone.js
 
-Cette partie est une **annexe de référence**. Elle répond à la question : que devient
-la détection de changement quand on limite Zone.js ou qu'on passe en mode zoneless ?
+Cette partie est une **annexe de référence**. Elle répond à la question : que devient la détection de changement quand on limite Zone.js ou qu'on passe en mode zoneless ?
 
 ### Ce que fait Zone.js
 
-Zone.js remplace les APIs async natives du navigateur par ses propres versions pour
-intercepter chaque appel et prévenir Angular qu'un changement a peut-être eu lieu.
+Zone.js remplace les APIs async natives du navigateur par ses propres versions pour intercepter chaque appel et prévenir Angular qu'un changement a peut-être eu lieu.
 
 ```ts
 // Zone.js remplace silencieusement au démarrage :
@@ -775,9 +724,7 @@ window.addEventListener → version Zone.js
 XMLHttpRequest          → version Zone.js
 ```
 
-Quand le callback async se termine, Zone.js dit à Angular : *"quelque chose a peut-être changé"*.
-Angular lance alors un cycle de détection global. Avec `OnPush`, les composants
-non marqués dirty sont sautés, ce qui limite déjà le travail.
+Quand le callback async se termine, Zone.js dit à Angular : *"quelque chose a peut-être changé"*. Angular lance alors un cycle de détection global. Avec `OnPush`, les composants non marqués dirty sont sautés, ce qui limite déjà le travail.
 
 ```ts
 // Zone.js seul — Angular lance un cycle après le setTimeout
@@ -796,15 +743,13 @@ setTimeout(() => {
 }, 1000);                 // le re-render sur les lecteurs de name()
 ```
 
-> Zone.js espionne les APIs pour **deviner** qu'un changement a eu lieu.
-> Signals **annonce** explicitement le changement.
+> Zone.js espionne les APIs pour **deviner** qu'un changement a eu lieu. Signals **annonce** explicitement le changement.
 
 ---
 
 ### Cas 1 — Limiter le re-render par composant avec `OnPush`
 
-`OnPush` dit à Angular : **ignore ce composant pendant un cycle de détection
-sauf si une raison explicite existe**.
+`OnPush` dit à Angular : **ignore ce composant pendant un cycle de détection sauf si une raison explicite existe**.
 
 ```ts
 @Component({
@@ -821,8 +766,7 @@ sauf si une raison explicite existe**.
 | Une propriété de classe classique change | **Non** |
 | Un `@Input()` ou un `input()`  reçoit le même objet muté | **Non** |
 
-> `OnPush` ne supprime pas Zone.js. Zone.js continue de déclencher des cycles globaux —
-> `OnPush` fait juste que ce composant est **sauté** s'il n'est pas marqué dirty.
+> `OnPush` ne supprime pas Zone.js. Zone.js continue de déclencher des cycles globaux — `OnPush` fait juste que ce composant est **sauté** s'il n'est pas marqué dirty.
 
 ### Comment un composant est marqué dirty
 
@@ -850,8 +794,7 @@ Signals + OnPush :
 
 ### Cas 2 — Supprimer Zone.js avec le mode Zoneless en Angular 21
 
-Ce n'est pas l'objectif de ce dojo, mais c'est la suite logique une fois l'état
-principal piloté par Signals.
+Ce n'est pas l'objectif de ce dojo, mais c'est la suite logique une fois l'état principal piloté par Signals.
 
 **1. `app.config.ts` :**
 
@@ -873,9 +816,7 @@ provideZonelessChangeDetection()
 "polyfills": []
 ```
 
-En zoneless, Signals ne sont pas obligatoires partout, mais chaque changement
-doit passer par un déclencheur connu d'Angular : `signal().set()`, `input()`,
-événement template, `async pipe`, `markForCheck()`, router/forms, etc.
+En zoneless, Signals ne sont pas obligatoires partout, mais chaque changement doit passer par un déclencheur connu d'Angular : `signal().set()`, `input()`, événement template, `async pipe`, `markForCheck()`, router/forms, etc.
 
 ```ts
 // Fragile en zoneless : propriété classique modifiée dans un callback async
@@ -908,3 +849,4 @@ Avec OnPush   →   Cycle global lancé,    →   Mode Zoneless
                   dirty sont re-rendus        un re-render ciblé
 ```
 ---
+
