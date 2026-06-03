@@ -48,6 +48,9 @@ Zone.js résout : le déclenchement automatique de la détection après async
 
 ## Intention d'architecture du dojo
 
+Les decisions d'architecture pedagogique sont detaillees dans
+`docs/adr/0001-architecture-pedagogique-dojo-signals.md`.
+
 Le projet montre volontairement **deux patterns Signals**.
 
 ### 1. Signals directement dans les composants
@@ -74,6 +77,8 @@ Le projet montre volontairement **deux patterns Signals**.
 ---
 
 ## Lecture guidée — code mixte pendant la migration
+
+Voir aussi l'ADR 0001 pour la justification de ce choix.
 
 Le projet contient volontairement du code mixte : certains états sont déjà des
 signals, d'autres restent des propriétés classiques.
