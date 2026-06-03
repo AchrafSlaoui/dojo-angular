@@ -1,9 +1,5 @@
 # ADR 0001 - Architecture pédagogique du dojo Angular Signals
 
-## Statut
-
-Accepté.
-
 ## Contexte
 
 Le dojo enseigne Angular Signals dans une application Angular 21 existante.
@@ -98,12 +94,3 @@ init
 Chaque branche ajoute uniquement la correction de son exercice par rapport à la
 branche précédente.
 
-## Conséquences
-
-- Les participants voient une migration progressive, pas une réécriture totale.
-- Les propriétés classiques et les signals peuvent coexister dans le même projet.
-- Les façades restent pertinentes pour l'état partagé.
-- RxJS garde son rôle sur les flux temporels.
-- Le mode zoneless reste un sujet avancé et séparé des exercices principaux.
-- Le support principal peut rester concentré sur les définitions, consignes et
-  exemples, pendant que cet ADR porte les décisions d'architecture.
