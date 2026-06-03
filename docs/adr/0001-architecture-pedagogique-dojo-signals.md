@@ -51,6 +51,26 @@ convertis mecaniquement en signals. Une propriete classique reste acceptable si
 elle est locale, simple, manipulee par des handlers de template et sans besoin
 d'etre lue par un `computed()` ou un `effect()`.
 
+### Scoper les facades stateful au composant
+
+Le projet contient deux types de facades qui n'ont pas le meme role :
+
+**Facades stateful** (`AccountsFacade`, `MovementsFacade`) : declarees dans
+`providers` du composant consommateur, pas dans `root`. Chaque page obtient sa
+propre instance. L'etat ne fuit pas entre navigations et le cycle de vie est lie
+au composant.
+
+```ts
+@Component({ providers: [AccountsFacade] })
+```
+
+**Facade d'orchestration** (`ClientAccountsFacade`) : `providedIn: 'root'`,
+sans etat, orchestre uniquement des appels paralleles et retourne le resultat.
+Stateless, donc sans risque a etre globale.
+
+Regle : une facade qui porte de l'etat doit etre scopee au composant. Une
+facade sans etat peut etre globale.
+
 ### Garder RxJS pour les flux temporels
 
 RxJS reste l'outil adapte pour les flux dans le temps : debounce, combinaison de
