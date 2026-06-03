@@ -34,6 +34,37 @@ Le projet contient à la fois :
 
 Ce mélange est volontaire. Tous les états locaux transitoires ne doivent pas être convertis mécaniquement en signals. Une propriété classique reste acceptable si elle est locale, simple, manipulée par des handlers de template et sans besoin d'être lue par un `computed()` ou un `effect()`.
 
+Certains fichiers montrent donc volontairement des états déjà migrés et des états classiques dans le même projet :
+
+```ts
+// ClientCardComponent
+editMode = false;
+editModel: ClientUpdate | null = null;
+
+// ClientDetailComponent
+addingAccount = false;
+readonly mutating = this.accountsFacade.mutating;
+
+// AccountsComponent
+adding = false;
+```
+
+Dans les templates, cela donne aussi un mélange visible :
+
+```html
+@if (addingAccount) { ... }
+@if (mutating()) { ... }
+```
+
+Ce n'est pas une incohérence. C'est le reflet d'une migration progressive :
+
+- `mutating()` vient d'une façade Signals et peut être partagé entre composants ;
+- `addingAccount`, `adding`, `editMode` et `editModel` sont des états locaux transitoires ;
+- avec `zone.js` + `OnPush`, un clic template marque le composant à vérifier ;
+- convertir en signal devient intéressant quand l'état est lu par `computed()`, `effect()`, plusieurs composants, ou quand on veut expliciter ses dépendances.
+
+Dans ce dojo, on ne convertit donc pas tout mécaniquement. L'exercice 1 convertit `adding` dans `ClientsComponent` pour apprendre `signal()`, tandis que le `adding` de `AccountsComponent` reste volontairement classique pour illustrer une migration progressive.
+
 ### Scoper les façades stateful au composant
 
 Le projet contient deux types de façades qui n'ont pas le même rôle :

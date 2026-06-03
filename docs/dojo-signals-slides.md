@@ -44,43 +44,7 @@ Les décisions d'architecture pédagogique sont détaillées dans `docs/adr/0001
 
 Le projet montre volontairement deux patterns : des Signals directement dans les composants pour apprendre les bases, puis des Signals dans des façades pour l'état partagé et les règles métier. L'asymétrie est intentionnelle : on commence simple, puis on extrait quand l'état devient plus riche ou partagé.
 
----
-
-## Lecture guidée — code mixte pendant la migration
-
-Voir aussi l'ADR 0001 pour la justification de ce choix.
-
-Le projet contient volontairement du code mixte : certains états sont déjà des signals, d'autres restent des propriétés classiques.
-
-```ts
-// ClientCardComponent
-editMode = false;
-editModel: ClientUpdate | null = null;
-
-// ClientDetailComponent
-addingAccount = false;
-readonly mutating = this.accountsFacade.mutating;
-
-// AccountsComponent
-adding = false;
-```
-
-Dans les templates, cela donne aussi un mélange visible :
-
-```html
-@if (addingAccount) { ... }
-@if (mutating()) { ... }
-```
-
-Ce n'est pas une incohérence. C'est le reflet d'une migration progressive :
-
-- `mutating()` vient d'une façade Signals et peut être partagé entre composants ;
-- `addingAccount`, `adding`, `editMode` et `editModel` sont des états locaux transitoires ;
-- avec `zone.js` + `OnPush`, un clic template marque le composant à vérifier ;
-- convertir en signal devient intéressant quand l'état est lu par `computed()`,
-  `effect()`, plusieurs composants, ou quand on veut expliciter ses dépendances.
-
-À retenir : dans ce dojo, on ne convertit pas tout mécaniquement. L'exercice 1 convertit `adding` dans `ClientsComponent` pour apprendre `signal()`, tandis que le `adding` de `AccountsComponent` reste volontairement classique pour illustrer une migration progressive.
+Le détail du code mixte pendant la migration est documenté dans l'ADR 0001.
 
 ---
 
