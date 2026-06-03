@@ -120,6 +120,24 @@ qu'une migration peut être progressive quand l'état reste local et simple.
 
 ---
 
+## Mapping exercices / branches / fichiers
+
+| Exercice | Branche | Concept | Fichiers principaux |
+|---|---|---|---|
+| 1 | `exercice-1` | `signal()` | `clients.component.ts`, `clients.component.html`, `clients.component.spec.ts` |
+| 2 | `exercice-2` | `computed()` en facade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html`, `accounts.component.spec.ts` |
+| 3 | `exercice-3` | `effect()` pour cohérence d'état | `clients.component.ts` |
+| 4 | `exercice-4` | `viewChild()` + `effect()` DOM | `clients.component.ts` |
+| 5 | `exercice-5` | `input()` | `account-card.component.ts` |
+| 6 | `exercice-6` | `output()` | `account-list.component.ts` |
+| 7 | `exercice-7` | `toSignal()` / `toObservable()` | `accounts.component.ts`, `dashboard.component.ts`, `dashboard.component.spec.ts`, `clients.component.ts` |
+| 8 | `exercice-8` | `computed()` en facade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html` |
+
+Les branches sont cumulatives : chaque branche ajoute uniquement la correction de
+son exercice par rapport à la branche précédente.
+
+---
+
 ## Exercice 1 — `signal()`
 
 ### Fichier à modifier
