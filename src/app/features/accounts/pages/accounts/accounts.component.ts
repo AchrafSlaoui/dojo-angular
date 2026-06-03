@@ -45,6 +45,7 @@ export class AccountsComponent {
 
   constructor() {
     this.accountsFacade.setTypeFilter(this.initialTypeFilter());
+    // EXERCICE 7a — remplacer cette souscription par toSignal() + effect(), puis retirer DestroyRef et takeUntilDestroyed.
     this.clientId$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((clientId) => {

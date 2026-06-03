@@ -32,6 +32,7 @@ export class AccountsFacade {
   readonly clientBalance = computed(() =>
     Math.round(this.accountsState().reduce((total, account) => total + account.balance, 0) * 100) / 100
   );
+  // EXERCICE 2 — convertir ce getter en computed(), puis lire blockedAccountsCount() dans le composant et les tests.
   get blockedAccountsCount(): number {
     return this.filteredAccounts().filter((account) => account.status === 'blocked').length;
   }

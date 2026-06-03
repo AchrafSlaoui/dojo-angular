@@ -73,6 +73,48 @@ Le projet montre volontairement **deux patterns Signals**.
 
 ---
 
+## Lecture guidée — code mixte pendant la migration
+
+Le projet contient volontairement du code mixte : certains états sont déjà des
+signals, d'autres restent des propriétés classiques.
+
+```ts
+// ClientCardComponent
+editMode = false;
+editModel: ClientUpdate | null = null;
+
+// ClientDetailComponent
+addingAccount = false;
+readonly mutating = this.accountsFacade.mutating;
+
+// AccountsComponent
+adding = false;
+```
+
+Dans les templates, cela donne aussi un mélange visible :
+
+```html
+@if (addingAccount) { ... }
+@if (mutating()) { ... }
+```
+
+Ce n'est pas une incohérence. C'est le reflet d'une migration progressive :
+
+- `mutating()` vient d'une facade Signals et peut être partagé entre composants ;
+- `addingAccount`, `adding`, `editMode` et `editModel` sont des états locaux transitoires ;
+- avec `zone.js` + `OnPush`, un clic template marque le composant à vérifier ;
+- convertir en signal devient intéressant quand l'état est lu par `computed()`,
+  `effect()`, plusieurs composants, ou quand on veut expliciter ses dépendances.
+
+À retenir : dans ce dojo, on ne convertit pas tout mécaniquement. On convertit les
+états qui rendent le modèle réactif plus clair.
+
+L'exercice 1 convertit `adding` dans `ClientsComponent` pour apprendre `signal()`.
+Le `adding` de `AccountsComponent` reste volontairement classique : il illustre
+qu'une migration peut être progressive quand l'état reste local et simple.
+
+---
+
 ## Exercice 1 — `signal()`
 
 ### Fichier à modifier
@@ -133,6 +175,7 @@ adding()                          // lire (template ou TS)
 | Situation | Outil |
 |---|---|
 | État UI local : booléen, texte, page courante | `signal()` |
+| État local transitoire manipulé seulement par des handlers template | Propriété classique acceptable pendant la migration |
 | Valeur calculée à partir d'autres signals | `computed()` — pas `signal()` |
 | Valeur issue d'une route ou d'un appel HTTP | `toSignal()` |
 | État partagé entre composants via service | facade Signals ou store dédié |
@@ -209,7 +252,7 @@ blockedAccountsCount()  // lecture
 
 ---
 
-## Exercice 3 — `effect()` + `viewChild()`
+## Exercice 3 — `effect()` pour synchroniser un état
 
 ### Fichier à modifier
 
@@ -217,7 +260,7 @@ blockedAccountsCount()  // lecture
 
 ### Consigne
 
-**Partie 1** : remplacer l'appel impératif `this.clampCurrentPage()` par un `effect()` dans le constructeur.
+Remplacer l'appel impératif `this.clampCurrentPage()` par un `effect()` dans le constructeur.
 
 ```ts
 // Ajouter dans le constructeur
@@ -233,16 +276,6 @@ this.clampCurrentPage(); // ← retirer cette ligne
 private clampCurrentPage(): void { ... }
 ```
 
-**Partie 2** : conditionner le focus sur `adding()` dans l'effet `viewChild` existant.
-
-```ts
-// Avant
-effect(() => { this.firstNameInput()?.nativeElement.focus(); });
-
-// Après
-effect(() => { if (this.adding()) this.firstNameInput()?.nativeElement.focus(); });
-```
-
 ```bash
 npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.component.spec.ts
 ```
@@ -251,15 +284,6 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 
 > `effect()` exécute un **effet de bord** quand les signals lus dans son corps changent.
 > Il s'exécute automatiquement, sans appel explicite.
-
-### Définition `viewChild()`
-
-> `viewChild()` expose une **référence DOM comme un signal**. Retourne `undefined` quand
-> l'élément est absent du DOM, `ElementRef` quand il est présent.
-
-```ts
-private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
-```
 
 ### vs Zone.js
 
@@ -281,7 +305,52 @@ private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
 
 ---
 
-## Exercice 4 — `input()`
+## Exercice 4 — `viewChild()` + `effect()` pour le DOM
+
+### Fichier à modifier
+
+`src/app/features/clients/pages/clients/clients.component.ts`
+
+### Mise en contexte
+
+Cet exercice montre un deuxième usage de `effect()` : déclencher un effet DOM quand
+une condition UI devient vraie. Ici, on veut placer le focus sur le champ prénom
+quand le formulaire d'ajout est affiché.
+
+### Définition `viewChild()`
+
+> `viewChild()` expose une **référence DOM comme un signal**. Retourne `undefined` quand
+> l'élément est absent du DOM, `ElementRef` quand il est présent.
+
+```ts
+private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
+```
+
+### Consigne
+
+Conditionner le focus sur `adding()` dans l'effet `viewChild` existant.
+
+```ts
+// Avant
+effect(() => { this.firstNameInput()?.nativeElement.focus(); });
+
+// Après
+effect(() => { if (this.adding()) this.firstNameInput()?.nativeElement.focus(); });
+```
+
+```bash
+npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.component.spec.ts
+```
+
+### Pourquoi `effect()` ici
+
+Le focus n'est pas une valeur calculée : c'est une interaction avec le DOM.
+`effect()` est adapté parce qu'il réagit à `adding()` et à la présence réelle de
+l'élément exposé par `viewChild()`.
+
+---
+
+## Exercice 5 — `input()`
 
 ### Fichier à modifier
 
@@ -334,15 +403,29 @@ showStatus()                           // lecture
 | Entrée lue dans un `computed()` ou `effect()` | `input()` |
 | Entrée requise sans valeur par défaut | `input.required<T>()` |
 | Entrée legacy dans un composant non migré | `@Input()` acceptable |
-| Valeur bidirectionnelle parent ↔ enfant | `model()` (disponible en Angular 21) |
+| Valeur bidirectionnelle parent ↔ enfant | `model()` (voir parenthèse après `output()`) |
 
 ---
 
-## Exercice 5 — `output()`
+## Exercice 6 — `output()`
 
 ### Fichier à modifier
 
 `src/app/features/accounts/components/account-list/account-list.component.ts`
+
+### Lecture guidée
+
+Le fichier contient déjà plusieurs sorties écrites avec `output()` :
+
+```ts
+editRequested = output<Account>();
+saveRequested = output<void>();
+cancelRequested = output<void>();
+deleteRequested = output<Account>();
+```
+
+Elles servent de modèle local. L'exercice consiste à aligner la dernière sortie
+legacy, `selectedRequested`, sur le même style.
 
 ### Consigne
 
@@ -389,7 +472,23 @@ this.selectedRequested.emit(account);        // émettre
 | Événement vers le parent direct | `output()` |
 | Événement global ou cross-composant | Service dédié |
 | Flux avec opérateurs temporels | Flux dédié, pas `output()` |
-| Valeur bidirectionnelle entrée + sortie | `model()` (disponible en Angular 21) |
+| Valeur bidirectionnelle entrée + sortie | `model()` (voir ci-dessous) |
+
+### Parenthèse rapide — `model()`
+
+> `model()` déclare une **valeur bidirectionnelle** entre parent et enfant.
+> Il combine l'idée d'une entrée (`input`) et d'une sortie (`output`) pour des cas
+> comme un composant de formulaire contrôlé.
+
+```ts
+value = model('');
+
+// Parent
+<app-search-box [(value)]="searchTerm" />
+```
+
+À retenir dans ce dojo : `input()` sert à recevoir une valeur, `output()` sert à
+émettre une intention, `model()` sert aux échanges bidirectionnels explicites.
 
 ---
 
@@ -420,19 +519,30 @@ clientId() // lecture côté composant/template
 
 ---
 
-## Exercice 6 — `toSignal()` + `toObservable()`
+## Exercice 7 — Interop RxJS progressive
 
 ### Fichiers à modifier
 
-**Partie 1** — `src/app/features/accounts/pages/accounts/accounts.component.ts`
+**7a — `toSignal()` simple** — `src/app/features/accounts/pages/accounts/accounts.component.ts`
 
-**Partie 2** — `src/app/features/clients/pages/dashboard/dashboard.component.ts`
+**7b — `toSignal()` avec état de chargement** — `src/app/features/clients/pages/dashboard/dashboard.component.ts`
 
-**Partie 3** — `src/app/features/clients/pages/clients/clients.component.ts` *(lecture seule — démo)*
+**7c — `toObservable()`** — `src/app/features/clients/pages/clients/clients.component.ts` *(lecture seule / bonus)*
+
+### Progression
+
+Cet exercice est le plus dense du dojo. Il se découpe en trois marches :
+
+1. Convertir un Observable simple en signal.
+2. Ajouter l'état `loading/error` autour d'un flux HTTP.
+3. Lire `toObservable()` comme pont inverse, sans demander de modification.
+
+Le but n'est pas de remplacer RxJS. Le but est de savoir où placer la frontière :
+RxJS compose le flux, `toSignal()` expose sa dernière valeur au template signal.
 
 ### Consigne
 
-**Partie 1** : remplacer la souscription manuelle à `paramMap` par `toSignal()`.
+**7a** : remplacer la souscription manuelle à `paramMap` par `toSignal()`.
 
 ```ts
 // Avant — souscription manuelle
@@ -452,7 +562,18 @@ constructor() {
 }
 ```
 
-**Partie 2** : remplacer `firstValueFrom()` + états manuels par `toSignal()` + pipe RxJS.
+Nettoyer aussi les imports devenus inutiles :
+
+```ts
+// À retirer après conversion
+DestroyRef
+takeUntilDestroyed
+```
+
+**7b** : remplacer `firstValueFrom()` + états manuels par `toSignal()` + pipe RxJS.
+
+Point d'attention : ici RxJS reste utile. Le `pipe()` construit un petit état de vue
+unique : données, chargement et erreur.
 
 ```ts
 private readonly clientsQuery = toSignal(
@@ -467,7 +588,14 @@ readonly loading = computed(() => this.clientsQuery().loading);
 readonly error   = computed(() => this.clientsQuery().error);
 ```
 
-**Partie 3** : lire et expliquer `debouncedSearch$` dans `ClientsComponent` (pas de modification).
+La méthode `reload()` disparaît : le chargement initial est porté par le signal
+créé avec `toSignal()`.
+
+**7c** : lire et expliquer `debouncedSearch$` dans `ClientsComponent` (pas de modification).
+
+Cette partie sert de consolidation. Elle montre le pont inverse :
+on part d'un signal local, puis on repasse en Observable uniquement parce qu'un
+opérateur temporel (`debounceTime`) est nécessaire.
 
 ```bash
 npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
@@ -512,7 +640,11 @@ readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
 ---
 
-## Exercice 7 — Refactoring facade avec `computed()`
+## Exercice 8 — Consolidation facade avec `computed()`
+
+Cet exercice ne présente pas une nouvelle API. Il sert à consolider l'architecture :
+une règle métier dérivée doit vivre au bon endroit, avec un nom explicite et une
+surface testable.
 
 ### Fichiers à modifier
 
@@ -550,6 +682,13 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 > Exposer une **règle métier dérivée** dans la facade sous forme de `computed()` plutôt que
 > de calculer en ligne dans le template ou le composant.
 
+### Pourquoi terminer par cet exercice
+
+Après l'interop RxJS, on revient à un geste simple mais structurant : placer la
+logique dérivée dans la facade. C'est le lien avec l'objectif architectural du dojo :
+des composants plus lisibles, une facade qui porte l'état partagé, et des règles
+métier nommées.
+
 ### vs Zone.js / vs RxJS
 
 | Règle dans le template ou le composant | `computed()` dans la facade |
@@ -580,7 +719,24 @@ Observable HTTP         → pipe(map, catchError, startWith) → toSignal()
 
 ---
 
-## Fin de dojo — Limiter ou supprimer Zone.js
+## Clôture du dojo — Règles à retenir
+
+```
+1. computed()   ne fait jamais d'appel HTTP — calcul pur uniquement
+2. effect()     n'expose jamais de valeur    — effets de bord uniquement
+3. L'enfant émet une INTENTION, le parent exécute l'ACTION
+4. Ne pas bridger signal ↔ RxJS systématiquement — rester dans un seul monde
+5. Zone.js peut coexister — migrer progressivement, pas tout d'un coup
+6. input() dans un computed() = dépendance réelle / @Input() dans computed() = non
+7. toSignal() gère le désabonnement — ne pas ajouter takeUntilDestroyed en plus
+```
+
+---
+
+## Annexe — Limiter ou supprimer Zone.js
+
+Cette partie est une **annexe de référence**. Elle répond à la question : que devient
+la détection de changement quand on limite Zone.js ou qu'on passe en mode zoneless ?
 
 ### Ce que fait Zone.js
 
@@ -729,15 +885,3 @@ Avec OnPush   →   Cycle global lancé,    →   Mode Zoneless
                   dirty sont re-rendus        un re-render ciblé
 ```
 ---
-
-## Règles à retenir pendant le dojo
-
-```
-1. computed()   ne fait jamais d'appel HTTP — calcul pur uniquement
-2. effect()     n'expose jamais de valeur    — effets de bord uniquement
-3. L'enfant émet une INTENTION, le parent exécute l'ACTION
-4. Ne pas bridger signal ↔ RxJS systématiquement — rester dans un seul monde
-5. Zone.js peut coexister — migrer progressivement, pas tout d'un coup
-6. input() dans un computed() = dépendance réelle / @Input() dans computed() = non
-7. toSignal() gère le désabonnement — ne pas ajouter takeUntilDestroyed en plus
-```

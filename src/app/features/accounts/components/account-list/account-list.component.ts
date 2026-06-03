@@ -22,6 +22,7 @@ export class AccountListComponent {
   saveRequested = output<void>();
   cancelRequested = output<void>();
   deleteRequested = output<Account>();
+  // EXERCICE 6 — aligner cette sortie legacy avec les output() ci-dessus.
   @Output() selectedRequested = new EventEmitter<Account>();
 
   private readonly selectedAccount = signal<Account | null>(null, { equal: () => false });
