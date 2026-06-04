@@ -10,7 +10,7 @@ type ClientRecord = Client & { accounts?: Account[]; movements?: Movement[] };
 let DB: ClientRecord[] | null = null;
 const STORAGE_KEY = 'dojo-angular-2-mock';
 const STORAGE_VERSION_KEY = 'dojo-angular-2-mock-version';
-const DATA_VERSION = 4;
+const DATA_VERSION = 5;
 
 export function mockApiInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   const response = handleMockApiRequest(req);
@@ -379,13 +379,36 @@ function ensureHumanNames(db: ClientRecord[]): void {
 
 function ensureClientPhotos(db: ClientRecord[]): void {
   for (let i = 0; i < db.length; i++) {
-    db[i].photoUrl = db[i].photoUrl || mockClientPhotoUrl(i);
+    if (!db[i].photoUrl || isExternalMockPhoto(db[i].photoUrl)) {
+      db[i].photoUrl = mockClientPhotoUrl(i);
+    }
   }
 }
 
 function mockClientPhotoUrl(index: number): string {
-  const imageId = (index % 70) + 1;
-  return `https://i.pravatar.cc/160?img=${imageId}`;
+  const palette = [
+    ['#2563eb', '#bfdbfe'],
+    ['#047857', '#bbf7d0'],
+    ['#b45309', '#fed7aa'],
+    ['#be123c', '#fecdd3'],
+    ['#6d28d9', '#ddd6fe'],
+    ['#0f766e', '#99f6e4'],
+  ];
+  const [background, foreground] = palette[index % palette.length];
+  const label = `C${index + 1}`;
+  const svg = [
+    '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">',
+    `<rect width="160" height="160" rx="32" fill="${background}"/>`,
+    `<circle cx="118" cy="38" r="26" fill="${foreground}" opacity="0.45"/>`,
+    `<circle cx="36" cy="124" r="30" fill="${foreground}" opacity="0.25"/>`,
+    `<text x="80" y="94" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="700" fill="${foreground}">${label}</text>`,
+    '</svg>',
+  ].join('');
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function isExternalMockPhoto(photoUrl: string): boolean {
+  return /^https?:\/\//i.test(photoUrl);
 }
 
 function ensureMovementsThisWeek(clients: ClientRecord[]): void {
