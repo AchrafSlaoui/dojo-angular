@@ -379,7 +379,8 @@ function ensureHumanNames(db: ClientRecord[]): void {
 
 function ensureClientPhotos(db: ClientRecord[]): void {
   for (let i = 0; i < db.length; i++) {
-    if (!db[i].photoUrl || isExternalMockPhoto(db[i].photoUrl)) {
+    const photoUrl = db[i].photoUrl;
+    if (!photoUrl || isExternalMockPhoto(photoUrl)) {
       db[i].photoUrl = mockClientPhotoUrl(i);
     }
   }
