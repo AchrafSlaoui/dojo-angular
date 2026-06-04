@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { ClientDetailComponent } from './client-detail.component';
@@ -15,6 +16,7 @@ const client: Client = {
   id: clientId,
   firstName: 'Ada',
   lastName: 'Lovelace',
+  photoUrl: 'https://example.com/ada.jpg',
 };
 
 const accounts: Account[] = [
@@ -99,6 +101,15 @@ describe('ClientDetailComponent', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Compte courant Ada');
     expect(text).toContain('Livret Ada');
+  });
+
+  it('falls back to client initials when the summary photo cannot be loaded', () => {
+    const image = fixture.debugElement.query(By.css('.avatar img'));
+    image.triggerEventHandler('error');
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('.avatar img'))).toBeNull();
+    expect(fixture.debugElement.query(By.css('.avatar span')).nativeElement.textContent).toContain('AL');
   });
 
   it('renders account CRUD actions on the client detail page', () => {

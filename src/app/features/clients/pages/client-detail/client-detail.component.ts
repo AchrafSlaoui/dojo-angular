@@ -32,6 +32,7 @@ export class ClientDetailComponent {
   readonly accountTypeFilter = this.accountsFacade.typeFilter;
   addingAccount = false;
   editingAccountId: string | null = null;
+  failedPhotoClientId: string | null = null;
   newAccount: AccountCreate = this.createAccountDraft();
   editAccount: AccountUpdate = { id: '', label: '', type: 'checking', status: 'active' };
 
@@ -60,6 +61,18 @@ export class ClientDetailComponent {
 
   setAccountTypeFilter(type: string): void {
     this.accountsFacade.setTypeFilter(type);
+  }
+
+  shouldShowClientPhoto(client: Client): boolean {
+    return !!client.photoUrl && this.failedPhotoClientId !== client.id;
+  }
+
+  clientInitials(client: Client): string {
+    return `${client.firstName.charAt(0)}${client.lastName.charAt(0)}`.toUpperCase();
+  }
+
+  onClientPhotoError(client: Client): void {
+    this.failedPhotoClientId = client.id;
   }
 
   private async loadClient(id: string): Promise<void> {

@@ -6,10 +6,10 @@
   @if (!editMode) {
     <div class="row">
       <div class="avatar">
-        @if (client().photoUrl) {
-          <img [src]="client().photoUrl" [alt]="client().firstName + ' ' + client().lastName" loading="lazy" />
+        @if (shouldShowPhoto()) {
+          <img [src]="client().photoUrl" [alt]="client().firstName + ' ' + client().lastName" loading="lazy" (error)="onPhotoError()" />
         } @else {
-          <span>{{ client().firstName.charAt(0) }}{{ client().lastName.charAt(0) }}</span>
+          <span>{{ clientInitials() }}</span>
         }
       </div>
       <div class="name">

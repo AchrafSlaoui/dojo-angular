@@ -7,10 +7,10 @@
     <section class="info">
       <div class="client-summary">
         <div class="avatar">
-          @if (client.photoUrl) {
-            <img [src]="client.photoUrl" [alt]="client.firstName + ' ' + client.lastName" />
+          @if (shouldShowClientPhoto(client)) {
+            <img [src]="client.photoUrl" [alt]="client.firstName + ' ' + client.lastName" (error)="onClientPhotoError(client)" />
           } @else {
-            <span>{{ client.firstName.charAt(0) }}{{ client.lastName.charAt(0) }}</span>
+            <span>{{ clientInitials(client) }}</span>
           }
         </div>
         <div>

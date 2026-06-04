@@ -48,6 +48,18 @@ describe('ClientCardComponent', () => {
     expect(image.getAttribute('alt')).toBe('Ada Lovelace');
   });
 
+  it('falls back to client initials when the photo cannot be loaded', () => {
+    fixture.componentRef.setInput('client', client);
+    fixture.detectChanges();
+
+    const image = fixture.debugElement.query(By.css('.avatar img'));
+    image.triggerEventHandler('error');
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('.avatar img'))).toBeNull();
+    expect(fixture.debugElement.query(By.css('.avatar span')).nativeElement.textContent).toContain('AL');
+  });
+
   it('switches to edit mode when the edit button is activated', () => {
     // Given an editable client card
     fixture.componentRef.setInput('client', client);

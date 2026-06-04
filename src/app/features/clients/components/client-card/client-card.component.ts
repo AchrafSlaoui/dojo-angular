@@ -22,6 +22,7 @@ export class ClientCardComponent {
   saveRequested = output<ClientUpdate>();
   editMode = false;
   editModel: ClientUpdate | null = null;
+  failedPhotoClientId: string | null = null;
 
   get cardHref(): string {
     const current = this.client();
@@ -47,6 +48,20 @@ export class ClientCardComponent {
 
   onDelete(): void {
     this.deleteRequested.emit(this.client());
+  }
+
+  shouldShowPhoto(): boolean {
+    const current = this.client();
+    return !!current.photoUrl && this.failedPhotoClientId !== current.id;
+  }
+
+  clientInitials(): string {
+    const current = this.client();
+    return `${current.firstName.charAt(0)}${current.lastName.charAt(0)}`.toUpperCase();
+  }
+
+  onPhotoError(): void {
+    this.failedPhotoClientId = this.client().id;
   }
 
   startEdit(event?: Event) {
