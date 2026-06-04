@@ -22,10 +22,12 @@ describe('mockApiInterceptor accounts domain', () => {
 
   it('returns local mocked client photos without external network URLs', async () => {
     const clients = await send<ClientActivity[]>('GET', '/api/clients');
+    const firstPhoto = clients.body?.[0]?.photoUrl ?? '';
 
     expect(clients.body?.length).toBeGreaterThan(0);
     expect(clients.body?.every((client) => client.photoUrl?.startsWith('data:image/svg+xml,'))).toBe(true);
     expect(clients.body?.some((client) => client.photoUrl?.startsWith('http'))).toBe(false);
+    expect(decodeURIComponent(firstPhoto)).not.toContain('<text');
   });
 
   it('creates an account and keeps it persisted for the client', async () => {

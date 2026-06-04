@@ -10,7 +10,7 @@ type ClientRecord = Client & { accounts?: Account[]; movements?: Movement[] };
 let DB: ClientRecord[] | null = null;
 const STORAGE_KEY = 'dojo-angular-2-mock';
 const STORAGE_VERSION_KEY = 'dojo-angular-2-mock-version';
-const DATA_VERSION = 5;
+const DATA_VERSION = 6;
 
 export function mockApiInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   const response = handleMockApiRequest(req);
@@ -387,22 +387,36 @@ function ensureClientPhotos(db: ClientRecord[]): void {
 }
 
 function mockClientPhotoUrl(index: number): string {
-  const palette = [
-    ['#2563eb', '#bfdbfe'],
-    ['#047857', '#bbf7d0'],
-    ['#b45309', '#fed7aa'],
-    ['#be123c', '#fecdd3'],
-    ['#6d28d9', '#ddd6fe'],
-    ['#0f766e', '#99f6e4'],
+  const portraits = [
+    ['#e0f2fe', '#0f172a', '#f2c9a6', '#3b2f2f', '#2563eb'],
+    ['#dcfce7', '#052e16', '#d8a47f', '#1f2937', '#047857'],
+    ['#fef3c7', '#431407', '#f1b98b', '#7c2d12', '#b45309'],
+    ['#fee2e2', '#4c0519', '#e7b58f', '#111827', '#be123c'],
+    ['#ede9fe', '#2e1065', '#c89474', '#3f2a20', '#6d28d9'],
+    ['#ccfbf1', '#042f2e', '#f0c7a1', '#0f172a', '#0f766e'],
   ];
-  const [background, foreground] = palette[index % palette.length];
-  const label = `C${index + 1}`;
+  const [background, stroke, skin, hair, shirt] = portraits[index % portraits.length];
+  const offset = index % 4;
+  const hairPath = offset === 0
+    ? 'M45 68c2-29 24-45 52-38 20 5 31 24 28 50-13-13-25-21-42-21-16 0-27 7-38 20z'
+    : offset === 1
+      ? 'M43 73c-3-27 16-48 44-48 28 0 45 20 43 48-18-16-37-22-65-12-8 3-14 7-22 12z'
+      : offset === 2
+        ? 'M47 72c0-31 19-48 49-43 18 3 31 17 34 39-11-7-22-10-35-10-18 0-34 5-48 14z'
+        : 'M42 76c1-25 20-45 50-45s49 20 50 45c-15-10-29-14-50-14s-36 4-50 14z';
   const svg = [
     '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">',
-    `<rect width="160" height="160" rx="32" fill="${background}"/>`,
-    `<circle cx="118" cy="38" r="26" fill="${foreground}" opacity="0.45"/>`,
-    `<circle cx="36" cy="124" r="30" fill="${foreground}" opacity="0.25"/>`,
-    `<text x="80" y="94" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="700" fill="${foreground}">${label}</text>`,
+    `<rect width="160" height="160" rx="24" fill="${background}"/>`,
+    `<circle cx="128" cy="34" r="22" fill="${shirt}" opacity="0.18"/>`,
+    `<circle cx="30" cy="132" r="28" fill="${shirt}" opacity="0.16"/>`,
+    `<path d="${hairPath}" fill="${hair}"/>`,
+    `<circle cx="80" cy="73" r="34" fill="${skin}" stroke="${stroke}" stroke-opacity="0.08" stroke-width="2"/>`,
+    `<path d="M52 142c5-25 24-40 48-40s43 15 48 40z" fill="${shirt}"/>`,
+    `<path d="M64 142c5-13 17-21 36-21s31 8 36 21z" fill="#ffffff" opacity="0.28"/>`,
+    `<circle cx="68" cy="75" r="4" fill="${stroke}" opacity="0.78"/>`,
+    `<circle cx="92" cy="75" r="4" fill="${stroke}" opacity="0.78"/>`,
+    `<path d="M72 91c6 5 17 5 24 0" fill="none" stroke="${stroke}" stroke-width="4" stroke-linecap="round" opacity="0.7"/>`,
+    `<path d="M79 80l-4 12h8" fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>`,
     '</svg>',
   ].join('');
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
