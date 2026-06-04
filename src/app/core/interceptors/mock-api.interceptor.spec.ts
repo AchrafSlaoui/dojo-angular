@@ -20,14 +20,12 @@ describe('mockApiInterceptor accounts domain', () => {
     jest.clearAllMocks();
   });
 
-  it('returns local mocked client photos without external network URLs', async () => {
+  it('returns mocked client photo URLs', async () => {
     const clients = await send<ClientActivity[]>('GET', '/api/clients');
-    const firstPhoto = clients.body?.[0]?.photoUrl ?? '';
 
     expect(clients.body?.length).toBeGreaterThan(0);
-    expect(clients.body?.every((client) => client.photoUrl?.startsWith('data:image/svg+xml,'))).toBe(true);
-    expect(clients.body?.some((client) => client.photoUrl?.startsWith('http'))).toBe(false);
-    expect(decodeURIComponent(firstPhoto)).not.toContain('<text');
+    expect(clients.body?.every((client) => client.photoUrl?.startsWith('https://i.pravatar.cc/160?img='))).toBe(true);
+    expect(clients.body?.some((client) => client.photoUrl?.startsWith('data:image/svg+xml,'))).toBe(false);
   });
 
   it('creates an account and keeps it persisted for the client', async () => {
