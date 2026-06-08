@@ -301,8 +301,6 @@ private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
 
 `src/app/features/clients/pages/clients/clients.component.ts`
 
-### Mise en contexte
-
 Cet exercice montre un deuxième usage de `effect()` : déclencher un effet DOM quand une condition UI devient vraie. Ici, on veut placer le focus sur le champ prénom quand le formulaire d'ajout est affiché.
 
 ### Consigne
@@ -318,9 +316,7 @@ private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
 
 // À créer dans le constructeur
 effect(() => {
-  if (this.adding()) {
-    this.firstNameInput()?.nativeElement.focus();
-  }
+  this.firstNameInput()?.nativeElement.focus();
 });
 ```
 
@@ -330,7 +326,7 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 
 ### Pourquoi `effect()` ici
 
-Le focus n'est pas une valeur calculée : c'est une interaction avec le DOM. `effect()` est adapté parce qu'il réagit à `adding()` et à la présence réelle de l'élément exposé par `viewChild()`.
+Le focus n'est pas une valeur calculée : c'est une interaction avec le DOM. `effect()` est adapté parce qu'il réagit à la présence réelle de l'élément exposé par `viewChild()`.
 
 ---
 
