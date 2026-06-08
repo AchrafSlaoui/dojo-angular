@@ -9,6 +9,7 @@
       <option value="totalMovementsAsc">Montant mouvements croissant</option>
     </select>
   </label>
+  <!-- EXERCICE 1 -->
   @if (!adding) {
     <button class="icon-btn plus" (click)="startAdd()" title="Ajouter un client" aria-label="Ajouter">
       <span class="icon i-plus icon-lg"></span>
@@ -33,6 +34,7 @@
   <div class="status">Traitement en cours...</div>
 }
 
+<!-- EXERCICE 1 -->
 @if (adding) {
   <form class="add-client card" (ngSubmit)="saveAdd()">
     <input #firstNameRef type="text" [(ngModel)]="newClient.firstName" name="firstName" placeholder="Prenom" required />

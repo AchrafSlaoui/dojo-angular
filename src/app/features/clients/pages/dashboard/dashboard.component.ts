@@ -39,7 +39,7 @@ export class DashboardComponent {
     this.search.set(term ?? '');
   }
 
-  // EXERCICE 7b — remplacer cette méthode par un toSignal() qui expose clients/loading/error.
+  // EXERCICE 7b
   async reload(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);

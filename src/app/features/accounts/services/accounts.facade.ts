@@ -17,22 +17,25 @@ export class AccountsFacade {
 
   readonly search = signal('');
   readonly typeFilter = signal<AccountTypeFilter>('all');
+  // EXERCICE 8
   readonly loading = signal(false);
   readonly mutating = signal(false);
   readonly error = signal<string | null>(null);
 
   readonly accounts = this.accountsState.asReadonly();
   readonly clientId = this.clientIdState.asReadonly();
+  // exemple à lire avant exercice 8
   readonly filteredAccounts = computed(() =>
     this.filterAccounts(this.accountsState(), this.search(), this.typeFilter())
   );
+  // exemple à lire avant exercice 2
   readonly totalBalance = computed(() =>
     Math.round(this.filteredAccounts().reduce((total, account) => total + account.balance, 0) * 100) / 100
   );
   readonly clientBalance = computed(() =>
     Math.round(this.accountsState().reduce((total, account) => total + account.balance, 0) * 100) / 100
   );
-  // EXERCICE 2 — convertir ce getter en computed(), puis lire blockedAccountsCount() dans le composant et les tests.
+  // EXERCICE 2
   get blockedAccountsCount(): number {
     return this.filteredAccounts().filter((account) => account.status === 'blocked').length;
   }

@@ -12,10 +12,13 @@ import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountCardComponent {
+  // exemple à lire avant exercice 5
   account = input.required<Account>();
   clientId = input.required<string>();
+  // EXERCICE 5
   @Input() showStatus = true;
 
+  // EXERCICE 5
   readonly visibleStatusLabel = computed(() => this.showStatus ? this.statusLabel() : null);
 
   readonly statusLabel = computed(() => {

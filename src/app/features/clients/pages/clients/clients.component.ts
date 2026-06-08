@@ -25,6 +25,7 @@ export class ClientsComponent {
   private readonly notifications = inject(NotificationService);
   private readonly confirm = inject(ConfirmService);
 
+  // exemple à lire avant exercice 1
   private readonly clientsState = signal<ClientActivity[]>([]);
   readonly search = signal('');
   readonly sort = signal<ClientSort>('latestMovement');
@@ -49,24 +50,25 @@ export class ClientsComponent {
   readonly totalPages = computed(() => this.pageSlice().totalPages);
   readonly allClients = computed(() => listClients(this.clientsState(), this.search(), this.sort()));
   readonly useVirtualScroll = computed(() => this.totalClients() > 100);
-  // EXERCICE 1 — convertir en signal(false), puis lire adding() dans le template et les tests.
+  // EXERCICE 1
   adding = false;
   newClient: Omit<Client, 'id'> = { firstName: '', lastName: '', email: '', phone: '', address: '' };
+  // exemple à lire avant exercice 4
   private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
   readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
   constructor() {
-    // exemples à lire avant l'exercice 7
+    // exemple à lire avant exercice 3
     effect(() => {
       document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';
     });
 
-    // EXERCICE 4 — ajouter la condition if (this.adding()) autour du focus
+    // EXERCICE 4
     effect(() => {
       this.firstNameInput()?.nativeElement.focus();
     });
 
-    // EXERCICE 3 — ajouter un effect() qui remplace clampCurrentPage()
+    // EXERCICE 3
     this.loadClients();
   }
 
@@ -138,7 +140,7 @@ export class ClientsComponent {
       this.mutating.set(true);
       await firstValueFrom(this.clientsApi.remove(client.id));
       this.clientsState.update((list) => list.filter((c) => c.id !== client.id));
-      this.clampCurrentPage(); // EXERCICE 3 — supprimer cet appel une fois l'effect() ajouté
+      this.clampCurrentPage(); // EXERCICE 3
       this.notifications.success('Client supprime.');
     } catch {
       this.notifications.error('La suppression du client a echoue.');
@@ -183,7 +185,7 @@ export class ClientsComponent {
     this.page.set(1);
   }
 
-  // EXERCICE 3 — supprimer cette méthode une fois l'effect() ajouté dans le constructeur
+  // EXERCICE 3
   private clampCurrentPage(): void {
     const clamped = this.pageSlice().page;
     if (clamped !== this.page()) {

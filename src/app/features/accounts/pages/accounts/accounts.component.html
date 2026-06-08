@@ -8,6 +8,7 @@
   </div>
   <div class="header-actions">
     <strong>Total affiche: {{ totalBalance() | formatValue:"currency" }}</strong>
+    <!-- EXERCICE 2 -->
     <strong>Bloques: {{ blockedAccountsCount }}</strong>
   </div>
 </header>
@@ -76,5 +77,6 @@
     (deleteRequested)="deleteAccount($event)"
   ></app-account-list>
 } @else if (!loading()) {
+  <!-- EXERCICE 8 -->
   <div class="empty">Aucun compte trouve.</div>
 }

@@ -18,11 +18,12 @@ export class AccountListComponent {
   editingAccountId = input<string | null>(null);
   editAccount = input.required<AccountUpdate>();
 
+  // exemple à lire avant exercice 6
   editRequested = output<Account>();
   saveRequested = output<void>();
   cancelRequested = output<void>();
   deleteRequested = output<Account>();
-  // EXERCICE 6 — aligner cette sortie legacy avec les output() ci-dessus.
+  // EXERCICE 6
   @Output() selectedRequested = new EventEmitter<Account>();
 
   private readonly selectedAccount = signal<Account | null>(null, { equal: () => false });

@@ -57,7 +57,7 @@ describe('AccountsComponent', () => {
     expect(api.getByClientId).toHaveBeenCalledWith('c1');
     expect(fixture.componentInstance.accounts()).toHaveLength(2);
     expect(fixture.componentInstance.totalBalance()).toBe(350);
-    // EXERCICE 2 — après conversion en computed(), lire blockedAccountsCount().
+    // EXERCICE 2
     expect(fixture.componentInstance.blockedAccountsCount).toBe(1);
   });
 

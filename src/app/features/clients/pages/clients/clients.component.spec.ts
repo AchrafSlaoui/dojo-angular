@@ -117,13 +117,13 @@ describe('ClientsComponent (deep)', () => {
     component.newClient = { firstName: 'Old', lastName: 'Value', email: 'old@example.com', phone: '1', address: 'Paris' };
     component.startAdd();
 
-    // EXERCICE 1 — après conversion en signal, lire component.adding().
+    // EXERCICE 1
     expect(component.adding).toBe(true);
     expect(component.newClient).toEqual({ firstName: '', lastName: '', email: '', phone: '', address: '' });
 
     component.cancelAdd();
 
-    // EXERCICE 1 — après conversion en signal, lire component.adding().
+    // EXERCICE 1
     expect(component.adding).toBe(false);
   });
 
@@ -159,7 +159,7 @@ describe('ClientsComponent (deep)', () => {
     });
     expect(component.clients()[0]).toMatchObject({ id: '3', firstName: 'Alan', lastName: 'Turing' });
     expect(component.page()).toBe(1);
-    // EXERCICE 1 — après conversion en signal, lire component.adding().
+    // EXERCICE 1
     expect(component.adding).toBe(false);
     expect(notifications.success).toHaveBeenCalledWith('Client Alan Turing cree.');
   });

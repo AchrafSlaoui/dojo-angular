@@ -40,7 +40,7 @@ describe('DashboardComponent', () => {
 
   it('surfaces loading and error state', async () => {
     api.getAll.mockReturnValueOnce(throwError(() => new Error('oops')));
-    // EXERCICE 7b — après suppression de reload(), recréer le composant avec l'API en erreur.
+    // EXERCICE 7b
     await component.reload();
     await fixture.whenStable();
     expect(component.error()).toBe('oops');

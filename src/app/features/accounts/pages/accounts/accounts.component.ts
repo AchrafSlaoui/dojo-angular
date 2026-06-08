@@ -22,6 +22,7 @@ export class AccountsComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly accountsFacade = inject(AccountsFacade);
   private readonly clientId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
+  // exemple à lire avant exercice 7
   private readonly initialTypeFilter: Signal<string> = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get('type') ?? 'all')),
     { initialValue: 'all' }
@@ -33,7 +34,9 @@ export class AccountsComponent {
   readonly mutating = this.accountsFacade.mutating;
   readonly error = this.accountsFacade.error;
   readonly accounts = this.accountsFacade.filteredAccounts;
+  // EXERCICE 8
   readonly totalBalance = this.accountsFacade.totalBalance;
+  // EXERCICE 2
   get blockedAccountsCount(): number {
     return this.accountsFacade.blockedAccountsCount;
   }
@@ -45,7 +48,7 @@ export class AccountsComponent {
 
   constructor() {
     this.accountsFacade.setTypeFilter(this.initialTypeFilter());
-    // EXERCICE 7a — remplacer cette souscription par toSignal() + effect(), puis retirer DestroyRef et takeUntilDestroyed.
+    // EXERCICE 7a
     this.clientId$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((clientId) => {
