@@ -306,15 +306,10 @@ Cet exercice montre un deuxième usage de `effect()` : déclencher un effet DOM 
 Créer un `effect()` dans le constructeur pour déclencher le focus quand le formulaire d'ajout est ouvert.
 
 ```ts
-// Point de départ
-private focusFirstNameInput(): void {
-  this.firstNameInput()?.nativeElement.focus();
-}
-
 // À créer dans le constructeur
 effect(() => {
   if (this.adding()) {
-    this.focusFirstNameInput();
+    this.firstNameInput()?.nativeElement.focus();
   }
 });
 ```

@@ -180,11 +180,6 @@ export class ClientsComponent {
     this.page.set(1);
   }
 
-  // EXERCICE 4
-  private focusFirstNameInput(): void {
-    this.firstNameInput()?.nativeElement.focus();
-  }
-
   // EXERCICE 3
   private clampCurrentPage(): void {
     const clamped = this.pageSlice().page;
