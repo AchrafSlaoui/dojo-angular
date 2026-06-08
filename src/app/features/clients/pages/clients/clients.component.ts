@@ -63,11 +63,6 @@ export class ClientsComponent {
       document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';
     });
 
-    // EXERCICE 4
-    effect(() => {
-      this.firstNameInput()?.nativeElement.focus();
-    });
-
     // EXERCICE 3
     this.loadClients();
   }
@@ -183,6 +178,11 @@ export class ClientsComponent {
     }
     this.sort.set(sort);
     this.page.set(1);
+  }
+
+  // EXERCICE 4
+  private focusFirstNameInput(): void {
+    this.firstNameInput()?.nativeElement.focus();
   }
 
   // EXERCICE 3

@@ -97,6 +97,25 @@ Les branches sont cumulatives : chaque branche ajoute uniquement la correction d
 
 ## Exercice 1 — `signal()`
 
+### Définition
+
+> Un signal est une **valeur réactive observable par Angular**. Il contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lu.
+
+Quand la valeur change, Angular sait précisément quelles dépendances invalider : les valeurs dérivées sont recalculées si nécessaire et les vues concernées sont mises à jour.
+
+`signal()` crée un signal mutable. `computed()` crée un signal dérivé en lecture seule. `effect()` observe des signals, mais n'est pas un signal.
+
+```ts
+readonly adding = signal(false);  // déclarer
+this.adding.set(true);            // écrire
+this.adding.update(v => !v);      // mettre à jour depuis la valeur courante
+adding()                          // lire (template ou TS)
+```
+
+Dans cet exercice, `.set(true)` et `.set(false)` sont préférables à `.update()` : la nouvelle valeur ne dépend pas de l'ancienne. `.update()` devient utile quand on calcule la nouvelle valeur à partir de la valeur courante, par exemple `this.adding.update(value => !value)`.
+
+Sur la branche `init`, `adding` est encore un booléen classique. Tant qu'il n'a pas été converti en `signal(false)`, il n'a donc pas de méthode `.set()` ou `.update()`.
+
 ### Fichier à modifier
 
 `src/app/features/clients/pages/clients/clients.component.ts`
@@ -123,21 +142,6 @@ Dans le template : remplacer `adding` par `adding()`.
 npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.component.spec.ts
 ```
 
-### Définition
-
-> Un signal est une **valeur réactive observable par Angular**. Il contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lu.
-
-Quand la valeur change, Angular sait précisément quelles dépendances invalider : les valeurs dérivées sont recalculées si nécessaire et les vues concernées sont mises à jour.
-
-`signal()` crée un signal mutable. `computed()` crée un signal dérivé en lecture seule. `effect()` observe des signals, mais n'est pas un signal.
-
-```ts
-readonly adding = signal(false);  // déclarer
-this.adding.set(true);            // écrire
-this.adding.update(v => !v);      // mettre à jour depuis la valeur courante
-adding()                          // lire (template ou TS)
-```
-
 ### vs Zone.js
 
 | Zone.js + propriété classique | `signal()` |
@@ -159,6 +163,18 @@ adding()                          // lire (template ou TS)
 ---
 
 ## Exercice 2 — `computed()`
+
+### Définition
+
+> Un `computed` est une **valeur dérivée mémorisée**. Le calcul ne se relance que si une dépendance lue a changé depuis la dernière lecture.
+
+```ts
+readonly blockedAccountsCount = computed(() =>
+  this.filteredAccounts().filter(a => a.status === 'blocked').length
+);
+
+blockedAccountsCount()  // lecture
+```
 
 ### Fichiers à modifier
 
@@ -196,18 +212,6 @@ Dans le template : `{{ blockedAccountsCount }}` → `{{ blockedAccountsCount() }
 npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
 ```
 
-### Définition
-
-> Un `computed` est une **valeur dérivée mémorisée**. Le calcul ne se relance que si une dépendance lue a changé depuis la dernière lecture.
-
-```ts
-readonly blockedAccountsCount = computed(() =>
-  this.filteredAccounts().filter(a => a.status === 'blocked').length
-);
-
-blockedAccountsCount()  // lecture
-```
-
 ### vs Zone.js
 
 | Getter + Zone.js | `computed()` |
@@ -228,6 +232,10 @@ blockedAccountsCount()  // lecture
 ---
 
 ## Exercice 3 — `effect()` pour synchroniser un état
+
+### Définition `effect()`
+
+> `effect()` exécute un **effet de bord** quand les signals lus dans son corps changent. Il s'exécute automatiquement, sans appel explicite.
 
 ### Fichier à modifier
 
@@ -255,10 +263,6 @@ private clampCurrentPage(): void { ... }
 npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.component.spec.ts
 ```
 
-### Définition `effect()`
-
-> `effect()` exécute un **effet de bord** quand les signals lus dans son corps changent. Il s'exécute automatiquement, sans appel explicite.
-
 ### vs Zone.js
 
 | Appel impératif après mutation | `effect()` |
@@ -281,14 +285,6 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 
 ## Exercice 4 — `viewChild()` + `effect()` pour le DOM
 
-### Fichier à modifier
-
-`src/app/features/clients/pages/clients/clients.component.ts`
-
-### Mise en contexte
-
-Cet exercice montre un deuxième usage de `effect()` : déclencher un effet DOM quand une condition UI devient vraie. Ici, on veut placer le focus sur le champ prénom quand le formulaire d'ajout est affiché.
-
 ### Définition `viewChild()`
 
 > `viewChild()` expose une **référence DOM comme un signal**. Retourne `undefined` quand l'élément est absent du DOM, `ElementRef` quand il est présent.
@@ -297,16 +293,30 @@ Cet exercice montre un deuxième usage de `effect()` : déclencher un effet DOM 
 private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
 ```
 
+### Fichier à modifier
+
+`src/app/features/clients/pages/clients/clients.component.ts`
+
+### Mise en contexte
+
+Cet exercice montre un deuxième usage de `effect()` : déclencher un effet DOM quand une condition UI devient vraie. Ici, on veut placer le focus sur le champ prénom quand le formulaire d'ajout est affiché.
+
 ### Consigne
 
-Conditionner le focus sur `adding()` dans l'effet `viewChild` existant.
+Créer un `effect()` dans le constructeur pour déclencher le focus quand le formulaire d'ajout est ouvert.
 
 ```ts
-// Avant
-effect(() => { this.firstNameInput()?.nativeElement.focus(); });
+// Point de départ
+private focusFirstNameInput(): void {
+  this.firstNameInput()?.nativeElement.focus();
+}
 
-// Après
-effect(() => { if (this.adding()) this.firstNameInput()?.nativeElement.focus(); });
+// À créer dans le constructeur
+effect(() => {
+  if (this.adding()) {
+    this.focusFirstNameInput();
+  }
+});
 ```
 
 ```bash
@@ -320,6 +330,16 @@ Le focus n'est pas une valeur calculée : c'est une interaction avec le DOM. `ef
 ---
 
 ## Exercice 5 — `input()`
+
+### Définition
+
+> `input()` déclare une **entrée de composant sous forme de signal**. La valeur passée par le parent devient une dépendance réelle dans les `computed()` et `effect()`.
+
+```ts
+showStatus = input(true);              // avec valeur par défaut
+account = input.required<Account>();   // requis
+showStatus()                           // lecture
+```
 
 ### Fichier à modifier
 
@@ -345,16 +365,6 @@ readonly visibleStatusLabel = computed(() => this.showStatus() ? this.statusLabe
 npm test -- --runTestsByPath src/app/features/accounts/components/account-card/account-card.component.spec.ts
 ```
 
-### Définition
-
-> `input()` déclare une **entrée de composant sous forme de signal**. La valeur passée par le parent devient une dépendance réelle dans les `computed()` et `effect()`.
-
-```ts
-showStatus = input(true);              // avec valeur par défaut
-account = input.required<Account>();   // requis
-showStatus()                           // lecture
-```
-
 ### vs Zone.js
 
 | `@Input()` classique | `input()` |
@@ -375,6 +385,16 @@ showStatus()                           // lecture
 ---
 
 ## Exercice 6 — `output()`
+
+### Définition
+
+> `output()` déclare un **événement sortant du composant**. L'enfant émet une intention, le parent décide quoi faire. Ce n'est pas un Observable.
+
+```ts
+selectedRequested = output<Account>();       // déclarer
+this.selectedRequested.emit(account);        // émettre
+(selectedRequested)="startEdit($event)"      // écouter dans le parent
+```
 
 ### Fichier à modifier
 
@@ -409,16 +429,6 @@ L'émission dans l'`effect()` reste identique : `this.selectedRequested.emit(acc
 
 ```bash
 npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
-```
-
-### Définition
-
-> `output()` déclare un **événement sortant du composant**. L'enfant émet une intention, le parent décide quoi faire. Ce n'est pas un Observable.
-
-```ts
-selectedRequested = output<Account>();       // déclarer
-this.selectedRequested.emit(account);        // émettre
-(selectedRequested)="startEdit($event)"      // écouter dans le parent
 ```
 
 ### vs Zone.js
@@ -478,6 +488,15 @@ clientId() // lecture côté composant/template
 ---
 
 ## Exercice 7 — Interop RxJS progressive
+
+### Définition
+
+> `toSignal()` convertit un Observable en signal (dernière valeur émise, abonnement géré automatiquement). `toObservable()` expose un signal comme Observable pour brancher des opérateurs RxJS.
+
+```ts
+// Signal → Observable pour opérateurs RxJS
+readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
+```
 
 ### Fichiers à modifier
 
@@ -564,15 +583,6 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 npm test -- --runTestsByPath src/app/features/clients/pages/dashboard/dashboard.component.spec.ts
 ```
 
-### Définition
-
-> `toSignal()` convertit un Observable en signal (dernière valeur émise, abonnement géré automatiquement). `toObservable()` expose un signal comme Observable pour brancher des opérateurs RxJS.
-
-```ts
-// Signal → Observable pour opérateurs RxJS
-readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
-```
-
 ### vs Zone.js
 
 | Observable + `.subscribe()` | `toSignal()` |
@@ -605,6 +615,10 @@ readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
 Cet exercice ne présente pas une nouvelle API. Il sert à consolider l'architecture : une règle métier dérivée doit vivre au bon endroit, avec un nom explicite et une surface testable.
 
+### Définition
+
+> Exposer une **règle métier dérivée** dans la façade sous forme de `computed()` plutôt que de calculer en ligne dans le template ou le composant.
+
 ### Fichiers à modifier
 
 - `src/app/features/accounts/services/accounts.facade.ts`
@@ -635,10 +649,6 @@ readonly hasActiveFilter = this.accountsFacade.hasActiveFilter;
 ```bash
 npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
 ```
-
-### Définition
-
-> Exposer une **règle métier dérivée** dans la façade sous forme de `computed()` plutôt que de calculer en ligne dans le template ou le composant.
 
 ### Pourquoi terminer par cet exercice
 
