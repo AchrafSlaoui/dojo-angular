@@ -301,7 +301,7 @@ private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
 
 `src/app/features/clients/pages/clients/clients.component.ts`
 
-Cet exercice montre un deuxième usage de `effect()` : déclencher un effet DOM quand une condition UI devient vraie. Ici, on veut placer le focus sur le champ prénom quand le formulaire d'ajout est affiché.
+Cet exercice montre un deuxième usage de `effect()` : déclencher un effet DOM quand un élément référencé par `viewChild()` apparaît. Ici, on veut placer le focus sur le champ prénom dès qu'il est présent dans le DOM.
 
 ### Consigne
 
