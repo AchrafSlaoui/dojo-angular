@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ElementRef, Signal, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ElementRef, Signal, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { toObservable } from '@angular/core/rxjs-interop';
@@ -53,12 +53,13 @@ export class ClientsComponent {
   // EXERCICE 1
   adding = false;
   newClient: Omit<Client, 'id'> = { firstName: '', lastName: '', email: '', phone: '', address: '' };
-  // exemple à lire avant exercice 4
-  private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
+  // EXERCICE 4
+  @ViewChild('firstNameRef') private firstNameInput?: ElementRef;
   readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
   constructor() {
     // exemple à lire avant exercice 3
+    // exemple à lire avant exercice 4
     effect(() => {
       document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';
     });

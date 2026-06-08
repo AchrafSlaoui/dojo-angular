@@ -290,6 +290,10 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 > `viewChild()` expose une **référence DOM comme un signal**. Retourne `undefined` quand l'élément est absent du DOM, `ElementRef` quand il est présent.
 
 ```ts
+// Avant : ViewChild classique
+@ViewChild('firstNameRef') private firstNameInput?: ElementRef;
+
+// Après : ViewChild signal
 private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
 ```
 
@@ -303,9 +307,15 @@ Cet exercice montre un deuxième usage de `effect()` : déclencher un effet DOM 
 
 ### Consigne
 
-Créer un `effect()` dans le constructeur pour déclencher le focus quand le formulaire d'ajout est ouvert.
+Transformer le `@ViewChild` classique en `viewChild()` signal, puis créer un `effect()` dans le constructeur pour déclencher le focus quand le formulaire d'ajout est ouvert.
 
 ```ts
+// Avant
+@ViewChild('firstNameRef') private firstNameInput?: ElementRef;
+
+// Après
+private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
+
 // À créer dans le constructeur
 effect(() => {
   if (this.adding()) {
