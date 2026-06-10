@@ -112,9 +112,13 @@ Le détail du code mixte pendant la migration est documenté dans l'ADR 0001.
 | 3 | `exercice-3` | `effect()` pour cohérence d'état | `clients.component.ts` |
 | 4 | `exercice-4` | `viewChild()` + `effect()` DOM | `clients.component.ts` |
 | 5 | `exercice-5` | `input()` | `account-card.component.ts` |
-| 6 | `exercice-6` | `output()` | `account-list.component.ts` |
-| 7 | `exercice-7` | `toSignal()` / `toObservable()` | `accounts.component.ts`, `dashboard.component.ts`, `dashboard.component.spec.ts`, `clients.component.ts` |
-| 8 | `exercice-8` | `computed()` en façade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html` |
+| 6A | `exercice-6` | `output()` | `account-list.component.ts` |
+| 6B | `exercice-6-model` | `model()` | `account-list.component.ts`, `accounts.component.ts` |
+| 7 | `exercice-7` | `linkedSignal()` | `accounts.component.ts` |
+| 8 | `exercice-8` | `toSignal()` / `toObservable()` | `accounts.component.ts`, `dashboard.component.ts`, `dashboard.component.spec.ts`, `clients.component.ts` |
+| 9 | `exercice-9` | `rxResource()` | `dashboard.component.ts` |
+| 10 | `exercice-10` | `afterNextRender()` / `afterRender()` | `clients.component.ts` |
+| 11 | `exercice-11` | `computed()` en façade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html` |
 
 Les branches sont cumulatives : chaque branche ajoute uniquement la correction de son exercice par rapport à la branche précédente.
 
@@ -233,6 +237,14 @@ readonly blockedAccountsCount = this.accountsFacade.blockedAccountsCount;
 
 Dans le template : `{{ blockedAccountsCount }}` → `{{ blockedAccountsCount() }}`
 
+La façade protège ses états internes avec `.asReadonly()` : les composants peuvent lire la valeur mais ne peuvent pas appeler `.set()` dessus.
+
+```ts
+// AccountsFacade — état interne protégé
+private readonly accountsState = signal<Account[]>([]);
+readonly accounts = this.accountsState.asReadonly(); // Signal<Account[]> en lecture seule
+```
+
 ```bash
 npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
 ```
@@ -284,9 +296,38 @@ this.clampCurrentPage(); // ← retirer cette ligne
 private clampCurrentPage(): void { ... }
 ```
 
+Point d'attention : `this.page()` est lu dans l'effet pour la comparaison, ce qui crée une dépendance non intentionnelle. `untracked()` permet de lire un signal sans s'y abonner.
+
+```ts
+// Sans untracked() : page() devient une dépendance → l'effet peut se déclencher en boucle
+effect(() => {
+  const clamped = this.pageSlice().page;
+  if (clamped !== this.page()) this.page.set(clamped);
+});
+
+// Avec untracked() : pageSlice() déclenche, page() est lu sans créer de dépendance
+effect(() => {
+  const clamped = this.pageSlice().page;
+  if (clamped !== untracked(this.page)) this.page.set(clamped);
+});
+```
+
 ```bash
 npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.component.spec.ts
 ```
+
+### Nettoyage de l'effet — `onCleanup`
+
+Quand un effet crée une ressource (timer, abonnement, listener), `onCleanup` permet de la libérer avant que l'effet se ré-exécute ou que le composant soit détruit.
+
+```ts
+effect((onCleanup) => {
+  const id = setInterval(() => console.log(this.search()), 1000);
+  onCleanup(() => clearInterval(id));
+});
+```
+
+Sans `onCleanup`, chaque ré-exécution de l'effet crée un nouveau timer sans supprimer le précédent.
 
 ### vs Zone.js
 
@@ -353,6 +394,19 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 
 Le focus n'est pas une valeur calculée : c'est une interaction avec le DOM. `effect()` est adapté parce qu'il réagit à la présence réelle de l'élément exposé par `viewChild()`.
 
+### Extension — `viewChildren()`
+
+`viewChildren()` retourne toutes les occurrences correspondant au sélecteur sous forme de `Signal<readonly T[]>`. Là où `viewChild()` cible un seul élément, `viewChildren()` observe la liste entière et se met à jour à chaque rendu.
+
+```ts
+// viewChild() — un seul élément
+private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
+
+// viewChildren() — toutes les cartes rendues dans le @for
+private readonly cards = viewChildren(ClientCardComponent);
+// Signal<readonly ClientCardComponent[]>
+```
+
 ---
 
 ## Exercice 5 — `input()`
@@ -410,7 +464,7 @@ npm test -- --runTestsByPath src/app/features/accounts/components/account-card/a
 
 ---
 
-## Exercice 6 — `output()`
+## Exercice 6A — `output()`
 
 ### Définition
 
@@ -471,22 +525,104 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 |---|---|
 | Événement vers le parent direct | `output()` |
 | Événement global ou cross-composant | Service dédié |
-| Valeur bidirectionnelle entrée + sortie | `model()` (voir ci-dessous) |
+| Valeur bidirectionnelle entrée + sortie | `model()` (voir exercice 6B) |
 
-### Parenthèse rapide — `model()`
+---
 
-> `model()` déclare une **valeur bidirectionnelle** entre parent et enfant. Il combine l'idée d'une entrée (`input`) et d'une sortie (`output`) pour des cas comme un composant de formulaire contrôlé.
+## Exercice 6B — `model()`
+
+### Définition
+
+> `model()` déclare une **valeur bidirectionnelle** entre parent et enfant. L'enfant peut lire et modifier la valeur directement, sans émettre d'événements. Il combine `input()` et `output()` en une seule déclaration.
 
 ```ts
-value = model('');
+editingAccountId = model<string | null>(null);
 
-// Parent
-<app-search-box [(value)]="searchTerm" />
+// Enfant : contrôle direct
+this.editingAccountId.set(account.id);  // ouvrir
+this.editingAccountId.set(null);         // fermer
+
+// Parent : liaison bidirectionnelle
+[(editingAccountId)]="editingAccountId"
 ```
 
-Le projet contient aussi un exemple dans `src/app/features/signals-demo/model-amount/model-amount.component.ts`.
+### Fichiers à modifier
 
-À retenir dans ce dojo : `input()` sert à recevoir une valeur, `output()` sert à émettre une intention, `model()` sert aux échanges bidirectionnels explicites.
+- `src/app/features/accounts/components/account-list/account-list.component.ts`
+- `src/app/features/accounts/pages/accounts/accounts.component.ts`
+
+### Consigne
+
+Dans `account-list.component.ts`, remplacer les trois déclarations par un seul `model()` :
+
+```ts
+// Avant
+editingAccountId = input<string | null>(null);
+editRequested    = output<Account>();
+cancelRequested  = output<void>();
+
+// Après
+editingAccountId = model<string | null>(null);
+```
+
+Modifier `requestEdit()` pour appeler `.set()` directement, et ajouter `cancelEdit()` :
+
+```ts
+requestEdit(account: Account): void {
+  this.selectedAccount.set(account);
+  this.editingAccountId.set(account.id);  // remplace editRequested.emit(account)
+}
+
+cancelEdit(): void {
+  this.editingAccountId.set(null);
+}
+```
+
+Dans `accounts.component.ts`, convertir `editingAccountId` en signal et simplifier `startEdit()` :
+
+```ts
+// Avant
+editingAccountId: string | null = null;
+startEdit(account: Account): void {
+  this.editingAccountId = account.id;
+  this.editAccount = { id: account.id, label: account.label, type: account.type, status: account.status };
+}
+cancelEdit(): void { this.editingAccountId = null; }
+
+// Après
+readonly editingAccountId = signal<string | null>(null);
+startEdit(account: Account): void {
+  // editingAccountId est désormais géré par l'enfant via model()
+  this.editAccount = { id: account.id, label: account.label, type: account.type, status: account.status };
+}
+// cancelEdit() supprimée : l'enfant appelle .set(null) directement
+```
+
+Dans le template `accounts.component.html`, remplacer les trois liaisons par une seule :
+
+```html
+<!-- Avant -->
+[editingAccountId]="editingAccountId"
+(editRequested)="startEdit($event)"
+(cancelRequested)="cancelEdit()"
+
+<!-- Après -->
+[(editingAccountId)]="editingAccountId"
+(editRequested)="startEdit($event)"
+```
+
+```bash
+npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
+```
+
+### `output()` vs `model()` — récapitulatif
+
+| | `output()` — exercice 6A | `model()` — exercice 6B |
+|---|---|---|
+| Propriétaire de l'état | Parent | Partagé (enfant peut modifier) |
+| Contrat | Événement → action dans le parent | Valeur bidirectionnelle |
+| Usage typique | Intentions (clic, soumission) | Sélections, filtres, toggles |
+| Binding parent | `(editRequested)="startEdit($event)"` | `[(editingAccountId)]="editingAccountId"` |
 
 ---
 
@@ -514,7 +650,74 @@ clientId() // lecture côté composant/template
 
 ---
 
-## Exercice 7 — Interop RxJS progressive
+## Exercice 7 — `linkedSignal()`
+
+### Définition
+
+> `linkedSignal()` crée un **signal writable dérivé** d'un autre signal. Contrairement à `computed()` qui est en lecture seule, sa valeur peut être modifiée par `.set()` ou `.update()`. Elle est automatiquement recalculée quand la source change.
+
+```ts
+readonly value = linkedSignal(() => this.source());
+value()        // lecture
+value.set(x)   // écriture possible — contrairement à computed()
+// Quand source() change → value() est recalculée depuis la source
+```
+
+### Fichier à modifier
+
+`src/app/features/accounts/pages/accounts/accounts.component.ts`
+
+### Consigne
+
+Convertir `editAccount` en `linkedSignal()` dérivé du compte sélectionné. Ajouter un signal `accountForEdit` pour porter la sélection courante.
+
+```ts
+// Avant
+editAccount: AccountUpdate = { id: '', label: '', type: 'checking', status: 'active' };
+
+startEdit(account: Account): void {
+  this.editingAccountId = account.id;
+  this.editAccount = { id: account.id, label: account.label, type: account.type, status: account.status };
+}
+
+// Après
+private readonly accountForEdit = signal<Account | null>(null);
+readonly editAccount = linkedSignal<AccountUpdate>(() => {
+  const a = this.accountForEdit();
+  return a
+    ? { id: a.id, label: a.label, type: a.type, status: a.status }
+    : { id: '', label: '', type: 'checking', status: 'active' };
+});
+
+startEdit(account: Account): void {
+  this.editingAccountId = account.id;
+  this.accountForEdit.set(account);
+}
+```
+
+```bash
+npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
+```
+
+### `linkedSignal()` vs `computed()`
+
+| `computed()` | `linkedSignal()` |
+|---|---|
+| Lecture seule | Writable — `.set()` et `.update()` disponibles |
+| Recalculé quand les dépendances changent | Recalculé quand la source change, modifiable entre deux |
+| Adapté aux valeurs dérivées stables | Adapté aux formulaires pré-remplis depuis une sélection |
+
+### Quand utiliser `linkedSignal()`
+
+| Situation | Outil |
+|---|---|
+| Valeur dérivée en lecture seule | `computed()` |
+| Formulaire pré-rempli depuis une sélection, modifiable par l'utilisateur | `linkedSignal()` |
+| État local sans dérivation | `signal()` |
+
+---
+
+## Exercice 8 — Interop RxJS progressive
 
 ### Définition
 
@@ -527,11 +730,11 @@ readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
 ### Fichiers à modifier
 
-**7a — `toSignal()` simple** — `src/app/features/accounts/pages/accounts/accounts.component.ts`
+**8a — `toSignal()` simple** — `src/app/features/accounts/pages/accounts/accounts.component.ts`
 
-**7b — `toSignal()` avec état de chargement** — `src/app/features/clients/pages/dashboard/dashboard.component.ts`
+**8b — `toSignal()` avec état de chargement** — `src/app/features/clients/pages/dashboard/dashboard.component.ts`
 
-**7c — `toObservable()`** — `src/app/features/clients/pages/clients/clients.component.ts` *(lecture seule / bonus)*
+**8c — `toObservable()`** — `src/app/features/clients/pages/clients/clients.component.ts` *(lecture seule / bonus)*
 
 ### Progression
 
@@ -545,7 +748,7 @@ Le but n'est pas de remplacer RxJS. Le but est de savoir où placer la frontièr
 
 ### Consigne
 
-**7a** : remplacer la souscription manuelle à `paramMap` par `toSignal()`.
+**8a** : remplacer la souscription manuelle à `paramMap` par `toSignal()`.
 
 ```ts
 // Avant — souscription manuelle
@@ -573,11 +776,11 @@ DestroyRef
 takeUntilDestroyed
 ```
 
-**7b** : remplacer `firstValueFrom()` + états manuels par `toSignal()` + pipe RxJS.
+**8b** : remplacer `firstValueFrom()` + états manuels par `toSignal()` + pipe RxJS.
 
 Point d'attention : ici RxJS reste utile. Le `pipe()` construit un petit état de vue unique : données, chargement et erreur.
 
-### Lecture de la pipeline 7b
+### Lecture de la pipeline 8b
 
 Dans cette pipeline :
 
@@ -601,7 +804,7 @@ readonly error   = computed(() => this.clientsQuery().error);
 
 La méthode `reload()` disparaît : le chargement initial est porté par le signal créé avec `toSignal()`.
 
-**7c** : lire et expliquer `debouncedSearch$` dans `ClientsComponent` (pas de modification).
+**8c** : lire et expliquer `debouncedSearch$` dans `ClientsComponent` (pas de modification).
 
 Cette partie sert de consolidation. Elle montre le pont inverse : on part d'un signal local, puis on repasse en Observable uniquement parce qu'un opérateur temporel (`debounceTime`) est nécessaire.
 
@@ -638,7 +841,184 @@ npm test -- --runTestsByPath src/app/features/clients/pages/dashboard/dashboard.
 
 ---
 
-## Exercice 8 — Consolidation façade avec `computed()`
+## Exercice 9 — `rxResource()`
+
+### Définition
+
+> `rxResource()` crée un **signal async** alimenté par un Observable. Il expose automatiquement `value()`, `isLoading()` et `error()` sans gérer manuellement le cycle de vie de la requête.
+
+```ts
+private readonly resource = rxResource({
+  loader: () => this.api.getAll()
+});
+readonly loading = resource.isLoading;
+readonly error   = computed(() => resource.error()?.message ?? null);
+readonly data    = computed(() => resource.value() ?? []);
+```
+
+### Fichier à modifier
+
+`src/app/features/clients/pages/dashboard/dashboard.component.ts`
+
+### Consigne
+
+Remplacer `reload()` et les signaux manuels `loading`, `error`, `clientsState` par `rxResource()`.
+
+```ts
+// Avant
+private readonly clientsState = signal<ClientActivity[]>([]);
+readonly loading = signal(false);
+readonly error = signal<string | null>(null);
+
+async reload(): Promise<void> {
+  this.loading.set(true);
+  this.error.set(null);
+  try {
+    const data = await firstValueFrom(this.clientsApi.getAll());
+    this.clientsState.set(data);
+  } catch (err) {
+    this.error.set(err instanceof Error ? err.message : 'Erreur');
+    this.clientsState.set([]);
+  } finally { this.loading.set(false); }
+}
+
+// Après
+private readonly clientsResource = rxResource({
+  loader: () => this.clientsApi.getAll()
+});
+readonly loading = this.clientsResource.isLoading;
+readonly error   = computed(() => this.clientsResource.error()?.message ?? null);
+weeklyClients    = computed(() =>
+  getWeeklyClients(this.clientsResource.value() ?? [], this.search())
+);
+```
+
+Retirer `reload()` et son appel dans le constructeur. Retirer `firstValueFrom` des imports si plus utilisé.
+
+```bash
+npm test -- --runTestsByPath src/app/features/clients/pages/dashboard/dashboard.component.spec.ts
+```
+
+### vs `toSignal()` + pipe
+
+| `toSignal()` + pipe | `rxResource()` |
+|---|---|
+| État loading / error géré manuellement | `isLoading()`, `error()`, `value()` exposés nativement |
+| Abonnement dans `toSignal()` | Abonnement géré automatiquement |
+| Flux continu ou composé (RxJS) | Requête ponctuelle avec état de chargement |
+
+### Quand utiliser `rxResource()`
+
+| Situation | Outil |
+|---|---|
+| Requête HTTP one-shot avec état loading / error | `rxResource()` |
+| Requête déclenchée par un paramètre signal | `rxResource()` avec `request` |
+| Flux continu (WebSocket, polling) | RxJS pur |
+| Requête POST / PUT / DELETE | `firstValueFrom()` dans une méthode async |
+
+---
+
+## Exercice 10 — `afterNextRender()` / `afterRender()`
+
+### Définition
+
+> Ces deux hooks permettent d'exécuter du code **après qu'Angular a écrit dans le DOM**, quand les mesures et manipulations DOM sont sûres.
+
+| | `afterNextRender()` | `afterRender()` |
+|---|---|---|
+| Fréquence | **Une seule fois** après le prochain rendu | **Après chaque** cycle de rendu |
+| Usage typique | Scroll one-shot, init librairie tierce | Mesures DOM continues |
+| Risque | Aucun surcoût après l'exécution | Coûteux si le rendu est fréquent |
+
+```ts
+// one-shot : scroll après une action
+afterNextRender(
+  () => { /* DOM garanti stable ici */ },
+  { injector: this.injector }  // nécessaire hors du constructeur
+);
+
+// récurrent : mesure à chaque rendu
+afterRender(() => {
+  this.height.set(this.el.nativeElement.offsetHeight);
+});
+```
+
+### Différence clé avec `effect()`
+
+```
+effect()          → réactif : se relance à chaque changement de dépendance
+afterNextRender() → one-shot : s'exécute une fois après le prochain rendu
+afterRender()     → récurrent : s'exécute après chaque cycle de rendu
+```
+
+### Fichier à modifier
+
+`src/app/features/clients/pages/clients/clients.component.ts`
+
+### Consigne
+
+Après l'ajout d'un client, scroller le viewport virtuel en haut de liste avec `afterNextRender()`.
+
+Ajouter d'abord les imports nécessaires :
+
+```ts
+import { afterNextRender, Injector, viewChild } from '@angular/core';
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+```
+
+Puis ajouter les références DOM dans le composant :
+
+```ts
+private readonly viewport = viewChild(CdkVirtualScrollViewport);
+private readonly injector = inject(Injector);
+```
+
+```ts
+// Dans saveAdd(), à la place du commentaire EXERCICE 10
+afterNextRender(
+  () => { this.viewport()?.scrollToIndex(0); },
+  { injector: this.injector }
+);
+```
+
+```bash
+npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.component.spec.ts
+```
+
+### Pourquoi pas `effect()` ici
+
+`effect()` se déclencherait à chaque changement de signal observé, pas uniquement après un ajout. `afterNextRender()` est plus précis : il garantit un seul scroll après le rendu qui suit l'action, sans observer continuellement l'état.
+
+### Quand utiliser `afterNextRender()`
+
+| Situation | Outil |
+|---|---|
+| Scroll, mesure DOM après une action utilisateur | `afterNextRender()` avec `injector` |
+| Initialisation one-shot d'une librairie tierce | `afterNextRender()` dans le constructeur |
+| Réaction continue à un changement d'état | `effect()` |
+| Opération DOM déclenchée par l'apparition d'un élément | `effect()` + `viewChild()` |
+
+### `afterRender()` vs `afterNextRender()`
+
+| | `afterNextRender()` | `afterRender()` |
+|---|---|---|
+| Fréquence | **Une seule fois** après le prochain rendu | **Après chaque** cycle de rendu |
+| Usage typique | Scroll one-shot, init librairie tierce | Mesures DOM continues, animations |
+| Risque | Aucun surcoût après l'exécution | Peut devenir coûteux si le rendu est fréquent |
+
+```ts
+// one-shot : scroll après ajout
+afterNextRender(() => viewport.scrollToIndex(0), { injector });
+
+// récurrent : mesure la hauteur à chaque rendu
+afterRender(() => {
+  this.height.set(this.el.nativeElement.offsetHeight);
+});
+```
+
+---
+
+## Exercice 11 — Consolidation façade avec `computed()`
 
 Cet exercice ne présente pas une nouvelle API. Il sert à consolider l'architecture : une règle métier dérivée doit vivre au bon endroit, avec un nom explicite et une surface testable.
 
@@ -679,7 +1059,7 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ### Pourquoi terminer par cet exercice
 
-Après l'interop RxJS, on revient à un geste simple mais structurant : placer la logique dérivée dans la façade. C'est le lien avec l'objectif architectural du dojo : des composants plus lisibles, une façade qui porte l'état partagé, et des règles métier nommées.
+Après avoir exploré les primitives avancées (`linkedSignal`, `rxResource`, `afterNextRender`), on revient à un geste simple mais structurant : placer la logique dérivée dans la façade. C'est le lien avec l'objectif architectural du dojo : des composants plus lisibles, une façade qui porte l'état partagé, et des règles métier nommées.
 
 ### vs Zone.js / vs RxJS
 
@@ -717,14 +1097,26 @@ Les conventions d'usage des primitives Signals et la décision de ne pas migrer 
 le mode zoneless sont détaillées dans `docs/adr/0002-conventions-usage-signals-et-detection-changement.md`.
 
 ```
-1. computed()   ne fait jamais d'appel HTTP — calcul pur uniquement
-2. effect()     n'expose jamais de valeur    — effets de bord uniquement
+1. computed()         ne fait jamais d'appel HTTP — calcul pur uniquement
+2. effect()           n'expose jamais de valeur    — effets de bord uniquement
 3. L'enfant émet une INTENTION, le parent exécute l'ACTION
 4. Ne pas bridger signal ↔ RxJS systématiquement — rester dans un seul monde
 5. Zone.js peut coexister — migrer progressivement, pas tout d'un coup
 6. input() dans un computed() = dépendance réelle / @Input() dans computed() = non
 7. toSignal() gère le désabonnement — ne pas ajouter takeUntilDestroyed en plus
+8. untracked()        pour lire sans s'abonner dans un effect()
 ```
+
+---
+
+## Perspectives — Primitives à explorer
+
+- `untracked()` : lire un signal dans un `effect()` sans en devenir dépendant — voir exercice 3
+- `viewChildren()` : liste réactive de références, compagnon de `viewChild()` — voir exercice 4
+- `signal.asReadonly()` : exposer un état interne en lecture seule depuis une façade — voir exercice 2
+- `linkedSignal()` : signal writable dérivé d'un autre — voir exercice 7
+- `rxResource()` : signal async natif pour HTTP — voir exercice 9
+- `afterNextRender()` : opération DOM garantie après le prochain rendu — voir exercice 10
 
 ---
 

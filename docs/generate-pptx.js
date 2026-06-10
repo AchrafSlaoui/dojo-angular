@@ -574,38 +574,54 @@ function renderExercisesSection(section) {
   const table = section.items.find((item) => item.type === 'table');
   if (!table || table.rows.length <= 1) return false;
 
-  const slide = pptx.addSlide();
-  addHeader(slide, section.title);
   const exerciseRows = table.rows.slice(1);
-  exerciseRows.forEach((row, index) => renderExerciseCard(slide, row, index));
-
+  const isAdvancedExercise = (row) => {
+    const exercise = String(row[0] ?? '');
+    const match = exercise.match(/\d+/);
+    return match ? Number(match[0]) >= 8 : false;
+  };
+  const socleRows = exerciseRows.filter((row) => !isAdvancedExercise(row));
+  const advancedRows = exerciseRows.filter(isAdvancedExercise);
+  const pages = [
+    { rows: socleRows, label: section.title },
+    ...(advancedRows.length
+      ? [{ rows: advancedRows, label: `${section.title} — Aller plus loin` }]
+      : []),
+  ];
   const note = section.items
     .filter((item) => item.type === 'paragraph')
     .map((item) => item.text)
     .join(' ');
-  if (note) {
-    slide.addShape(pptx.ShapeType.roundRect, {
-      x: M,
-      y: 6.55,
-      w: CONTENT_W,
-      h: 0.42,
-      rectRadius: 0.06,
-      fill: { color: COLORS.softGreen },
-      line: { color: 'B7E4C7', pt: 0.8 },
-    });
-    slide.addText(note, {
-      x: M + 0.18,
-      y: 6.65,
-      w: CONTENT_W - 0.36,
-      h: 0.19,
-      fontSize: 7.8,
-      bold: true,
-      color: COLORS.text,
-      align: 'center',
-      margin: 0,
-      fit: 'shrink',
-    });
-  }
+
+  pages.forEach(({ rows, label }, p) => {
+    const slide = pptx.addSlide();
+    addHeader(slide, label);
+    rows.forEach((row, index) => renderExerciseCard(slide, row, index));
+
+    if (note && p === pages.length - 1) {
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: M,
+        y: 6.55,
+        w: CONTENT_W,
+        h: 0.42,
+        rectRadius: 0.06,
+        fill: { color: COLORS.softGreen },
+        line: { color: 'B7E4C7', pt: 0.8 },
+      });
+      slide.addText(note, {
+        x: M + 0.18,
+        y: 6.65,
+        w: CONTENT_W - 0.36,
+        h: 0.19,
+        fontSize: 7.8,
+        bold: true,
+        color: COLORS.text,
+        align: 'center',
+        margin: 0,
+        fit: 'shrink',
+      });
+    }
+  });
   return true;
 }
 
@@ -1045,7 +1061,7 @@ function renderSection(section) {
   if (notes) state.slide.addNotes(notes);
   for (const item of items) {
     const h = itemHeight(item);
-    if (state.y + h > H - 0.55) {
+    if (state.y > 1.02 && state.y + h > H - 0.55) {
       slideNo += 1;
       state = newContentSlide(section.title, `suite ${slideNo}`);
     }

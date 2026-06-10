@@ -17,14 +17,14 @@ export class AccountsFacade {
 
   readonly search = signal('');
   readonly typeFilter = signal<AccountTypeFilter>('all');
-  // EXERCICE 8
+  // EXERCICE 11
   readonly loading = signal(false);
   readonly mutating = signal(false);
   readonly error = signal<string | null>(null);
 
   readonly accounts = this.accountsState.asReadonly();
   readonly clientId = this.clientIdState.asReadonly();
-  // exemple à lire avant exercice 8
+  // exemple à lire avant exercice 11
   readonly filteredAccounts = computed(() =>
     this.filterAccounts(this.accountsState(), this.search(), this.typeFilter())
   );
