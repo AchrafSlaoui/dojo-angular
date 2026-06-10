@@ -37,7 +37,7 @@ RxJS sert a modeliser des flux dans le temps : HTTP, route params, evenements, `
 
 ## Structure des branches
 
-`main` contient les docs. `init` reprend la base fonctionnelle sans docs.
+Les branches d'exercices sont cumulatives.
 
 ```text
 init
