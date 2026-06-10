@@ -61,4 +61,15 @@ Chaque branche d'exercice ajoute uniquement la correction de son exercice par ra
 | 7 — `toSignal()` / `toObservable()` | `src/app/features/accounts/pages/accounts/accounts.component.ts`, `src/app/features/clients/pages/dashboard/dashboard.component.ts`, `src/app/features/clients/pages/clients/clients.component.ts` | Pont entre Observable RxJS et signal Angular. | Remplacer la souscription manuelle a la route par `toSignal()`, exposer le chargement dashboard comme signal, et identifier le pont inverse `toObservable()` pour la recherche debouncee. |
 | 8 — `computed()` facade | `src/app/features/accounts/services/accounts.facade.ts`, `src/app/features/accounts/pages/accounts/accounts.component.*` | Vue derivee de l'etat metier dans une facade. | Ajouter `hasActiveFilter` comme valeur derivee de la facade. Le message vide doit dependre de cette regle exposee par la facade. |
 
-Rappel tests : les tests ne sont pas l'objectif principal du dojo. S'ils echouent a cause de la migration demandee, corriger les erreurs pour refleter le nouveau comportement.
+---
+
+## Rappel tests
+
+- Les tests ne sont pas l'objectif principal du dojo.
+- Lancer les tests pour verifier que la migration n'a pas casse le comportement existant.
+- Si une erreur apparait a cause de la migration demandee, corriger le code ou le test pour refleter le nouveau comportement attendu.
+- Ne pas perdre de temps sur les tests hors perimetre de l'exercice.
+
+```bash
+npm test
+```

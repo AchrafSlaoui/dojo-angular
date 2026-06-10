@@ -589,53 +589,6 @@ function renderExercisesSection(section) {
   return true;
 }
 
-function renderRecapCard(slide, text, index) {
-  const col = index % 2;
-  const row = Math.floor(index / 2);
-  const cardW = (CONTENT_W - 0.3) / 2;
-  const cardH = 1.25;
-  const x = M + col * (cardW + 0.3);
-  const y = 3.05 + row * 1.48;
-  const accents = [COLORS.primary, COLORS.secondary, '188038', '7B61FF'];
-  const fills = [COLORS.softRed, COLORS.softBlue, COLORS.softGreen, 'F0ECFF'];
-  const accent = accents[index % accents.length];
-
-  slide.addShape(pptx.ShapeType.roundRect, {
-    x,
-    y,
-    w: cardW,
-    h: cardH,
-    rectRadius: 0.08,
-    fill: { color: COLORS.white },
-    line: { color: COLORS.line, pt: 0.8 },
-  });
-  slide.addText(String(index + 1).padStart(2, '0'), {
-    x: x + 0.16,
-    y: y + 0.16,
-    w: 0.38,
-    h: 0.25,
-    fontSize: 8,
-    bold: true,
-    color: accent,
-    align: 'center',
-    valign: 'mid',
-    fill: { color: fills[index % fills.length] },
-    line: { color: fills[index % fills.length] },
-    margin: 0,
-  });
-  slide.addText(text, {
-    x: x + 0.68,
-    y: y + 0.18,
-    w: cardW - 0.88,
-    h: cardH - 0.32,
-    fontSize: 12,
-    color: COLORS.text,
-    margin: 0.02,
-    fit: 'shrink',
-    valign: 'mid',
-  });
-}
-
 function renderRecapSection(section) {
   const paragraph = section.items.find((item) => item.type === 'paragraph');
   const bullets = section.items.filter((item) => item.type === 'bullet');
@@ -643,45 +596,208 @@ function renderRecapSection(section) {
 
   const slide = pptx.addSlide();
   addHeader(slide, section.title);
+  const subject = section.rawTitle.replace(/^Rappels\s+—\s+/, '');
+  const palette = subject.includes('Zone')
+    ? { accent: COLORS.secondary, soft: COLORS.softBlue }
+    : subject.includes('RxJS')
+      ? { accent: '188038', soft: COLORS.softGreen }
+      : { accent: COLORS.primary, soft: COLORS.softRed };
+
   slide.addShape(pptx.ShapeType.roundRect, {
     x: M,
     y: 1.05,
-    w: CONTENT_W,
-    h: 1.32,
+    w: 4.15,
+    h: 5.7,
     rectRadius: 0.08,
-    fill: { color: COLORS.white },
-    line: { color: COLORS.line, pt: 0.8 },
+    fill: { color: palette.soft },
+    line: { color: palette.soft, pt: 0.8 },
   });
-  slide.addShape(pptx.ShapeType.rect, {
-    x: M,
-    y: 1.05,
-    w: 0.12,
-    h: 1.32,
-    fill: { color: COLORS.primary },
-    line: { color: COLORS.primary },
-  });
-  slide.addText('Définition', {
-    x: M + 0.28,
-    y: 1.22,
-    w: 1.25,
-    h: 0.25,
-    fontSize: 9,
+  slide.addText(subject, {
+    x: M + 0.32,
+    y: 1.35,
+    w: 3.45,
+    h: 0.5,
+    fontSize: 26,
     bold: true,
-    color: COLORS.primary,
+    color: palette.accent,
     margin: 0,
+    fit: 'shrink',
   });
   slide.addText(paragraph.text, {
-    x: M + 1.62,
-    y: 1.18,
-    w: CONTENT_W - 1.9,
-    h: 0.86,
-    fontSize: 15,
-    color: COLORS.text,
-    margin: 0.02,
+    x: M + 0.32,
+    y: 2.18,
+    w: 3.42,
+    h: 2.35,
+    fontSize: 17,
+    bold: true,
+    color: COLORS.dark,
+    margin: 0.03,
     fit: 'shrink',
     valign: 'mid',
   });
-  bullets.slice(0, 4).forEach((item, index) => renderRecapCard(slide, item.text, index));
+  slide.addText('Question cle', {
+    x: M + 0.32,
+    y: 5.25,
+    w: 1.3,
+    h: 0.2,
+    fontSize: 8,
+    bold: true,
+    color: palette.accent,
+    margin: 0,
+  });
+  slide.addText(subject.includes('Zone')
+    ? 'Qui declenche la detection ?'
+    : subject.includes('RxJS')
+      ? 'Ou placer la frontiere avec Signals ?'
+      : 'Qui depend de cette valeur ?',
+  {
+    x: M + 0.32,
+    y: 5.55,
+    w: 3.4,
+    h: 0.42,
+    fontSize: 12,
+    color: COLORS.text,
+    margin: 0,
+    fit: 'shrink',
+  });
+
+  const blocks = [
+    { title: 'Rôle dans le dojo', items: bullets.slice(0, 2), y: 1.05 },
+    { title: 'À retenir', items: bullets.slice(2, 4), y: 3.92 },
+  ];
+  blocks.forEach((block) => {
+    slide.addShape(pptx.ShapeType.roundRect, {
+      x: M + 4.55,
+      y: block.y,
+      w: CONTENT_W - 4.55,
+      h: 2.55,
+      rectRadius: 0.08,
+      fill: { color: COLORS.white },
+      line: { color: COLORS.line, pt: 0.8 },
+    });
+    slide.addText(block.title, {
+      x: M + 4.85,
+      y: block.y + 0.22,
+      w: 3.2,
+      h: 0.28,
+      fontSize: 13,
+      bold: true,
+      color: palette.accent,
+      margin: 0,
+    });
+    block.items.forEach((item, index) => {
+      slide.addShape(pptx.ShapeType.ellipse, {
+        x: M + 4.88,
+        y: block.y + 0.77 + index * 0.72,
+        w: 0.12,
+        h: 0.12,
+        fill: { color: palette.accent },
+        line: { color: palette.accent },
+      });
+      slide.addText(item.text, {
+        x: M + 5.15,
+        y: block.y + 0.66 + index * 0.72,
+        w: CONTENT_W - 5.45,
+        h: 0.48,
+        fontSize: 12.5,
+        color: COLORS.text,
+        margin: 0,
+        fit: 'shrink',
+      });
+    });
+  });
+  return true;
+}
+
+function renderTestsSection(section) {
+  const bullets = section.items.filter((item) => item.type === 'bullet');
+  const code = section.items.find((item) => item.type === 'code');
+  if (!bullets.length) return false;
+
+  const slide = pptx.addSlide();
+  addHeader(slide, section.title, '188038');
+  slide.addShape(pptx.ShapeType.roundRect, {
+    x: M,
+    y: 1.08,
+    w: 4.35,
+    h: 5.55,
+    rectRadius: 0.08,
+    fill: { color: COLORS.softGreen },
+    line: { color: 'B7E4C7', pt: 0.8 },
+  });
+  slide.addText('À lancer', {
+    x: M + 0.35,
+    y: 1.42,
+    w: 1.2,
+    h: 0.25,
+    fontSize: 10,
+    bold: true,
+    color: '188038',
+    margin: 0,
+  });
+  slide.addText(code ? code.text : 'npm test', {
+    x: M + 0.35,
+    y: 2.02,
+    w: 3.55,
+    h: 0.72,
+    fontFace: 'Courier New',
+    fontSize: 20,
+    bold: true,
+    color: COLORS.codeText,
+    fill: { color: COLORS.code },
+    margin: 0.1,
+    fit: 'shrink',
+  });
+  slide.addText('But : verifier que la migration ne casse pas le comportement existant.', {
+    x: M + 0.35,
+    y: 3.35,
+    w: 3.55,
+    h: 1.25,
+    fontSize: 16,
+    bold: true,
+    color: COLORS.dark,
+    margin: 0,
+    fit: 'shrink',
+  });
+
+  const rules = bullets.slice(0, 4);
+  rules.forEach((item, index) => {
+    const y = 1.08 + index * 1.36;
+    slide.addShape(pptx.ShapeType.roundRect, {
+      x: M + 4.75,
+      y,
+      w: CONTENT_W - 4.75,
+      h: 1.12,
+      rectRadius: 0.08,
+      fill: { color: COLORS.white },
+      line: { color: COLORS.line, pt: 0.8 },
+    });
+    slide.addText(String(index + 1), {
+      x: M + 5.02,
+      y: y + 0.28,
+      w: 0.3,
+      h: 0.3,
+      fontSize: 10,
+      bold: true,
+      color: '188038',
+      align: 'center',
+      valign: 'mid',
+      fill: { color: COLORS.softGreen },
+      line: { color: COLORS.softGreen },
+      margin: 0,
+    });
+    slide.addText(item.text, {
+      x: M + 5.52,
+      y: y + 0.22,
+      w: CONTENT_W - 5.85,
+      h: 0.58,
+      fontSize: 12,
+      color: COLORS.text,
+      margin: 0,
+      fit: 'shrink',
+      valign: 'mid',
+    });
+  });
   return true;
 }
 
@@ -751,6 +867,10 @@ function renderSection(section) {
   }
 
   if (section.level === 2 && section.rawTitle === 'Exercices' && renderExercisesSection(section)) {
+    return;
+  }
+
+  if (section.level === 2 && section.rawTitle === 'Rappel tests' && renderTestsSection(section)) {
     return;
   }
 
