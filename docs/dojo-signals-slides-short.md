@@ -35,6 +35,26 @@ RxJS sert a modeliser des flux dans le temps : HTTP, route params, evenements, `
 
 ---
 
+## Rappels — Modes de détection
+
+| Déclencheur | Zone.js (défaut) | Zone.js + OnPush | Zoneless |
+|---|---|---|---|
+| Evenement async | Tout l'arbre | Sous-arbre marked dirty | Aucun déclencheur automatique |
+| `@Input()` change | ✓ | ✓ | Aucun effet — utiliser `input()` |
+| `input()` / signal change | ✓ | ✓ | ✓ |
+| `async` pipe | ✓ | ✓ | Composant + parents verifies (markForCheck) |
+
+Signal en zoneless : seuls les lecteurs directs sont mis a jour. async pipe : composant + parents verifies via markForCheck(), DOM mis a jour seulement si quelque chose a change.
+
+```
+Zone.js (défaut)
+  → ajouter OnPush sur chaque composant
+    → migrer les états vers signal() / input()
+      → provideZonelessChangeDetection() + retirer zone.js
+```
+
+---
+
 ## Structure des branches
 
 Les branches d'exercices sont cumulatives.

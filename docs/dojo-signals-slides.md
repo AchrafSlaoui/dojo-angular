@@ -46,6 +46,14 @@ Avec `OnPush`, Angular vérifie surtout un composant quand :
 
 Dans ce dojo, `OnPush` permet de montrer que Signals rend les dépendances plus précises sans imposer une migration immédiate en zoneless.
 
+| Déclencheur | Zone.js (défaut) | Zone.js + OnPush | Zoneless |
+|---|---|---|---|
+| Événement async (`setTimeout`, `Promise`, XHR…) | Tout l'arbre | Sous-arbre marqué dirty | Aucun déclencheur automatique |
+| `@Input()` dont la référence change | ✓ | ✓ | Aucun effet — utiliser `input()` |
+| `input()` / signal lu dans le template | ✓ | ✓ | ✓ |
+| `async` pipe reçoit une valeur | ✓ | ✓ | Composant + parents vérifiés (`markForCheck`) |
+| Événement template sans signal modifié | ✓ | ✓ | Aucun effet |
+
 ---
 
 ## Zoneless
@@ -59,11 +67,28 @@ En zoneless, les mises à jour doivent venir de mécanismes explicites :
 - `async` pipe ;
 - appels explicites de détection si nécessaire.
 
-Ce dojo garde `zone.js` au départ. La suppression ou la limitation de `zone.js` se traite en fin de parcours, quand les participants ont déjà compris Signals.
+En zoneless, signal et `async` pipe ne se comportent pas de la même façon : un signal met à jour uniquement ses lecteurs directs. `async` pipe appelle `markForCheck()` — le composant et ses parents sont vérifiés, le DOM est mis à jour seulement si quelque chose a effectivement changé.
+
+Ce dojo garde `zone.js` au départ. La migration zoneless est la suite naturelle une fois l'état principal piloté par Signals.
 
 ```
 Signals résout : l'état réactif local synchrone
 Zone.js résout : le déclenchement automatique de la détection après async
+```
+
+```
+Zone.js (défaut)
+  → ajouter OnPush sur chaque composant
+    → migrer les états vers signal() / input() / output()
+      → provideZonelessChangeDetection() + supprimer zone.js
+```
+
+```ts
+// app.config.ts — activer zoneless (Angular 21, stable)
+provideZonelessChangeDetection()
+
+// angular.json — retirer zone.js des polyfills
+"polyfills": []
 ```
 
 ---
