@@ -10,11 +10,12 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
 import { BalanceCardComponent } from './balance-card/balance-card.component';
+import { ModelAmountComponent } from './model-amount/model-amount.component';
 
 @Component({
   selector: 'app-signals-demo',
   standalone: true,
-  imports: [BalanceCardComponent],
+  imports: [BalanceCardComponent, ModelAmountComponent],
   templateUrl: './signals-demo.component.html',
   styleUrl: './signals-demo.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,4 +56,7 @@ export class SignalsDemoComponent {
   onResetRequested(): void {
     this.balance.set(0);
   }
+
+  // model()
+  readonly targetAmount = signal(500);
 }

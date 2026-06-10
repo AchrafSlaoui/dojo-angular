@@ -446,7 +446,6 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 |---|---|
 | Événement vers le parent direct | `output()` |
 | Événement global ou cross-composant | Service dédié |
-| Flux avec opérateurs temporels | Flux dédié, pas `output()` |
 | Valeur bidirectionnelle entrée + sortie | `model()` (voir ci-dessous) |
 
 ### Parenthèse rapide — `model()`
@@ -459,6 +458,8 @@ value = model('');
 // Parent
 <app-search-box [(value)]="searchTerm" />
 ```
+
+Le projet contient aussi un exemple dans `src/app/features/signals-demo/model-amount/model-amount.component.ts`.
 
 À retenir dans ce dojo : `input()` sert à recevoir une valeur, `output()` sert à émettre une intention, `model()` sert aux échanges bidirectionnels explicites.
 

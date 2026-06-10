@@ -90,7 +90,26 @@
     />
   </section>
 
-  <!-- ── 5. viewChild() ───────────────────────────────────── -->
+  <!-- ── 5. model() ───────────────────────────────────────── -->
+  <section class="card demo-section">
+    <div class="section-header">
+      <span class="api-badge">model()</span>
+      <span class="section-title">Valeur bidirectionnelle explicite</span>
+    </div>
+    <p class="hint">
+      Le composant enfant expose <code>value = model(0)</code>.
+      Le parent relie son signal avec <code>[(value)]</code>.
+    </p>
+    <app-model-amount [(value)]="targetAmount" />
+    <div class="values">
+      <div class="value-item">
+        <code>targetAmount()</code>
+        <strong>{{ targetAmount() }} €</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 6. viewChild() ───────────────────────────────────── -->
   <section class="card demo-section">
     <div class="section-header">
       <span class="api-badge">viewChild()</span>
@@ -114,7 +133,7 @@
     </div>
   </section>
 
-  <!-- ── 6. toSignal() ────────────────────────────────────── -->
+  <!-- ── 7. toSignal() ────────────────────────────────────── -->
   <section class="card demo-section">
     <div class="section-header">
       <span class="api-badge">toSignal()</span>
