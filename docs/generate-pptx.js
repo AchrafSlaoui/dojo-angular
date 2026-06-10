@@ -564,19 +564,124 @@ function renderExercisesSection(section) {
     .map((item) => item.text)
     .join(' ');
   if (note) {
-    slide.addText(note, {
+    slide.addShape(pptx.ShapeType.roundRect, {
       x: M,
-      y: 6.72,
+      y: 6.55,
       w: CONTENT_W,
-      h: 0.28,
-      fontSize: 7.2,
-      color: COLORS.muted,
-      italic: true,
+      h: 0.42,
+      rectRadius: 0.06,
+      fill: { color: COLORS.softGreen },
+      line: { color: 'B7E4C7', pt: 0.8 },
+    });
+    slide.addText(note, {
+      x: M + 0.18,
+      y: 6.65,
+      w: CONTENT_W - 0.36,
+      h: 0.19,
+      fontSize: 7.8,
+      bold: true,
+      color: COLORS.text,
       align: 'center',
       margin: 0,
       fit: 'shrink',
     });
   }
+  return true;
+}
+
+function renderRecapCard(slide, text, index) {
+  const col = index % 2;
+  const row = Math.floor(index / 2);
+  const cardW = (CONTENT_W - 0.3) / 2;
+  const cardH = 1.25;
+  const x = M + col * (cardW + 0.3);
+  const y = 3.05 + row * 1.48;
+  const accents = [COLORS.primary, COLORS.secondary, '188038', '7B61FF'];
+  const fills = [COLORS.softRed, COLORS.softBlue, COLORS.softGreen, 'F0ECFF'];
+  const accent = accents[index % accents.length];
+
+  slide.addShape(pptx.ShapeType.roundRect, {
+    x,
+    y,
+    w: cardW,
+    h: cardH,
+    rectRadius: 0.08,
+    fill: { color: COLORS.white },
+    line: { color: COLORS.line, pt: 0.8 },
+  });
+  slide.addText(String(index + 1).padStart(2, '0'), {
+    x: x + 0.16,
+    y: y + 0.16,
+    w: 0.38,
+    h: 0.25,
+    fontSize: 8,
+    bold: true,
+    color: accent,
+    align: 'center',
+    valign: 'mid',
+    fill: { color: fills[index % fills.length] },
+    line: { color: fills[index % fills.length] },
+    margin: 0,
+  });
+  slide.addText(text, {
+    x: x + 0.68,
+    y: y + 0.18,
+    w: cardW - 0.88,
+    h: cardH - 0.32,
+    fontSize: 12,
+    color: COLORS.text,
+    margin: 0.02,
+    fit: 'shrink',
+    valign: 'mid',
+  });
+}
+
+function renderRecapSection(section) {
+  const paragraph = section.items.find((item) => item.type === 'paragraph');
+  const bullets = section.items.filter((item) => item.type === 'bullet');
+  if (!paragraph || !bullets.length) return false;
+
+  const slide = pptx.addSlide();
+  addHeader(slide, section.title);
+  slide.addShape(pptx.ShapeType.roundRect, {
+    x: M,
+    y: 1.05,
+    w: CONTENT_W,
+    h: 1.32,
+    rectRadius: 0.08,
+    fill: { color: COLORS.white },
+    line: { color: COLORS.line, pt: 0.8 },
+  });
+  slide.addShape(pptx.ShapeType.rect, {
+    x: M,
+    y: 1.05,
+    w: 0.12,
+    h: 1.32,
+    fill: { color: COLORS.primary },
+    line: { color: COLORS.primary },
+  });
+  slide.addText('Définition', {
+    x: M + 0.28,
+    y: 1.22,
+    w: 1.25,
+    h: 0.25,
+    fontSize: 9,
+    bold: true,
+    color: COLORS.primary,
+    margin: 0,
+  });
+  slide.addText(paragraph.text, {
+    x: M + 1.62,
+    y: 1.18,
+    w: CONTENT_W - 1.9,
+    h: 0.86,
+    fontSize: 15,
+    color: COLORS.text,
+    margin: 0.02,
+    fit: 'shrink',
+    valign: 'mid',
+  });
+  bullets.slice(0, 4).forEach((item, index) => renderRecapCard(slide, item.text, index));
   return true;
 }
 
@@ -638,6 +743,10 @@ function renderItem(slide, item, y) {
 function renderSection(section) {
   if (section.level === 1) {
     coverSlide(section.title);
+    return;
+  }
+
+  if (section.level === 2 && /^Rappels\s+—/.test(section.rawTitle) && renderRecapSection(section)) {
     return;
   }
 
