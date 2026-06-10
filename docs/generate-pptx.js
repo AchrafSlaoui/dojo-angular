@@ -14,7 +14,7 @@ pptx.layout = 'LAYOUT_WIDE';
 pptx.author = 'Dojo Angular Signals';
 pptx.subject = 'Angular 21 Signals';
 pptx.title = 'Angular 21 Signals - Support de presentation dojo';
-pptx.company = 'Dojo Angular';
+pptx.company = 'BNP Paribas';
 pptx.lang = 'fr-FR';
 
 const W = 13.333;
@@ -24,21 +24,24 @@ const CONTENT_W = W - M * 2;
 const HEADER_H = 0.72;
 
 const COLORS = {
-  primary: 'DD0031',
-  secondary: '1976D2',
-  dark: '202124',
-  text: '273043',
-  muted: '667085',
-  light: 'F7F9FC',
-  line: 'E4E7EC',
-  code: '1F2937',
+  primary: '008A5B',
+  secondary: '006B4F',
+  accent: '00A86B',
+  dark: '1B2B2A',
+  text: '263B38',
+  muted: '61716F',
+  light: 'F3F8F6',
+  line: 'D6E5E0',
+  code: '15332F',
   codeText: 'F8FAFC',
-  quote: 'FFF3CD',
-  quoteBorder: 'FFC107',
+  quote: 'E9F6F1',
+  quoteBorder: '00A86B',
   surface: 'FFFFFF',
-  softRed: 'FCE7EC',
-  softBlue: 'E8F1FF',
-  softGreen: 'EAF7F0',
+  softPrimary: 'E2F3ED',
+  softBlue: 'E8F2EF',
+  softGreen: 'DFF2EA',
+  emeraldDark: '004B3A',
+  emeraldLight: 'CFEDE2',
   white: 'FFFFFF',
 };
 
@@ -219,7 +222,7 @@ function addHeader(slide, title, accent = COLORS.primary) {
     fit: 'shrink',
     margin: 0,
   });
-  slide.addText('Angular Signals', {
+  slide.addText('BNP Paribas', {
     x: W - 2.05,
     y: 0.27,
     w: 1.6,
@@ -229,8 +232,8 @@ function addHeader(slide, title, accent = COLORS.primary) {
     color: accent,
     align: 'center',
     valign: 'mid',
-    fill: { color: COLORS.softRed },
-    line: { color: COLORS.softRed },
+    fill: { color: COLORS.emeraldLight },
+    line: { color: COLORS.emeraldLight },
     margin: 0.02,
   });
 }
@@ -246,14 +249,31 @@ function coverSlide(title) {
     fill: { color: COLORS.primary },
     line: { color: COLORS.primary },
   });
-  slide.addText('Dojo', {
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0.18,
+    y: 0.18,
+    w: 0.12,
+    h: H - 0.36,
+    fill: { color: COLORS.accent },
+    line: { color: COLORS.accent },
+  });
+  slide.addText('BNP Paribas', {
     x: 0.55,
     y: 0.55,
-    w: 2.1,
+    w: 2.2,
     h: 0.45,
-    fontSize: 22,
+    fontSize: 18,
     bold: true,
     color: COLORS.white,
+    margin: 0,
+  });
+  slide.addText('Angular Dojo', {
+    x: 0.55,
+    y: 1.12,
+    w: 2.2,
+    h: 0.32,
+    fontSize: 12,
+    color: 'DFF2EA',
     margin: 0,
   });
   slide.addText(title, {
@@ -289,8 +309,8 @@ function coverSlide(title) {
     bold: true,
     align: 'center',
     valign: 'mid',
-    fill: { color: COLORS.softRed },
-    line: { color: COLORS.softRed },
+    fill: { color: COLORS.emeraldLight },
+    line: { color: COLORS.emeraldLight },
     margin: 0.02,
   });
   return slide;
@@ -307,7 +327,7 @@ function sectionSlide(title) {
       w: W - 1.3,
       h: 0.45,
       fontSize: 18,
-      color: 'CFE8FF',
+      color: COLORS.emeraldLight,
       align: 'center',
       margin: 0,
     });
@@ -484,7 +504,7 @@ function renderExerciseCard(slide, row, index) {
   const x = M + col * (cardW + gapX);
   const y = 1.02 + rowIndex * (cardH + gapY);
   const palette = index % 2 === 0
-    ? { fill: COLORS.white, accent: COLORS.primary, chip: COLORS.softRed }
+    ? { fill: COLORS.white, accent: COLORS.primary, chip: COLORS.softGreen }
     : { fill: COLORS.white, accent: COLORS.secondary, chip: COLORS.softBlue };
 
   slide.addShape(pptx.ShapeType.roundRect, {
@@ -598,8 +618,8 @@ function renderRecapSection(section) {
   const palette = subject.includes('Zone')
     ? { accent: COLORS.secondary, soft: COLORS.softBlue }
     : subject.includes('RxJS')
-      ? { accent: '188038', soft: COLORS.softGreen }
-      : { accent: COLORS.primary, soft: COLORS.softRed };
+      ? { accent: COLORS.accent, soft: COLORS.softGreen }
+      : { accent: COLORS.primary, soft: COLORS.emeraldLight };
 
   const roleSlide = pptx.addSlide();
   addHeader(roleSlide, `${section.title} — Définition et rôle`);
@@ -772,7 +792,7 @@ function renderTestsSection(section) {
   if (!bullets.length) return false;
 
   const slide = pptx.addSlide();
-  addHeader(slide, section.title, '188038');
+  addHeader(slide, section.title, COLORS.accent);
   slide.addShape(pptx.ShapeType.roundRect, {
     x: M,
     y: 1.08,
@@ -789,7 +809,7 @@ function renderTestsSection(section) {
     h: 0.25,
     fontSize: 10,
     bold: true,
-    color: '188038',
+    color: COLORS.accent,
     margin: 0,
   });
   slide.addText(code ? code.text : 'npm test', {
@@ -836,7 +856,7 @@ function renderTestsSection(section) {
       h: 0.3,
       fontSize: 10,
       bold: true,
-      color: '188038',
+      color: COLORS.accent,
       align: 'center',
       valign: 'mid',
       fill: { color: COLORS.softGreen },
