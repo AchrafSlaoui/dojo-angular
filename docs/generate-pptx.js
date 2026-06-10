@@ -408,7 +408,9 @@ function renderTable(slide, item, y) {
   const rowH = h / rowCount;
   const colW = maxCols === 3
     ? [1.55, 3.1, CONTENT_W - 4.65]
-    : Array(maxCols).fill(CONTENT_W / maxCols);
+    : maxCols === 4
+      ? [0.75, 2.45, 2.85, CONTENT_W - 6.05]
+      : Array(maxCols).fill(CONTENT_W / maxCols);
   slide.addTable(rows, {
     x: M,
     y,

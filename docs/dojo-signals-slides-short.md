@@ -50,13 +50,13 @@ Chaque branche d'exercice ajoute uniquement la correction de son exercice par ra
 
 ## Exercices
 
-| Ex. | Definition courte | Consigne claire |
-|---|---|---|
-| 1 — `signal()` | Valeur reactive mutable lue avec `()`. | Dans la page clients, l'ouverture du formulaire d'ajout ne doit plus etre un booleen classique : elle doit etre portee par un signal et rester lisible depuis le template et les tests. |
-| 2 — `computed()` | Valeur derivee en lecture seule. | Dans la facade accounts, les calculs derives doivent devenir des `computed()` afin que le composant consomme directement des valeurs reactives pretes a afficher. |
-| 3 — `effect()` | Effet de bord declenche par les signals lus. | Dans la page clients, l'etat UI doit rester coherent automatiquement quand les donnees ou les filtres changent, sans dupliquer cette logique dans le template. |
-| 4 — `viewChild()` + `effect()` | Reference DOM exposee comme signal, puis effet DOM. | Dans la page clients, le champ prenom doit recevoir le focus quand il devient disponible dans le DOM, avec une reference `viewChild()` signal et un `effect()` cree par les participants. |
-| 5 — `input()` | Entree de composant exposee comme signal. | Dans la carte compte, l'entree `showStatus` doit devenir une entree signal pour etre une vraie dependance reactive du calcul d'affichage. |
-| 6 — `output()` | Evenement emis par l'enfant vers le parent. | Dans la liste des comptes, la selection d'un compte doit etre emise avec `output()` comme une intention vers le parent, en gardant le parent responsable de l'action. |
-| 7 — `toSignal()` / `toObservable()` | Frontiere entre Observable RxJS et signal Angular. | Les flux de route, de chargement et de recherche doivent etre connectes aux signals sans supprimer RxJS la ou il compose le flux asynchrone. |
-| 8 — `computed()` facade | Vue derivee de l'etat metier dans une facade. | La facade accounts doit exposer l'etat derive `hasActiveFilter` pour retirer ce calcul du composant et centraliser la regle metier. |
+| Ex. | Fichier(s) | Definition courte | Consigne claire |
+|---|---|---|---|
+| 1 — `signal()` | `clients/pages/clients/clients.component.ts` | Valeur reactive mutable lue avec `()`. | Remplacer l'etat d'ouverture du formulaire d'ajout par un signal. Le template et les tests doivent lire cet etat avec la syntaxe signal. |
+| 2 — `computed()` | `accounts.facade.ts`, `accounts.component.*` | Valeur derivee en lecture seule. | Deplacer les calculs d'affichage de la page accounts dans des `computed()` de facade. Le composant doit consommer ces valeurs deja derivees. |
+| 3 — `effect()` | `clients/pages/clients/clients.component.ts` | Effet de bord declenche par les signals lus. | Ajouter une reaction automatique qui garde l'etat UI coherent quand les donnees clients ou les filtres changent. |
+| 4 — `viewChild()` + `effect()` | `clients/pages/clients/clients.component.ts` | Reference DOM exposee comme signal, puis effet DOM. | Convertir la reference du champ prenom en `viewChild()` signal, puis creer l'`effect()` qui place le focus quand le champ existe. |
+| 5 — `input()` | `account-card/account-card.component.ts` | Entree de composant exposee comme signal. | Convertir l'entree `showStatus` en `input()`. Le calcul du statut visible doit reagir quand le parent change cette entree. |
+| 6 — `output()` | `account-list/account-list.component.ts` | Evenement emis par l'enfant vers le parent. | Remplacer la sortie legacy de selection par `output()`. La liste emet l'intention, le parent garde la decision et l'action. |
+| 7 — `toSignal()` / `toObservable()` | `accounts.component.ts`, `dashboard.component.ts`, `clients.component.ts` | Pont entre Observable RxJS et signal Angular. | Connecter les flux route, chargement et recherche aux signals. RxJS reste responsable de composer les flux asynchrones. |
+| 8 — `computed()` facade | `accounts.facade.ts`, `accounts.component.*` | Vue derivee de l'etat metier dans une facade. | Exposer `hasActiveFilter` depuis la facade avec `computed()`. Le composant ne doit plus porter ce calcul metier. |
