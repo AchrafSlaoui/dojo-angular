@@ -37,12 +37,19 @@ RxJS sert a modeliser des flux dans le temps : HTTP, route params, evenements, `
 
 ## Structure des branches
 
-| Branche | Role |
-|---|---|
-| `main` / `init` | base sans correction |
-| `exercice-1` | correction exercice 1 |
-| `exercice-2` | corrections exercices 1 + 2 |
-| `exercice-N` | corrections cumulees jusqu'a N |
+`main` contient les docs. `init` reprend la base fonctionnelle sans docs.
+
+```text
+init
+`-- exercice-1
+    `-- exercice-2
+        `-- exercice-3
+            `-- exercice-4
+                `-- exercice-5
+                    `-- exercice-6
+                        `-- exercice-7
+                            `-- exercice-8
+```
 
 Chaque branche d'exercice ajoute uniquement la correction de son exercice par rapport a la branche precedente.
 
