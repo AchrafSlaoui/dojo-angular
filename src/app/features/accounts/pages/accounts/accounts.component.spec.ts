@@ -94,7 +94,7 @@ describe('AccountsComponent', () => {
     await settleAccounts();
 
     fixture.componentInstance.startEdit(accounts[0]);
-    fixture.componentInstance.editAccount = { id: 'a1', label: 'Compte principal', type: 'checking', status: 'active' };
+    fixture.componentInstance.editAccount.set({ id: 'a1', label: 'Compte principal', type: 'checking', status: 'active' });
     await fixture.componentInstance.saveEdit();
 
     expect(api.update).toHaveBeenCalledWith('c1', { id: 'a1', label: 'Compte principal', type: 'checking', status: 'active' });

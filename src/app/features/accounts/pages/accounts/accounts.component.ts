@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, Signal, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, Signal, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -43,7 +43,18 @@ export class AccountsComponent {
   readonly editingAccountId = signal<string | null>(null);
   newAccount: AccountCreate = { label: '', type: 'checking', status: 'active' };
   // EXERCICE 7
-  editAccount: AccountUpdate = { id: '', label: '', type: 'checking', status: 'active' };
+  private readonly accountForEdit = signal<Account | null>(null);
+  readonly editAccount = linkedSignal<AccountUpdate>(() => {
+    const account = this.accountForEdit();
+    return account
+      ? {
+          id: account.id,
+          label: account.label,
+          type: account.type,
+          status: account.status,
+        }
+      : { id: '', label: '', type: 'checking', status: 'active' };
+  });
 
   constructor() {
     this.accountsFacade.setTypeFilter(this.initialTypeFilter());
@@ -82,18 +93,14 @@ export class AccountsComponent {
 
   // EXERCICE 7
   startEdit(account: Account): void {
-    this.editAccount = {
-      id: account.id,
-      label: account.label,
-      type: account.type,
-      status: account.status,
-    };
+    this.accountForEdit.set(account);
   }
 
   async saveEdit(): Promise<void> {
-    const updated = await this.accountsFacade.update(this.editAccount);
+    const updated = await this.accountsFacade.update(this.editAccount());
     if (updated) {
       this.editingAccountId.set(null);
+      this.accountForEdit.set(null);
     }
   }
 
@@ -102,6 +109,7 @@ export class AccountsComponent {
     if (removed) {
       if (this.editingAccountId() === account.id) {
         this.editingAccountId.set(null);
+        this.accountForEdit.set(null);
       }
     }
   }

@@ -70,7 +70,7 @@
     [clientId]="clientId() ?? ''"
     [mutating]="mutating()"
     [(editingAccountId)]="editingAccountId"
-    [editAccount]="editAccount"
+    [editAccount]="editAccount()"
     (editRequested)="startEdit($event)"
     (saveRequested)="saveEdit()"
     (deleteRequested)="deleteAccount($event)"
