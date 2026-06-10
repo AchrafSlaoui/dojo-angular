@@ -388,11 +388,14 @@ function renderTable(slide, item, y) {
     while (cells.length < maxCols) cells.push('');
     return cells;
   });
+  const rowCount = normalizedRows.length;
+  const denseTable = rowCount > 6;
+  const fontSize = maxCols > 3 ? 7.8 : denseTable ? 7.4 : 10.2;
   const rows = normalizedRows.map((row, rowIndex) =>
     row.map((cell) => ({
       text: cell,
       options: {
-        fontSize: maxCols > 3 ? 8.5 : 10.2,
+        fontSize,
         bold: rowIndex === 0,
         color: rowIndex === 0 ? COLORS.white : COLORS.text,
         fill: { color: rowIndex === 0 ? COLORS.primary : rowIndex % 2 ? COLORS.white : COLORS.light },
@@ -401,15 +404,18 @@ function renderTable(slide, item, y) {
       },
     })),
   );
-  const h = Math.min(5.9, Math.max(0.65, normalizedRows.length * 0.34));
-  const colW = Array(maxCols).fill(CONTENT_W / maxCols);
+  const h = Math.min(H - y - 0.45, Math.max(0.65, rowCount * (denseTable ? 0.58 : 0.34)));
+  const rowH = h / rowCount;
+  const colW = maxCols === 3
+    ? [1.55, 3.1, CONTENT_W - 4.65]
+    : Array(maxCols).fill(CONTENT_W / maxCols);
   slide.addTable(rows, {
     x: M,
     y,
     w: CONTENT_W,
     h,
     colW,
-    rowH: 0.34,
+    rowH,
     border: { pt: 0.45, color: COLORS.line },
     fit: 'shrink',
   });
@@ -421,7 +427,10 @@ function itemHeight(item) {
   if (item.type === 'bullet') return estimateTextHeight(item.text, 105, 0.2, 0.28) + 0.06;
   if (item.type === 'quote') return estimateTextHeight(item.text, 95, 0.21, 0.42) + 0.14;
   if (item.type === 'code') return Math.min(5.9, Math.max(0.55, item.text.split('\n').length * 0.17 + 0.18)) + 0.16;
-  if (item.type === 'table') return Math.min(5.9, Math.max(0.65, item.rows.length * 0.34)) + 0.18;
+  if (item.type === 'table') {
+    const denseTable = item.rows.length > 6;
+    return Math.min(5.9, Math.max(0.65, item.rows.length * (denseTable ? 0.58 : 0.34))) + 0.18;
+  }
   return 0.3;
 }
 

@@ -50,13 +50,13 @@ Chaque branche d'exercice ajoute uniquement la correction de son exercice par ra
 
 ## Exercices
 
-| Ex. | API | Definition courte | Consigne |
-|---|---|---|---|
-| 1 | `signal()` | Valeur reactive mutable lue avec `()`. | L'etat d'ajout de la page clients doit devenir un signal. |
-| 2 | `computed()` | Valeur derivee en lecture seule. | Les valeurs derivees de la facade accounts doivent etre exposees en `computed()`. |
-| 3 | `effect()` | Effet de bord declenche par les signals lus. | La coherence de l'etat UI clients doit etre synchronisee par un `effect()`. |
-| 4 | `viewChild()` + `effect()` | Reference DOM exposee comme signal, puis effet DOM. | Le focus du champ prenom doit etre gere avec `viewChild()` signal et `effect()`. |
-| 5 | `input()` | Entree de composant exposee comme signal. | L'entree du composant carte compte doit etre convertie en `input()`. |
-| 6 | `output()` | Evenement emis par l'enfant vers le parent. | L'intention de selection doit etre emise avec `output()`. |
-| 7 | `toSignal()` / `toObservable()` | Frontiere entre Observable RxJS et signal Angular. | Les flux route, chargement et recherche doivent etre connectes aux signals. |
-| 8 | `computed()` facade | Vue derivee de l'etat metier dans une facade. | La logique active filter doit etre exposee par un `computed()` de facade. |
+| Ex. | Definition courte | Consigne claire |
+|---|---|---|
+| 1 — `signal()` | Valeur reactive mutable lue avec `()`. | Dans la page clients, l'ouverture du formulaire d'ajout ne doit plus etre un booleen classique : elle doit etre portee par un signal et rester lisible depuis le template et les tests. |
+| 2 — `computed()` | Valeur derivee en lecture seule. | Dans la facade accounts, les calculs derives doivent devenir des `computed()` afin que le composant consomme directement des valeurs reactives pretes a afficher. |
+| 3 — `effect()` | Effet de bord declenche par les signals lus. | Dans la page clients, l'etat UI doit rester coherent automatiquement quand les donnees ou les filtres changent, sans dupliquer cette logique dans le template. |
+| 4 — `viewChild()` + `effect()` | Reference DOM exposee comme signal, puis effet DOM. | Dans la page clients, le champ prenom doit recevoir le focus quand il devient disponible dans le DOM, avec une reference `viewChild()` signal et un `effect()` cree par les participants. |
+| 5 — `input()` | Entree de composant exposee comme signal. | Dans la carte compte, l'entree `showStatus` doit devenir une entree signal pour etre une vraie dependance reactive du calcul d'affichage. |
+| 6 — `output()` | Evenement emis par l'enfant vers le parent. | Dans la liste des comptes, la selection d'un compte doit etre emise avec `output()` comme une intention vers le parent, en gardant le parent responsable de l'action. |
+| 7 — `toSignal()` / `toObservable()` | Frontiere entre Observable RxJS et signal Angular. | Les flux de route, de chargement et de recherche doivent etre connectes aux signals sans supprimer RxJS la ou il compose le flux asynchrone. |
+| 8 — `computed()` facade | Vue derivee de l'etat metier dans une facade. | La facade accounts doit exposer l'etat derive `hasActiveFilter` pour retirer ce calcul du composant et centraliser la regle metier. |
