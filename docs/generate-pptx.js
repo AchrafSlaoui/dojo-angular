@@ -594,8 +594,6 @@ function renderRecapSection(section) {
   const bullets = section.items.filter((item) => item.type === 'bullet');
   if (!paragraph || !bullets.length) return false;
 
-  const slide = pptx.addSlide();
-  addHeader(slide, section.title);
   const subject = section.rawTitle.replace(/^Rappels\s+—\s+/, '');
   const palette = subject.includes('Zone')
     ? { accent: COLORS.secondary, soft: COLORS.softBlue }
@@ -603,117 +601,166 @@ function renderRecapSection(section) {
       ? { accent: '188038', soft: COLORS.softGreen }
       : { accent: COLORS.primary, soft: COLORS.softRed };
 
-  slide.addShape(pptx.ShapeType.roundRect, {
+  const roleSlide = pptx.addSlide();
+  addHeader(roleSlide, `${section.title} — Définition et rôle`);
+  roleSlide.addShape(pptx.ShapeType.roundRect, {
     x: M,
-    y: 1.05,
-    w: 4.15,
-    h: 5.7,
+    y: 1.12,
+    w: 5.05,
+    h: 5.45,
     rectRadius: 0.08,
     fill: { color: palette.soft },
     line: { color: palette.soft, pt: 0.8 },
   });
-  slide.addText(subject, {
-    x: M + 0.32,
-    y: 1.35,
-    w: 3.45,
-    h: 0.5,
-    fontSize: 26,
+  roleSlide.addText(subject, {
+    x: M + 0.38,
+    y: 1.48,
+    w: 4.15,
+    h: 0.58,
+    fontSize: 30,
     bold: true,
     color: palette.accent,
     margin: 0,
     fit: 'shrink',
   });
-  slide.addText('Définition', {
-    x: M + 0.32,
-    y: 1.98,
-    w: 1.35,
-    h: 0.2,
-    fontSize: 8,
+  roleSlide.addText('Définition', {
+    x: M + 0.38,
+    y: 2.38,
+    w: 1.4,
+    h: 0.22,
+    fontSize: 9,
     bold: true,
     color: palette.accent,
     margin: 0,
   });
-  slide.addText(paragraph.text, {
-    x: M + 0.32,
-    y: 2.3,
-    w: 3.42,
-    h: 2.15,
-    fontSize: 16,
+  roleSlide.addText(paragraph.text, {
+    x: M + 0.38,
+    y: 2.75,
+    w: 4.18,
+    h: 1.85,
+    fontSize: 18,
     bold: true,
     color: COLORS.dark,
-    margin: 0.03,
+    margin: 0.02,
     fit: 'shrink',
     valign: 'mid',
   });
-  slide.addText('Question cle', {
-    x: M + 0.32,
-    y: 5.25,
-    w: 1.3,
+  roleSlide.addText('Question clé', {
+    x: M + 0.38,
+    y: 5.35,
+    w: 1.25,
     h: 0.2,
     fontSize: 8,
     bold: true,
     color: palette.accent,
     margin: 0,
   });
-  slide.addText(subject.includes('Zone')
-    ? 'Qui declenche la detection ?'
+  roleSlide.addText(subject.includes('Zone')
+    ? 'Qui déclenche la détection ?'
     : subject.includes('RxJS')
-      ? 'Ou placer la frontiere avec Signals ?'
-      : 'Qui depend de cette valeur ?',
+      ? 'Où placer la frontière avec Signals ?'
+      : 'Qui dépend de cette valeur ?',
   {
-    x: M + 0.32,
-    y: 5.55,
-    w: 3.4,
+    x: M + 0.38,
+    y: 5.68,
+    w: 4.05,
     h: 0.42,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.text,
     margin: 0,
     fit: 'shrink',
   });
 
-  const blocks = [
-    { title: 'Rôle', items: bullets.slice(0, 2), y: 1.05 },
-    { title: 'À retenir', items: bullets.slice(2, 4), y: 3.92 },
-  ];
-  blocks.forEach((block) => {
-    slide.addShape(pptx.ShapeType.roundRect, {
-      x: M + 4.55,
-      y: block.y,
-      w: CONTENT_W - 4.55,
-      h: 2.55,
+  roleSlide.addShape(pptx.ShapeType.roundRect, {
+    x: M + 5.42,
+    y: 1.12,
+    w: CONTENT_W - 5.42,
+    h: 5.45,
+    rectRadius: 0.08,
+    fill: { color: COLORS.white },
+    line: { color: COLORS.line, pt: 0.8 },
+  });
+  roleSlide.addText('Rôle', {
+    x: M + 5.78,
+    y: 1.45,
+    w: 3.2,
+    h: 0.32,
+    fontSize: 17,
+    bold: true,
+    color: palette.accent,
+    margin: 0,
+  });
+  bullets.slice(0, 2).forEach((item, index) => {
+    const y = 2.1 + index * 1.35;
+    roleSlide.addShape(pptx.ShapeType.ellipse, {
+      x: M + 5.82,
+      y: y + 0.11,
+      w: 0.16,
+      h: 0.16,
+      fill: { color: palette.accent },
+      line: { color: palette.accent },
+    });
+    roleSlide.addText(item.text, {
+      x: M + 6.14,
+      y,
+      w: CONTENT_W - 6.45,
+      h: 0.75,
+      fontSize: 15,
+      color: COLORS.text,
+      margin: 0,
+      fit: 'shrink',
+    });
+  });
+
+  const takeawaySlide = pptx.addSlide();
+  addHeader(takeawaySlide, `${section.title} — À retenir`);
+  takeawaySlide.addText(subject, {
+    x: M,
+    y: 1.05,
+    w: 2.25,
+    h: 0.34,
+    fontSize: 15,
+    bold: true,
+    color: palette.accent,
+    margin: 0,
+  });
+  const takeawayItems = bullets.slice(2, 4);
+  takeawayItems.forEach((item, index) => {
+    const y = 1.72 + index * 2.18;
+    takeawaySlide.addShape(pptx.ShapeType.roundRect, {
+      x: M,
+      y,
+      w: CONTENT_W,
+      h: 1.62,
       rectRadius: 0.08,
       fill: { color: COLORS.white },
       line: { color: COLORS.line, pt: 0.8 },
     });
-    slide.addText(block.title, {
-      x: M + 4.85,
-      y: block.y + 0.22,
-      w: 3.2,
-      h: 0.28,
-      fontSize: 13,
+    takeawaySlide.addText(String(index + 1).padStart(2, '0'), {
+      x: M + 0.35,
+      y: y + 0.42,
+      w: 0.5,
+      h: 0.35,
+      fontSize: 11,
       bold: true,
       color: palette.accent,
+      align: 'center',
+      valign: 'mid',
+      fill: { color: palette.soft },
+      line: { color: palette.soft },
       margin: 0,
     });
-    block.items.forEach((item, index) => {
-      slide.addShape(pptx.ShapeType.ellipse, {
-        x: M + 4.88,
-        y: block.y + 0.77 + index * 0.72,
-        w: 0.12,
-        h: 0.12,
-        fill: { color: palette.accent },
-        line: { color: palette.accent },
-      });
-      slide.addText(item.text, {
-        x: M + 5.15,
-        y: block.y + 0.66 + index * 0.72,
-        w: CONTENT_W - 5.45,
-        h: 0.48,
-        fontSize: 12.5,
-        color: COLORS.text,
-        margin: 0,
-        fit: 'shrink',
-      });
+    takeawaySlide.addText(item.text, {
+      x: M + 1.18,
+      y: y + 0.34,
+      w: CONTENT_W - 1.55,
+      h: 0.78,
+      fontSize: 18,
+      color: COLORS.text,
+      bold: true,
+      margin: 0,
+      fit: 'shrink',
+      valign: 'mid',
     });
   });
   return true;
