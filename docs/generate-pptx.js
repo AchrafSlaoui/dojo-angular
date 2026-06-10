@@ -27,14 +27,18 @@ const COLORS = {
   primary: 'DD0031',
   secondary: '1976D2',
   dark: '202124',
-  text: '333333',
-  muted: '5F6368',
-  light: 'F6F7F9',
-  line: 'DADCE0',
+  text: '273043',
+  muted: '667085',
+  light: 'F7F9FC',
+  line: 'E4E7EC',
   code: '1F2937',
   codeText: 'F8FAFC',
   quote: 'FFF3CD',
   quoteBorder: 'FFC107',
+  surface: 'FFFFFF',
+  softRed: 'FCE7EC',
+  softBlue: 'E8F1FF',
+  softGreen: 'EAF7F0',
   white: 'FFFFFF',
 };
 
@@ -195,60 +199,99 @@ function addFooter(slide, index, total) {
 }
 
 function addHeader(slide, title, accent = COLORS.primary) {
-  slide.background = { color: COLORS.white };
+  slide.background = { color: COLORS.light };
   slide.addShape(pptx.ShapeType.rect, {
     x: 0,
     y: 0,
     w: W,
-    h: HEADER_H,
+    h: 0.1,
     fill: { color: accent },
     line: { color: accent },
   });
   slide.addText(title, {
     x: M,
-    y: 0.12,
-    w: CONTENT_W,
-    h: 0.45,
-    fontSize: title.length > 80 ? 15 : 18,
+    y: 0.24,
+    w: CONTENT_W - 2.2,
+    h: 0.38,
+    fontSize: title.length > 80 ? 16 : 20,
     bold: true,
-    color: COLORS.white,
+    color: COLORS.dark,
     fit: 'shrink',
     margin: 0,
+  });
+  slide.addText('Angular Signals', {
+    x: W - 2.05,
+    y: 0.27,
+    w: 1.6,
+    h: 0.24,
+    fontSize: 8,
+    bold: true,
+    color: accent,
+    align: 'center',
+    valign: 'mid',
+    fill: { color: COLORS.softRed },
+    line: { color: COLORS.softRed },
+    margin: 0.02,
   });
 }
 
 function coverSlide(title) {
   const slide = pptx.addSlide();
-  slide.background = { color: COLORS.primary };
-  slide.addText(title, {
-    x: 0.65,
-    y: 1.65,
-    w: W - 1.3,
-    h: 1.4,
-    fontSize: 44,
-    bold: true,
-    color: COLORS.white,
-    align: 'center',
-    valign: 'mid',
-    fit: 'shrink',
+  slide.background = { color: COLORS.light };
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0,
+    y: 0,
+    w: 3.25,
+    h: H,
+    fill: { color: COLORS.primary },
+    line: { color: COLORS.primary },
   });
-  slide.addText('Support de présentation dojo', {
-    x: 0.65,
-    y: 3.35,
-    w: W - 1.3,
+  slide.addText('Dojo', {
+    x: 0.55,
+    y: 0.55,
+    w: 2.1,
     h: 0.45,
     fontSize: 22,
-    color: 'FFD5DC',
-    align: 'center',
+    bold: true,
+    color: COLORS.white,
+    margin: 0,
+  });
+  slide.addText(title, {
+    x: 3.85,
+    y: 1.55,
+    w: W - 4.45,
+    h: 1.25,
+    fontSize: 38,
+    bold: true,
+    color: COLORS.dark,
+    align: 'left',
+    valign: 'mid',
+    fit: 'shrink',
+    margin: 0,
+  });
+  slide.addText('Support de présentation dojo', {
+    x: 3.9,
+    y: 3.05,
+    w: W - 4.5,
+    h: 0.42,
+    fontSize: 18,
+    color: COLORS.muted,
+    align: 'left',
+    margin: 0,
   });
   slide.addText('Angular 21 · Signals · Zone.js · RxJS interop', {
-    x: 0.65,
-    y: 5.35,
-    w: W - 1.3,
-    h: 0.35,
-    fontSize: 13,
-    color: 'FFD5DC',
+    x: 3.9,
+    y: 4.55,
+    w: 4.5,
+    h: 0.34,
+    fontSize: 11,
+    color: COLORS.primary,
+    bold: true,
     align: 'center',
+    valign: 'mid',
+    fill: { color: COLORS.softRed },
+    line: { color: COLORS.softRed },
+    margin: 0.02,
   });
   return slide;
 }
@@ -424,6 +467,119 @@ function renderTable(slide, item, y) {
   return h + 0.18;
 }
 
+function shortenExerciseFiles(text) {
+  return text
+    .replace(/src\/app\/features\//g, '')
+    .replace(/, /g, '\n');
+}
+
+function renderExerciseCard(slide, row, index) {
+  const [exercise, files, definition, need] = row;
+  const col = index < 4 ? 0 : 1;
+  const rowIndex = index % 4;
+  const gapX = 0.24;
+  const gapY = 0.11;
+  const cardW = (CONTENT_W - gapX) / 2;
+  const cardH = 1.28;
+  const x = M + col * (cardW + gapX);
+  const y = 1.02 + rowIndex * (cardH + gapY);
+  const palette = index % 2 === 0
+    ? { fill: COLORS.white, accent: COLORS.primary, chip: COLORS.softRed }
+    : { fill: COLORS.white, accent: COLORS.secondary, chip: COLORS.softBlue };
+
+  slide.addShape(pptx.ShapeType.roundRect, {
+    x,
+    y,
+    w: cardW,
+    h: cardH,
+    rectRadius: 0.06,
+    fill: { color: palette.fill },
+    line: { color: COLORS.line, pt: 0.8 },
+  });
+  slide.addShape(pptx.ShapeType.rect, {
+    x,
+    y,
+    w: 0.08,
+    h: cardH,
+    fill: { color: palette.accent },
+    line: { color: palette.accent },
+  });
+  slide.addText(exercise, {
+    x: x + 0.18,
+    y: y + 0.12,
+    w: 1.55,
+    h: 0.2,
+    fontSize: 8.2,
+    bold: true,
+    color: palette.accent,
+    margin: 0,
+    fit: 'shrink',
+  });
+  slide.addText(definition, {
+    x: x + 1.78,
+    y: y + 0.12,
+    w: cardW - 1.95,
+    h: 0.2,
+    fontSize: 6.8,
+    color: COLORS.muted,
+    margin: 0,
+    fit: 'shrink',
+  });
+  slide.addText(shortenExerciseFiles(files), {
+    x: x + 0.18,
+    y: y + 0.4,
+    w: 2.05,
+    h: 0.56,
+    fontSize: 5.8,
+    color: COLORS.secondary,
+    margin: 0,
+    breakLine: false,
+    fit: 'shrink',
+    valign: 'top',
+  });
+  slide.addText(need, {
+    x: x + 2.34,
+    y: y + 0.39,
+    w: cardW - 2.52,
+    h: 0.72,
+    fontSize: 6.8,
+    color: COLORS.text,
+    margin: 0.02,
+    fit: 'shrink',
+    valign: 'top',
+  });
+}
+
+function renderExercisesSection(section) {
+  const table = section.items.find((item) => item.type === 'table');
+  if (!table || table.rows.length <= 1) return false;
+
+  const slide = pptx.addSlide();
+  addHeader(slide, section.title);
+  const exerciseRows = table.rows.slice(1);
+  exerciseRows.forEach((row, index) => renderExerciseCard(slide, row, index));
+
+  const note = section.items
+    .filter((item) => item.type === 'paragraph')
+    .map((item) => item.text)
+    .join(' ');
+  if (note) {
+    slide.addText(note, {
+      x: M,
+      y: 6.72,
+      w: CONTENT_W,
+      h: 0.28,
+      fontSize: 7.2,
+      color: COLORS.muted,
+      italic: true,
+      align: 'center',
+      margin: 0,
+      fit: 'shrink',
+    });
+  }
+  return true;
+}
+
 function itemHeight(item) {
   if (item.type === 'paragraph') return estimateTextHeight(item.text, 115, 0.21, 0.35) + 0.12;
   if (item.type === 'bullet') return estimateTextHeight(item.text, 105, 0.2, 0.28) + 0.06;
@@ -482,6 +638,10 @@ function renderItem(slide, item, y) {
 function renderSection(section) {
   if (section.level === 1) {
     coverSlide(section.title);
+    return;
+  }
+
+  if (section.level === 2 && section.rawTitle === 'Exercices' && renderExercisesSection(section)) {
     return;
   }
 
