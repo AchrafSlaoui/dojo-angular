@@ -65,10 +65,10 @@ Chaque branche d'exercice ajoute uniquement la correction de son exercice par ra
 
 ## Rappel tests
 
-- Les tests ne sont pas l'objectif principal du dojo.
-- Lancer les tests pour verifier que la migration n'a pas casse le comportement existant.
-- Si une erreur apparait a cause de la migration demandee, corriger le code ou le test pour refleter le nouveau comportement attendu.
-- Ne pas perdre de temps sur les tests hors perimetre de l'exercice.
+- Avant de commencer un exercice, lancer les tests pour connaitre l'etat de depart.
+- A la fin de l'exercice, relancer les tests pour verifier la migration.
+- Si une erreur apparait, identifier si elle vient du changement realise.
+- Si besoin, corriger le code ou le test pour refleter le comportement attendu.
 
 ```bash
 npm test
