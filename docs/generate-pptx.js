@@ -623,12 +623,22 @@ function renderRecapSection(section) {
     margin: 0,
     fit: 'shrink',
   });
+  slide.addText('Définition', {
+    x: M + 0.32,
+    y: 1.98,
+    w: 1.35,
+    h: 0.2,
+    fontSize: 8,
+    bold: true,
+    color: palette.accent,
+    margin: 0,
+  });
   slide.addText(paragraph.text, {
     x: M + 0.32,
-    y: 2.18,
+    y: 2.3,
     w: 3.42,
-    h: 2.35,
-    fontSize: 17,
+    h: 2.15,
+    fontSize: 16,
     bold: true,
     color: COLORS.dark,
     margin: 0.03,
@@ -662,7 +672,7 @@ function renderRecapSection(section) {
   });
 
   const blocks = [
-    { title: 'Rôle dans le dojo', items: bullets.slice(0, 2), y: 1.05 },
+    { title: 'Rôle', items: bullets.slice(0, 2), y: 1.05 },
     { title: 'À retenir', items: bullets.slice(2, 4), y: 3.92 },
   ];
   blocks.forEach((block) => {

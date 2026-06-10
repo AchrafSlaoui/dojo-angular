@@ -6,10 +6,10 @@
 
 Un signal est une valeur reactive lue avec `()`. Quand sa valeur change, Angular sait quelles lectures dependent de cette valeur.
 
-- `signal()` cree une valeur mutable.
-- `computed()` cree une valeur derivee.
-- `effect()` observe des signals pour declencher un effet de bord.
-- Le template lit un signal avec `monSignal()`.
+- Representer explicitement un etat reactive dans l'application.
+- Notifier Angular des lectures dependantes quand la valeur change.
+- Un signal se lit avec `()` et se modifie avec `.set()` ou `.update()`.
+- `computed()` derive une valeur ; `effect()` declenche un effet de bord.
 
 ---
 
@@ -17,10 +17,10 @@ Un signal est une valeur reactive lue avec `()`. Quand sa valeur change, Angular
 
 Zone.js intercepte les evenements asynchrones du navigateur et previent Angular qu'un cycle de detection peut etre lance.
 
-- Zone.js declenche la detection apres un evenement async.
-- Zone.js ne dit pas quel etat applicatif a change.
-- Le dojo garde Zone.js pour montrer une migration progressive.
-- Les Signals rendent les dependances d'etat plus explicites.
+- Declencher la detection de changement apres une tache asynchrone.
+- Fournir le comportement historique d'Angular sans appels manuels de detection.
+- Zone.js ne modelise pas l'etat applicatif et ne sait pas quelle valeur a change.
+- Les Signals completent ce mecanisme en rendant les dependances d'etat explicites.
 
 ---
 
@@ -28,10 +28,10 @@ Zone.js intercepte les evenements asynchrones du navigateur et previent Angular 
 
 RxJS sert a modeliser des flux dans le temps : HTTP, route params, evenements, `debounceTime`, `switchMap`, `combineLatest`.
 
-- RxJS reste adapte aux flux asynchrones.
+- Modeliser et composer des donnees qui arrivent dans le temps.
+- Gerer les transformations asynchrones avec des operateurs comme `switchMap` ou `debounceTime`.
 - `toSignal()` expose la derniere valeur d'un Observable comme signal.
-- `toObservable()` expose un signal comme Observable.
-- Le but est de placer clairement la frontiere entre flux RxJS et etat signal.
+- `toObservable()` permet de repasser d'un signal vers un flux Observable.
 
 ---
 
