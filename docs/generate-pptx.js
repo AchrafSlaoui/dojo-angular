@@ -1,11 +1,13 @@
-// node docs/generate-pptx.js
+﻿// node docs/generate-pptx.js
 const fs = require('fs');
 const path = require('path');
 const PptxGenJS = require('pptxgenjs');
 
 const ROOT = path.resolve(__dirname, '..');
-const SOURCE = path.join(__dirname, 'dojo-signals-slides.md');
-const OUTPUT = path.join(__dirname, 'dojo-signals.pptx');
+const sourceArg = process.argv[2] || 'docs/dojo-signals-slides-short.md';
+const outputArg = process.argv[3] || 'docs/dojo-signals.pptx';
+const SOURCE = path.resolve(ROOT, sourceArg);
+const OUTPUT = path.resolve(ROOT, outputArg);
 
 const pptx = new PptxGenJS();
 pptx.layout = 'LAYOUT_WIDE';
@@ -513,8 +515,9 @@ pptx._slides.forEach((slide, index) => addFooter(slide, index + 1, total));
 pptx.writeFile({ fileName: OUTPUT })
   .then(() => {
     const relative = path.relative(ROOT, OUTPUT).replace(/\\/g, '/');
+    const sourceRelative = path.relative(ROOT, SOURCE).replace(/\\/g, '/');
     console.log(`PPTX généré : ${relative}`);
-    console.log(`${total} slides créées depuis docs/dojo-signals-slides.md`);
+    console.log(`${total} slides créées depuis ${sourceRelative}`);
   })
   .catch((err) => {
     console.error('Erreur de génération PPTX :', err);
