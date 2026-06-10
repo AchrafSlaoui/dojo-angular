@@ -878,6 +878,73 @@ function renderTestsSection(section) {
   return true;
 }
 
+function renderBranchesSection(section) {
+  const paragraph = section.items.find((item) => item.type === 'paragraph');
+  const code = section.items.find((item) => item.type === 'code');
+  if (!code) return false;
+
+  const slide = pptx.addSlide();
+  addHeader(slide, section.title);
+  if (paragraph) {
+    slide.addText(paragraph.text, {
+      x: M,
+      y: 1.08,
+      w: CONTENT_W,
+      h: 0.38,
+      fontSize: 17,
+      bold: true,
+      color: COLORS.dark,
+      margin: 0,
+      fit: 'shrink',
+    });
+  }
+
+  slide.addShape(pptx.ShapeType.roundRect, {
+    x: M + 1.55,
+    y: 1.72,
+    w: CONTENT_W - 3.1,
+    h: 4.55,
+    rectRadius: 0.08,
+    fill: { color: COLORS.code },
+    line: { color: COLORS.emeraldDark, pt: 1 },
+  });
+  slide.addText(code.text, {
+    x: M + 2.2,
+    y: 2.02,
+    w: CONTENT_W - 4.4,
+    h: 3.9,
+    fontFace: 'Courier New',
+    fontSize: 19,
+    bold: true,
+    color: COLORS.codeText,
+    margin: 0.05,
+    fit: 'shrink',
+    breakLine: false,
+    valign: 'mid',
+  });
+
+  const note = section.items
+    .filter((item) => item.type === 'paragraph')
+    .slice(1)
+    .map((item) => item.text)
+    .join(' ');
+  if (note) {
+    slide.addText(note, {
+      x: M,
+      y: 6.55,
+      w: CONTENT_W,
+      h: 0.28,
+      fontSize: 9.5,
+      color: COLORS.muted,
+      italic: true,
+      align: 'center',
+      margin: 0,
+      fit: 'shrink',
+    });
+  }
+  return true;
+}
+
 function itemHeight(item) {
   if (item.type === 'paragraph') return estimateTextHeight(item.text, 115, 0.21, 0.35) + 0.12;
   if (item.type === 'bullet') return estimateTextHeight(item.text, 105, 0.2, 0.28) + 0.06;
@@ -940,6 +1007,10 @@ function renderSection(section) {
   }
 
   if (section.level === 2 && /^Rappels\s+—/.test(section.rawTitle) && renderRecapSection(section)) {
+    return;
+  }
+
+  if (section.level === 2 && section.rawTitle === 'Structure des branches' && renderBranchesSection(section)) {
     return;
   }
 
