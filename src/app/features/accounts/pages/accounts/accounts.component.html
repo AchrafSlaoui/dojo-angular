@@ -69,11 +69,10 @@
     [accounts]="accounts()"
     [clientId]="clientId() ?? ''"
     [mutating]="mutating()"
-    [editingAccountId]="editingAccountId"
+    [(editingAccountId)]="editingAccountId"
     [editAccount]="editAccount"
     (editRequested)="startEdit($event)"
     (saveRequested)="saveEdit()"
-    (cancelRequested)="cancelEdit()"
     (deleteRequested)="deleteAccount($event)"
   ></app-account-list>
 } @else if (!loading()) {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, effect, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Account, AccountUpdate } from '@accounts/models/account';
 import { AccountCardComponent } from '@accounts/components/account-card/account-card.component';
@@ -15,16 +15,15 @@ export class AccountListComponent {
   accounts = input.required<Account[]>();
   clientId = input.required<string>();
   mutating = input(false);
-  editingAccountId = input<string | null>(null);
+  editingAccountId = model<string | null>(null);
   editAccount = input.required<AccountUpdate>();
 
   // Exemple output()
   editRequested = output<Account>();
   saveRequested = output<void>();
-  cancelRequested = output<void>();
   deleteRequested = output<Account>();
   // EXERCICE 6
-  @Output() selectedRequested = new EventEmitter<Account>();
+  selectedRequested = output<Account>();
 
   private readonly selectedAccount = signal<Account | null>(null, { equal: () => false });
 
@@ -39,6 +38,11 @@ export class AccountListComponent {
 
   requestEdit(account: Account): void {
     this.selectedAccount.set(account);
+    this.editingAccountId.set(account.id);
     this.editRequested.emit(account);
+  }
+
+  cancelEdit(): void {
+    this.editingAccountId.set(null);
   }
 }

@@ -18,7 +18,7 @@
             <button type="submit" class="icon-btn lg" title="Enregistrer" aria-label="Enregistrer" [disabled]="mutating()">
               <span class="icon i-check icon-lg"></span>
             </button>
-            <button type="button" class="icon-btn lg" (click)="cancelRequested.emit()" title="Annuler" aria-label="Annuler" [disabled]="mutating()">
+            <button type="button" class="icon-btn lg" (click)="cancelEdit()" title="Annuler" aria-label="Annuler" [disabled]="mutating()">
               <span class="icon i-close icon-lg"></span>
             </button>
           </div>

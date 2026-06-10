@@ -40,7 +40,7 @@ export class AccountsComponent {
   readonly blockedAccountsCount = this.accountsFacade.blockedAccountsCount;
   readonly clientId = signal<string | null>(null);
   adding = false;
-  editingAccountId: string | null = null;
+  readonly editingAccountId = signal<string | null>(null);
   newAccount: AccountCreate = { label: '', type: 'checking', status: 'active' };
   // EXERCICE 7
   editAccount: AccountUpdate = { id: '', label: '', type: 'checking', status: 'active' };
@@ -82,7 +82,6 @@ export class AccountsComponent {
 
   // EXERCICE 7
   startEdit(account: Account): void {
-    this.editingAccountId = account.id;
     this.editAccount = {
       id: account.id,
       label: account.label,
@@ -91,22 +90,18 @@ export class AccountsComponent {
     };
   }
 
-  cancelEdit(): void {
-    this.editingAccountId = null;
-  }
-
   async saveEdit(): Promise<void> {
     const updated = await this.accountsFacade.update(this.editAccount);
     if (updated) {
-      this.editingAccountId = null;
+      this.editingAccountId.set(null);
     }
   }
 
   async deleteAccount(account: Account): Promise<void> {
     const removed = await this.accountsFacade.remove(account);
     if (removed) {
-      if (this.editingAccountId === account.id) {
-        this.editingAccountId = null;
+      if (this.editingAccountId() === account.id) {
+        this.editingAccountId.set(null);
       }
     }
   }
