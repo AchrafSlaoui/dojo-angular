@@ -42,6 +42,22 @@ export const routes = [
         (m) => m.ClientDetailComponent
       ),
   },
+  {
+    path: 'signals-demo',
+    title: 'Signals Demo',
+    loadComponent: () =>
+      import('./features/signals-demo/signals-demo.component').then(
+        (m) => m.SignalsDemoComponent
+      ),
+  },
+  {
+    path: 'primitive-lab',
+    title: 'Primitive Lab',
+    loadComponent: () =>
+      import('./features/primitive-lab/primitive-lab.component').then(
+        (m) => m.PrimitiveLabComponent
+      ),
+  },
   { path: '**', redirectTo: 'dashboard' },
 ] satisfies Routes;
 
