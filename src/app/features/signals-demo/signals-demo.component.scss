@@ -27,6 +27,7 @@
     display: flex;
     align-items: center;
     gap: 0.6rem;
+    flex-wrap: wrap;
 
     .api-badge {
       background: var(--primary);
@@ -43,6 +44,18 @@
       font-size: 0.9rem;
       color: var(--muted);
       font-weight: 400;
+    }
+
+    .kind-badge {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.12rem 0.45rem;
+      white-space: nowrap;
+
+      &.experimental { background: #fdf2f8; border-color: #fbcfe8; }
     }
   }
 
@@ -83,6 +96,32 @@
     strong {
       font-size: 1.15rem;
       color: var(--text);
+    }
+  }
+
+  .segmented {
+    display: inline-flex;
+    align-self: flex-start;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+
+    button {
+      border: 0;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.35rem 0.8rem;
+
+      + button {
+        border-left: 1px solid var(--border);
+      }
+
+      &.active {
+        background: var(--primary);
+        color: #fff;
+      }
     }
   }
 
@@ -159,5 +198,63 @@
     display: flex;
     gap: 0.75rem;
     align-items: center;
+    flex-wrap: wrap;
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    input {
+      min-width: 10rem;
+      padding: 0.35rem 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+    }
+  }
+
+  .status-pill {
+    background: #dcfce7;
+    border-radius: 999px;
+    color: #166534;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.12rem 0.45rem;
+
+    &.blocked {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  }
+
+  .render-box {
+    background: var(--bg);
+    border: 1px dashed var(--primary);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 0.85rem;
+  }
+
+  .danger-text {
+    color: var(--danger);
+  }
+}
+
+@media (max-width: 560px) {
+  :host {
+    padding: 1rem;
+  }
+
+  .sections-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .demo-section .section-header {
+    align-items: flex-start;
   }
 }

@@ -118,10 +118,17 @@ Le support présente un panorama ciblé des APIs Signals et APIs Angular associ�
 | 6B | `exercice-6-model` | `model()` | `account-list.component.ts`, `accounts.component.ts` |
 | 7 | `exercice-7` | `linkedSignal()` | `accounts.component.ts` |
 | 8 | `exercice-8` | `toSignal()` / `toObservable()` | `accounts.component.ts`, `dashboard.component.ts`, `dashboard.component.spec.ts`, `clients.component.ts` |
-| 9 | `exercice-9` | `afterNextRender()` / `afterRender()` | `clients.component.ts` |
+| 9 | `exercice-9` | `afterNextRender()` / `afterEveryRender()` | `clients.component.ts` |
 | 10 | `exercice-10` | `computed()` en façade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html` |
 
-Les branches sont cumulatives : chaque branche ajoute uniquement la correction de son exercice par rapport à la branche précédente.
+Les branches sont cumulatives jusqu'à `exercice-5`.
+
+`exercice-6` et `exercice-6-model` sont deux variantes parallèles du même exercice :
+
+- `exercice-6` traite la version `output()` ;
+- `exercice-6-model` traite la version `model()`.
+
+`exercice-6-model` n'est pas une étape après `exercice-6`. Après la restitution, le parcours commun reprend sur `exercice-7`.
 
 ---
 
@@ -129,7 +136,7 @@ Les branches sont cumulatives : chaque branche ajoute uniquement la correction d
 
 ### Définition
 
-> Un signal est une **valeur réactive observable par Angular**. Il contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lu.
+> `signal()` est une **primitive Signal** : une valeur réactive observable par Angular. Elle contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lue.
 
 Quand la valeur change, Angular sait précisément quelles dépendances invalider : les valeurs dérivées sont recalculées si nécessaire et les vues concernées sont mises à jour.
 
@@ -188,7 +195,7 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 
 ### Définition
 
-> Un `computed` est une **valeur dérivée mémorisée**. Le calcul ne se relance que si une dépendance lue a changé depuis la dernière lecture.
+> `computed()` est une **primitive Signal** : une valeur dérivée mémorisée. Le calcul ne se relance que si une dépendance lue a changé depuis la dernière lecture.
 
 ```ts
 readonly blockedAccountsCount = computed(() =>
@@ -257,7 +264,7 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ### Définition `effect()`
 
-> `effect()` exécute un **effet de bord** quand les signals lus dans son corps changent. Il s'exécute automatiquement, sans appel explicite.
+> `effect()` est une **primitive Signal** : elle exécute un effet de bord quand les signals lus dans son corps changent. Elle s'exécute automatiquement, sans appel explicite.
 
 ### Fichier à modifier
 
@@ -333,7 +340,7 @@ Sans `onCleanup`, chaque ré-exécution de l'effet crée un nouveau timer sans s
 
 ### Définition `viewChild()`
 
-> `viewChild()` expose une **référence DOM comme un signal**. Retourne `undefined` quand l'élément est absent du DOM, `ElementRef` quand il est présent.
+> `viewChild()` est une **API Angular de requête de vue** : elle expose une référence DOM ou composant enfant comme un signal. Elle retourne `undefined` quand l'élément est absent du DOM, `ElementRef` quand il est présent.
 
 ```ts
 // Avant : ViewChild classique
@@ -393,7 +400,7 @@ private readonly cards = viewChildren(ClientCardComponent);
 
 ### Définition
 
-> `input()` déclare une **entrée de composant sous forme de signal**. La valeur passée par le parent devient une dépendance réelle dans les `computed()` et `effect()`.
+> `input()` est une **API composant Angular** : elle déclare une entrée de composant sous forme de signal. La valeur passée par le parent devient une dépendance réelle dans les `computed()` et `effect()`.
 
 ```ts
 showStatus = input(true);              // avec valeur par défaut
@@ -440,7 +447,7 @@ npm test -- --runTestsByPath src/app/features/accounts/components/account-card/a
 
 ### Définition
 
-> `output()` déclare un **événement sortant du composant**. L'enfant émet une intention, le parent décide quoi faire. Ce n'est pas un Observable.
+> `output()` est une **API composant Angular** : elle déclare un événement sortant du composant. L'enfant émet une intention, le parent décide quoi faire. Ce n'est pas un Observable.
 
 ```ts
 selectedRequested = output<Account>();       // déclarer
@@ -497,7 +504,7 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ### Définition
 
-> `model()` déclare une **valeur bidirectionnelle** entre parent et enfant. L'enfant peut lire et modifier la valeur directement, sans émettre d'événements. Il combine `input()` et `output()` en une seule déclaration.
+> `model()` est une **API composant Angular** : elle déclare une valeur bidirectionnelle entre parent et enfant. L'enfant peut lire et modifier la valeur directement, sans émettre d'événements. Elle combine `input()` et `output()` en une seule déclaration.
 
 ```ts
 editingAccountId = model<string | null>(null);
@@ -592,7 +599,7 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ### Définition
 
-> `linkedSignal()` crée un **signal writable dérivé** d'un autre signal. Contrairement à `computed()` qui est en lecture seule, sa valeur peut être modifiée par `.set()` ou `.update()`. Elle est automatiquement recalculée quand la source change.
+> `linkedSignal()` est une **primitive Signal** : elle crée un signal writable dérivé d'un autre signal. Contrairement à `computed()` qui est en lecture seule, sa valeur peut être modifiée par `.set()` ou `.update()`. Elle est automatiquement recalculée quand la source change.
 
 ```ts
 readonly value = linkedSignal(() => this.source());
@@ -659,7 +666,7 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ### Définition
 
-> `toSignal()` convertit un Observable en signal (dernière valeur émise, abonnement géré automatiquement). `toObservable()` expose un signal comme Observable pour brancher des opérateurs RxJS.
+> `toSignal()` et `toObservable()` sont des **APIs d'interop RxJS** : `toSignal()` convertit un Observable en signal (dernière valeur émise, abonnement géré automatiquement), `toObservable()` expose un signal comme Observable pour brancher des opérateurs RxJS.
 
 ```ts
 // Signal → Observable pour opérateurs RxJS
@@ -764,13 +771,13 @@ npm test -- --runTestsByPath src/app/features/clients/pages/dashboard/dashboard.
 
 ---
 
-## Exercice 9 — `afterNextRender()` / `afterRender()`
+## Exercice 9 — `afterNextRender()` / `afterEveryRender()`
 
 ### Définition
 
-> Ces deux hooks permettent d'exécuter du code **après qu'Angular a écrit dans le DOM**, quand les mesures et manipulations DOM sont sûres.
+> `afterNextRender()` et `afterEveryRender()` sont des **hooks de rendu Angular** : ils permettent d'exécuter du code après qu'Angular a écrit dans le DOM, quand les mesures et manipulations DOM sont sûres.
 
-| | `afterNextRender()` | `afterRender()` |
+| | `afterNextRender()` | `afterEveryRender()` |
 |---|---|---|
 | Fréquence | **Une seule fois** après le prochain rendu | **Après chaque** cycle de rendu |
 | Usage typique | Scroll one-shot, init librairie tierce | Mesures DOM continues |
@@ -784,7 +791,7 @@ afterNextRender(
 );
 
 // récurrent : mesure à chaque rendu
-afterRender(() => {
+afterEveryRender(() => {
   this.height.set(this.el.nativeElement.offsetHeight);
 });
 ```
@@ -794,7 +801,7 @@ afterRender(() => {
 ```
 effect()          → réactif : se relance à chaque changement de dépendance
 afterNextRender() → one-shot : s'exécute une fois après le prochain rendu
-afterRender()     → récurrent : s'exécute après chaque cycle de rendu
+afterEveryRender() → récurrent : s'exécute après chaque cycle de rendu
 ```
 
 ### Fichier à modifier
@@ -850,7 +857,7 @@ Cet exercice ne présente pas une nouvelle API. Il sert à consolider l'architec
 
 ### Définition
 
-> Exposer une **règle métier dérivée** dans la façade sous forme de `computed()` plutôt que de calculer en ligne dans le template ou le composant.
+> Cet exercice est une **consolidation d'architecture** : l'API utilisée est `computed()`, mais l'objectif principal est d'exposer une règle métier dérivée dans la façade plutôt que de la calculer en ligne dans le template ou le composant.
 
 ### Fichiers à modifier
 
@@ -905,6 +912,23 @@ Après les APIs avancées, on revient à une règle simple : une règle métier 
 Signal → toObservable() → pipe(debounceTime) → toSignal()
 Observable HTTP         → pipe(map, catchError, startWith) → toSignal()
 ```
+
+---
+
+## API à connaître — `rxResource()`
+
+`rxResource()` applique le modèle `resource` à une source RxJS : la ressource expose `value()`, `isLoading()` et `error()` à partir d'un Observable.
+
+Dans Angular 21.2, cette API est encore marquée `experimental`. Elle est donc utile à connaître, mais elle reste hors exercices et hors convention de production pour ce dojo.
+
+```ts
+private readonly clientsResource = rxResource({
+  stream: () => this.clientsApi.getAll(),
+  defaultValue: []
+});
+```
+
+À retenir : `rxResource()` vise les lectures async avec état de chargement. Pour ce support, on garde `toSignal()` + RxJS afin de rester sur des APIs stables.
 
 ---
 

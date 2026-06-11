@@ -454,19 +454,6 @@ function renderTable(slide, item, y) {
   const rowCount = normalizedRows.length;
   const denseTable = rowCount > 6;
   const fontSize = maxCols > 3 ? 7.8 : denseTable ? 7.4 : 10.2;
-  const rows = normalizedRows.map((row, rowIndex) =>
-    row.map((cell) => ({
-      text: cell,
-      options: {
-        fontSize,
-        bold: rowIndex === 0,
-        color: rowIndex === 0 ? COLORS.white : COLORS.text,
-        fill: { color: rowIndex === 0 ? COLORS.primary : rowIndex % 2 ? COLORS.white : COLORS.light },
-        valign: 'mid',
-        margin: [2, 4, 2, 4],
-      },
-    })),
-  );
   const h = Math.min(H - y - 0.45, Math.max(0.65, rowCount * (denseTable ? 0.58 : 0.34)));
   const rowH = h / rowCount;
   const colW = maxCols === 3
@@ -474,15 +461,35 @@ function renderTable(slide, item, y) {
     : maxCols === 4
       ? [0.75, 2.45, 2.85, CONTENT_W - 6.05]
       : Array(maxCols).fill(CONTENT_W / maxCols);
-  slide.addTable(rows, {
-    x: M,
-    y,
-    w: CONTENT_W,
-    h,
-    colW,
-    rowH,
-    border: { pt: 0.45, color: COLORS.line },
-    fit: 'shrink',
+  let rowY = y;
+  normalizedRows.forEach((row, rowIndex) => {
+    let cellX = M;
+    row.forEach((cell, colIndex) => {
+      const cellW = colW[colIndex];
+      const fill = rowIndex === 0 ? COLORS.primary : rowIndex % 2 ? COLORS.white : COLORS.light;
+      slide.addShape(pptx.ShapeType.rect, {
+        x: cellX,
+        y: rowY,
+        w: cellW,
+        h: rowH,
+        fill: { color: fill },
+        line: { color: COLORS.line, pt: 0.45 },
+      });
+      slide.addText(cell, {
+        x: cellX + 0.04,
+        y: rowY + 0.03,
+        w: Math.max(0.1, cellW - 0.08),
+        h: Math.max(0.1, rowH - 0.06),
+        fontSize,
+        bold: rowIndex === 0,
+        color: rowIndex === 0 ? COLORS.white : COLORS.text,
+        valign: 'mid',
+        margin: 0.01,
+        fit: 'shrink',
+      });
+      cellX += cellW;
+    });
+    rowY += rowH;
   });
   return h + 0.18;
 }

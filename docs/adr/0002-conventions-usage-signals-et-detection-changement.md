@@ -68,7 +68,7 @@ Les mutations passent par des méthodes nommées de la façade. Cela garde une s
 
 `afterNextRender()` est adapté aux opérations DOM one-shot après une action utilisateur : scroll, focus après ajout, mesure ponctuelle.
 
-`afterRender()` est réservé aux traitements récurrents après chaque rendu. Il doit rester rare, car il peut devenir coûteux si le rendu est fréquent.
+`afterEveryRender()` est réservé aux traitements récurrents après chaque rendu. Il doit rester rare, car il peut devenir coûteux si le rendu est fréquent.
 
 Un `effect()` reste préférable quand l'objectif est de réagir à un changement d'état plutôt qu'à l'écriture effective du DOM.
 

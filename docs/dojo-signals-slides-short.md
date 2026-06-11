@@ -57,39 +57,45 @@ Zone.js (défaut)
 
 ## Structure des branches
 
-Les branches d'exercices sont cumulatives.
+Les branches sont cumulatives jusqu'a l'exercice 5.
+L'exercice 6 se fait en deux variantes paralleles : `ex6` pour `output()`, `ex6-model` pour `model()`.
 
 ```text
 main : support de présentation et documentation
 
-init -> ex1 -> ex2 -> ex3 -> ex4 -> ex5 -> ex6
-     -> ex6-model -> ex7 -> ex8 -> ex9 -> ex10 -> ex11
+init -> ex1 -> ex2 -> ex3 -> ex4 -> ex5
+                                      |-> ex6        output()
+                                      |-> ex6-model  model()
+
+apres restitution -> ex7 -> ex8 -> ex9 -> ex10 -> ex11
 ```
 
-Chaque branche d'exercice ajoute uniquement la correction de son exercice par rapport a la branche precedente.
+`ex6-model` n'est pas une etape apres `ex6` : c'est une alternative pedagogique pour comparer `output()` et `model()`.
 
 ---
 
-## Primitives Signal — Vue d'ensemble
+## APIs Signals et associées — Vue d'ensemble
 
-| Primitive | Role | Exemple fichier |
+Cette table couvre les APIs utilisées ou citées dans ce support. Elle ne prétend pas lister toute l'API Angular.
+
+| API | Role | Exemple fichier |
 |---|---|---|
-| `signal()` | Etat mutable local. Se lit avec `()` et se modifie avec `.set()` ou `.update()`. | `clients.component.ts` |
-| `computed()` | Valeur derivee pure, mise en cache, recalculee quand ses signaux lus changent. | `accounts.facade.ts` |
-| `effect()` | Effet de bord reactif. Sert a synchroniser DOM, titre, page courante, etc. | `clients.component.ts` |
-| `effect(onCleanup)` | Variante d'effet qui libere une ressource avant reexecution ou destruction. | `signals-demo.component.ts` |
-| `viewChild()` | Reference DOM ou composant enfant exposee comme signal nullable. | `clients.component.ts` |
-| `viewChildren()` | Liste reactive de references rendues, mise a jour avec le template. | `signals-demo.component.ts` |
-| `input()` | Entree de composant en lecture seule, utilisable dans `computed()`. | `account-card.component.ts` |
-| `output()` | Evenement sortant vers le parent. Exprime une intention, pas un etat. | `account-list.component.ts` |
-| `model()` | Valeur bidirectionnelle explicite : input + output pour selection, toggle, formulaire. | `account-list.component.ts` |
-| `linkedSignal()` | Signal writable initialise depuis une source et modifiable localement. | `accounts.component.ts` |
-| `toSignal()` | Consomme la derniere valeur d'un Observable sous forme de signal. | `accounts.component.ts` |
-| `toObservable()` | Expose un signal en Observable pour utiliser les operateurs RxJS. | `clients.component.ts` |
-| `afterNextRender()` | Callback one-shot apres le prochain rendu DOM. Utile pour scroll ou focus post-action. | `clients.component.ts` |
-| `afterRender()` | Callback recurrent apres chaque rendu Angular. Utile pour mesures DOM continues. | `signals-demo.component.ts` |
-| `untracked()` | Lit un signal sans l'ajouter aux dependances d'un `effect()` ou `computed()`. | `clients.component.ts` |
-| `signal.asReadonly()` | Expose un etat interne sans donner acces au setter public. | `accounts.facade.ts` |
+| `signal()` | Primitive Signal — etat mutable local. Se lit avec `()` et se modifie avec `.set()` ou `.update()`. | `clients.component.ts` |
+| `computed()` | Primitive Signal — valeur derivee pure, mise en cache, recalculee quand ses signaux lus changent. | `accounts.facade.ts` |
+| `effect()` | Primitive Signal — effet de bord reactif. Sert a synchroniser DOM, titre, page courante, etc. | `clients.component.ts` |
+| `effect(onCleanup)` | Option de `effect()` — libere une ressource avant reexecution ou destruction. | `signals-demo.component.ts` |
+| `viewChild()` | API de requete de vue — reference DOM ou composant enfant exposee comme signal. Vaut `undefined` tant que la cible est absente. | `clients.component.ts` |
+| `viewChildren()` | API de requete de vue — liste reactive de references rendues, mise a jour avec le template. | `signals-demo.component.ts` |
+| `input()` | API composant — entree en lecture seule exposee comme signal, utilisable dans `computed()`. | `account-card.component.ts` |
+| `output()` | API composant — evenement sortant vers le parent. Exprime une intention, pas un etat. | `account-list.component.ts` |
+| `model()` | API composant — valeur bidirectionnelle explicite : input + output pour selection, toggle, formulaire. | `account-list.component.ts` |
+| `linkedSignal()` | Primitive Signal — signal writable initialise depuis une source et modifiable localement. | `accounts.component.ts` |
+| `toSignal()` | API interop RxJS — consomme la derniere valeur d'un Observable sous forme de signal. | `accounts.component.ts` |
+| `toObservable()` | API interop RxJS — expose un signal en Observable pour utiliser les operateurs RxJS. | `clients.component.ts` |
+| `afterNextRender()` | Hook de rendu — callback one-shot apres le prochain rendu DOM. Utile pour scroll ou focus post-action. | `clients.component.ts` |
+| `afterEveryRender()` | Hook de rendu — callback recurrent apres chaque rendu Angular. Utile pour mesures DOM continues. | `signals-demo.component.ts` |
+| `untracked()` | Utilitaire Signal — lit un signal sans l'ajouter aux dependances d'un `effect()` ou `computed()`. | `clients.component.ts` |
+| `signal.asReadonly()` | Methode de signal writable — expose un etat interne sans donner acces au setter public. | `accounts.facade.ts` |
 
 ---
 
@@ -97,23 +103,33 @@ Chaque branche d'exercice ajoute uniquement la correction de son exercice par ra
 
 | Ex. | Fichier(s) | Definition courte | Besoin a couvrir |
 |---|---|---|---|
-| 1 — `signal()` | `src/app/features/clients/pages/clients/clients.component.ts` | Valeur reactive mutable lue avec `()`. | Convertir l'etat `adding` en signal. Le template doit afficher le formulaire a partir de ce nouvel etat reactif. |
-| 2 — `computed()` | `src/app/features/accounts/services/accounts.facade.ts`, `src/app/features/accounts/pages/accounts/accounts.component.*` | Valeur derivee en lecture seule. | Transformer `blockedAccountsCount` en valeur derivee de la facade. La page accounts doit afficher ce compteur sans recalculer elle-meme la regle. |
-| 3 — `effect()` + `untracked()` | `src/app/features/clients/pages/clients/clients.component.ts` | Effet de bord declenche par les signals lus, avec lecture non suivie. | Remplacer le recalage imperatif de la page courante par une reaction automatique. Lire la page courante avec `untracked()` pour ne pas l'ajouter aux dependances de l'effet. |
-| 4 — `viewChild()` + `effect()` | `src/app/features/clients/pages/clients/clients.component.ts` | Reference DOM exposee comme signal, puis effet DOM. | Remplacer la reference DOM classique du champ prenom par une reference signal, puis declencher le focus quand ce champ apparait. |
-| 5 — `input()` | `src/app/features/accounts/components/account-card/account-card.component.ts` | Entree de composant exposee comme signal. | Convertir `showStatus` en input signal. Le libelle de statut doit reagir correctement quand le parent choisit d'afficher ou masquer ce statut. |
-| 6A — `output()` | `account-list.component.ts` | Evenement sortant vers le parent. Pas un Observable. | Groupe A : remplacer `selectedRequested` EventEmitter par `output()`. |
-| 6B — `model()` | `account-list.component.ts`, `accounts.component.ts` | Valeur bidirectionnelle input+output. Two-way binding signal. | Groupe B : remplacer `editingAccountId input` + `editRequested` + `cancelRequested` par un seul `model()`. L'enfant controle l'etat d'edition directement. |
-| 7 — `linkedSignal()` | `src/app/features/accounts/pages/accounts/accounts.component.ts` | Signal mutable qui se reinitialise quand sa source change. | Remplacer `editAccount` par un `linkedSignal()` derive du signal source. La valeur doit se remettre a zero quand le compte selectionne change. |
-| 8 — `toSignal()` / `toObservable()` | `src/app/features/accounts/pages/accounts/accounts.component.ts`, `src/app/features/clients/pages/dashboard/dashboard.component.ts`, `src/app/features/clients/pages/clients/clients.component.ts` | Pont entre Observable RxJS et signal Angular. | Remplacer la souscription manuelle a la route par `toSignal()`, exposer le chargement dashboard comme signal, et identifier le pont inverse `toObservable()` pour la recherche debouncee. |
-| 9 — `afterNextRender()` / `afterRender()` | `src/app/features/clients/pages/clients/clients.component.ts` | Hook post-rendu DOM one-shot ou recurrent. | Ajouter la reference au viewport, puis scroller en haut de liste avec `afterNextRender()` apres l'ajout d'un client. |
-| 10 — `computed()` facade | `src/app/features/accounts/services/accounts.facade.ts`, `src/app/features/accounts/pages/accounts/accounts.component.*` | Vue derivee de l'etat metier dans une facade. | Ajouter `hasActiveFilter` comme valeur derivee de la facade. Le message vide doit dependre de cette regle exposee par la facade. |
+| 1 — `signal()` | `src/app/features/clients/pages/clients/clients.component.ts` | Primitive Signal — valeur reactive mutable lue avec `()`. | Convertir l'etat `adding` en signal. Le template doit afficher le formulaire a partir de ce nouvel etat reactif. |
+| 2 — `computed()` | `src/app/features/accounts/services/accounts.facade.ts`, `src/app/features/accounts/pages/accounts/accounts.component.*` | Primitive Signal — valeur derivee en lecture seule. | Transformer `blockedAccountsCount` en valeur derivee de la facade. La page accounts doit afficher ce compteur sans recalculer elle-meme la regle. |
+| 3 — `effect()` + `untracked()` | `src/app/features/clients/pages/clients/clients.component.ts` | Primitive Signal + utilitaire — effet de bord declenche par les signals lus, avec lecture non suivie. | Remplacer le recalage imperatif de la page courante par une reaction automatique. Lire la page courante avec `untracked()` pour ne pas l'ajouter aux dependances de l'effet. |
+| 4 — `viewChild()` + `effect()` | `src/app/features/clients/pages/clients/clients.component.ts` | API de requete de vue + primitive Signal — reference DOM exposee comme signal, puis effet DOM. | Remplacer la reference DOM classique du champ prenom par une reference signal, puis declencher le focus quand ce champ apparait. |
+| 5 — `input()` | `src/app/features/accounts/components/account-card/account-card.component.ts` | API composant — entree exposee comme signal. | Convertir `showStatus` en input signal. Le libelle de statut doit reagir correctement quand le parent choisit d'afficher ou masquer ce statut. |
+| 6A — `output()` | `account-list.component.ts` | API composant — evenement sortant vers le parent. Pas un Observable. | Variante `output()` : remplacer `selectedRequested` EventEmitter par `output()`. |
+| 6B — `model()` | `account-list.component.ts`, `accounts.component.ts` | API composant — valeur bidirectionnelle input+output. Two-way binding signal. | Variante `model()` : remplacer `editingAccountId input` + `editRequested` + `cancelRequested` par un seul `model()`. L'enfant controle l'etat d'edition directement. |
+| 7 — `linkedSignal()` | `src/app/features/accounts/pages/accounts/accounts.component.ts` | Primitive Signal — signal mutable qui se reinitialise quand sa source change. | Remplacer `editAccount` par un `linkedSignal()` derive du signal source. La valeur doit se remettre a zero quand le compte selectionne change. |
+| 8 — `toSignal()` / `toObservable()` | `src/app/features/accounts/pages/accounts/accounts.component.ts`, `src/app/features/clients/pages/dashboard/dashboard.component.ts`, `src/app/features/clients/pages/clients/clients.component.ts` | API interop RxJS — pont entre Observable RxJS et signal Angular. | Remplacer la souscription manuelle a la route par `toSignal()`, exposer le chargement dashboard comme signal, et identifier le pont inverse `toObservable()` pour la recherche debouncee. |
+| 9 — `afterNextRender()` / `afterEveryRender()` | `src/app/features/clients/pages/clients/clients.component.ts` | Hook de rendu — post-rendu DOM one-shot ou recurrent. | Ajouter la reference au viewport, puis scroller en haut de liste avec `afterNextRender()` apres l'ajout d'un client. |
+| 10 — `computed()` facade | `src/app/features/accounts/services/accounts.facade.ts`, `src/app/features/accounts/pages/accounts/accounts.component.*` | Primitive Signal — vue derivee de l'etat metier dans une facade. | Ajouter `hasActiveFilter` comme valeur derivee de la facade. Le message vide doit dependre de cette regle exposee par la facade. |
 
 ---
 
 ## Extension avancée
 
 Ces exercices couvrent des primitives Angular avancées. Ils peuvent être traités en autonomie après les exercices socle (1 à 7).
+
+---
+
+## API hors exercice — `rxResource()`
+
+`rxResource()` applique le modèle `resource` à un Observable RxJS et expose `value()`, `isLoading()` et `error()`.
+
+- En Angular 21.2, l'API est encore marquée `experimental`.
+- Elle reste hors exercices et hors convention de production pour ce dojo.
+- Dans ce support, on garde `toSignal()` + RxJS pour les chargements HTTP.
 
 ---
 
@@ -132,9 +148,9 @@ effect((onCleanup) => {
 
 ---
 
-## afterNextRender() vs afterRender()
+## afterNextRender() vs afterEveryRender()
 
-| | `afterNextRender()` | `afterRender()` |
+| | `afterNextRender()` | `afterEveryRender()` |
 |---|---|---|
 | Frequence | Une seule fois apres le prochain rendu | Apres chaque cycle de rendu |
 | Usage typique | Scroll one-shot, init librairie tierce | Mesures DOM continues, animations |
@@ -145,10 +161,10 @@ effect((onCleanup) => {
 afterNextRender(() => viewport.scrollToIndex(0), { injector });
 
 // recurrent : mesure la hauteur a chaque rendu
-afterRender(() => { this.height.set(el.nativeElement.offsetHeight); });
+afterEveryRender(() => { this.height.set(el.nativeElement.offsetHeight); });
 ```
 
-En Zoneless, `afterRender()` ne se declenche que quand un signal change — beaucoup plus previsible qu'en Zone.js.
+En Zoneless, `afterEveryRender()` ne se declenche que quand Angular a un rendu a effectuer — beaucoup plus previsible qu'en Zone.js.
 
 ---
 
