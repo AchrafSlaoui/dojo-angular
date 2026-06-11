@@ -43,6 +43,14 @@ export const routes = [
       ),
   },
   {
+    path: 'signals-demo',
+    title: 'Signals Demo',
+    loadComponent: () =>
+      import('./features/signals-demo/signals-demo.component').then(
+        (m) => m.SignalsDemoComponent
+      ),
+  },
+  {
     path: 'primitive-lab',
     title: 'Primitive Lab',
     loadComponent: () =>

@@ -1,0 +1,351 @@
+<div class="page-header">
+  <h2>Signals - Demonstration interactive</h2>
+  <p>
+    Chaque carte isole une primitive ou une API Angular liee aux Signals.
+    Les exemples sont volontairement courts pour faciliter les breakpoints dans le composant TypeScript.
+  </p>
+</div>
+
+<div class="sections-grid" #demoRoot>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">signal()</span>
+      <span class="kind-badge primitive">Primitive Signal</span>
+      <span class="section-title">Etat local mutable</span>
+    </div>
+    <p class="hint">
+      <code>balance</code> est un signal writable. Il se lit avec <code>balance()</code>
+      et se modifie avec <code>.set()</code> ou <code>.update()</code>.
+    </p>
+    <div class="values">
+      <div class="value-item">
+        <code>balance()</code>
+        <strong>{{ balance() }} EUR</strong>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn outline" type="button" (click)="balance.update(v => v - 100)">- 100</button>
+      <button class="btn primary" type="button" (click)="balance.update(v => v + 100)">+ 100</button>
+      <button class="btn outline danger" type="button" (click)="balance.set(1000)">Reset</button>
+    </div>
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">computed()</span>
+      <span class="kind-badge primitive">Primitive Signal</span>
+      <span class="section-title">Valeurs derivees</span>
+    </div>
+    <p class="hint">
+      <code>fees</code> et <code>net</code> sont recalcules uniquement quand un signal lu
+      dans leur corps change. Ils restent en lecture seule.
+    </p>
+    <div class="values">
+      <div class="value-item">
+        <code>balance()</code>
+        <strong>{{ balance() }} EUR</strong>
+      </div>
+      <div class="value-item">
+        <code>fees()</code>
+        <strong>{{ fees() }} EUR</strong>
+      </div>
+      <div class="value-item">
+        <code>net()</code>
+        <strong>{{ net() }} EUR</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">effect()</span>
+      <span class="api-badge">untracked()</span>
+      <span class="kind-badge primitive">Primitive + utilitaire</span>
+      <span class="section-title">Effet de bord controle</span>
+    </div>
+    <p class="hint">
+      L'effet observe <code>balance()</code>. Il lit aussi <code>targetAmount()</code>
+      avec <code>untracked()</code>, donc changer le montant cible ne relance pas cet effet.
+    </p>
+    <ul class="log">
+      @for (entry of changeLog(); track entry) {
+        <li>{{ entry }}</li>
+      } @empty {
+        <li class="empty">Aucun changement enregistre</li>
+      }
+    </ul>
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">effect(onCleanup)</span>
+      <span class="kind-badge primitive">Primitive Signal</span>
+      <span class="section-title">Nettoyage automatique</span>
+    </div>
+    <p class="hint">
+      Quand le suivi est actif, l'effet cree un timer. Quand le signal repasse a faux,
+      <code>onCleanup</code> libere le timer avant la prochaine execution.
+    </p>
+    <div class="values">
+      <div class="value-item">
+        <code>cleanupWatcherEnabled()</code>
+        <strong>{{ cleanupWatcherEnabled() ? 'actif' : 'inactif' }}</strong>
+      </div>
+      <div class="value-item">
+        <code>cleanupTicks()</code>
+        <strong>{{ cleanupTicks() }}</strong>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" type="button" (click)="cleanupWatcherEnabled.update(v => !v)">
+        {{ cleanupWatcherEnabled() ? 'Arreter' : 'Demarrer' }}
+      </button>
+      <button class="btn outline" type="button" (click)="cleanupTicks.set(0)">Reset compteur</button>
+    </div>
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">input()</span>
+      <span class="api-badge">output()</span>
+      <span class="kind-badge component">API composant</span>
+      <span class="section-title">Communication parent / enfant</span>
+    </div>
+    <p class="hint">
+      Le composant enfant recoit <code>balance()</code> via <code>input.required()</code>
+      et emet une intention de remise a zero via <code>output()</code>.
+    </p>
+    <app-balance-card
+      [amount]="balance()"
+      (resetRequested)="onResetRequested()"
+    />
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">model()</span>
+      <span class="kind-badge component">API composant</span>
+      <span class="section-title">Valeur bidirectionnelle</span>
+    </div>
+    <p class="hint">
+      Le composant enfant expose <code>value = model(0)</code>.
+      Le parent relie son signal avec <code>[(value)]</code>.
+    </p>
+    <app-model-amount [(value)]="targetAmount" />
+    <div class="values">
+      <div class="value-item">
+        <code>targetAmount()</code>
+        <strong>{{ targetAmount() }} EUR</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">linkedSignal()</span>
+      <span class="kind-badge primitive">Primitive Signal</span>
+      <span class="section-title">Valeur locale reinitialisee par une source</span>
+    </div>
+    <p class="hint">
+      Le plafond editable repart de <code>defaultLimit()</code> quand le profil change,
+      mais il peut etre ajuste localement entre deux changements de profil.
+    </p>
+    <div class="segmented">
+      <button type="button" [class.active]="creditProfile() === 'standard'" (click)="selectProfile('standard')">
+        Standard
+      </button>
+      <button type="button" [class.active]="creditProfile() === 'premium'" (click)="selectProfile('premium')">
+        Premium
+      </button>
+    </div>
+    <div class="input-row">
+      <label>
+        Plafond editable
+        <input
+          type="number"
+          [value]="editableLimit()"
+          (input)="editableLimit.set(+$any($event.target).value)"
+        />
+      </label>
+    </div>
+    <div class="values">
+      <div class="value-item">
+        <code>defaultLimit()</code>
+        <strong>{{ defaultLimit() }} EUR</strong>
+      </div>
+      <div class="value-item">
+        <code>editableLimit()</code>
+        <strong>{{ editableLimit() }} EUR</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">viewChild()</span>
+      <span class="kind-badge view">API de vue</span>
+      <span class="section-title">Reference DOM comme signal</span>
+    </div>
+    <p class="hint">
+      <code>amountInput()</code> vaut <code>undefined</code> tant que l'element est absent,
+      puis <code>ElementRef</code> quand il est present dans la vue.
+    </p>
+    <div class="input-row">
+      <input
+        #amountRef
+        type="number"
+        [value]="balance()"
+        (change)="updateBalance($any($event.target).value)"
+        placeholder="Saisir un solde"
+      />
+      <button class="btn primary" type="button" (click)="focusInput()">
+        Focus via viewChild()
+      </button>
+    </div>
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">viewChildren()</span>
+      <span class="api-badge">asReadonly()</span>
+      <span class="kind-badge view">API de vue + methode Signal</span>
+      <span class="section-title">Liste de references et etat protege</span>
+    </div>
+    <p class="hint">
+      <code>viewChildren('demoCard')</code> expose la liste reactive des cartes rendues.
+      <code>auditLog</code> est expose avec <code>asReadonly()</code> : lecture publique,
+      mutation gardee dans le composant.
+    </p>
+    <div class="values">
+      <div class="value-item">
+        <code>demoCardCount()</code>
+        <strong>{{ demoCardCount() }}</strong>
+      </div>
+    </div>
+    <ul class="log">
+      @for (entry of auditLog(); track entry) {
+        <li>{{ entry }}</li>
+      }
+    </ul>
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">toSignal()</span>
+      <span class="api-badge">toObservable()</span>
+      <span class="kind-badge interop">Interop RxJS</span>
+      <span class="section-title">Frontiere Signal / Observable</span>
+    </div>
+    <p class="hint">
+      <code>toSignal()</code> consomme un Observable pour le template.
+      <code>toObservable()</code> repasse par RxJS pour appliquer <code>debounceTime()</code>.
+    </p>
+    <div class="values">
+      <div class="value-item">
+        <code>tick()</code>
+        <span class="tick">{{ tick() }}</span>
+      </div>
+      <div class="value-item">
+        <code>debouncedBalance()</code>
+        <strong>{{ debouncedBalance() }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">afterEveryRender()</span>
+      <span class="kind-badge render">Hook de rendu</span>
+      <span class="section-title">Mesure DOM apres rendu</span>
+    </div>
+    <p class="hint">
+      Le hook s'execute apres chaque rendu Angular. Ici il mesure la largeur de la grille
+      et n'ecrit dans le signal que si la valeur change.
+    </p>
+    <div class="values">
+      <div class="value-item">
+        <code>renderWidth()</code>
+        <strong>{{ renderWidth() }} px</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">afterNextRender()</span>
+      <span class="kind-badge render">Hook de rendu</span>
+      <span class="section-title">Action one-shot apres le prochain rendu</span>
+    </div>
+    <p class="hint">
+      <code>afterNextRender()</code> execute un callback une seule fois apres le prochain rendu.
+      Ici le composant affiche un bloc, puis mesure sa hauteur quand le DOM est stable.
+    </p>
+    <div class="actions">
+      <button class="btn primary" type="button" (click)="showAfterNextRenderBox()">Afficher et mesurer</button>
+      <button class="btn outline" type="button" (click)="hideAfterNextRenderBox()">Masquer</button>
+    </div>
+    @if (nextRenderVisible()) {
+      <div class="render-box" #nextRenderBox>
+        Bloc rendu pour demontrer une mesure DOM apres affichage.
+      </div>
+    }
+    <div class="values">
+      <div class="value-item">
+        <code>nextRenderMessage()</code>
+        <strong>{{ nextRenderMessage() }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="card demo-section" #demoCard>
+    <div class="section-header">
+      <span class="api-badge">rxResource()</span>
+      <span class="kind-badge experimental">API experimentale</span>
+      <span class="section-title">Resource alimentee par Observable RxJS</span>
+    </div>
+    <p class="hint">
+      <code>rxResource()</code> applique le modele <code>resource</code> a un Observable :
+      <code>value()</code>, <code>isLoading()</code>, <code>status()</code>, <code>error()</code>.
+      L'API est experimentale, donc montree ici pour culture, pas comme convention du dojo.
+    </p>
+    <div class="segmented">
+      <button type="button" [class.active]="accountFilter() === 'all'" (click)="selectAccountFilter('all')">
+        Tous
+      </button>
+      <button type="button" [class.active]="accountFilter() === 'active'" (click)="selectAccountFilter('active')">
+        Actifs
+      </button>
+      <button type="button" [class.active]="accountFilter() === 'blocked'" (click)="selectAccountFilter('blocked')">
+        Bloques
+      </button>
+    </div>
+    <div class="actions">
+      <button class="btn outline" type="button" (click)="accountsResource.reload()">Reload</button>
+    </div>
+    <div class="values">
+      <div class="value-item">
+        <code>accountsResource.status()</code>
+        <strong>{{ accountsResource.status() }}</strong>
+      </div>
+      <div class="value-item">
+        <code>accountsResource.isLoading()</code>
+        <strong>{{ accountsResource.isLoading() ? 'true' : 'false' }}</strong>
+      </div>
+    </div>
+    @if (accountsResource.error(); as error) {
+      <p class="hint danger-text">{{ error.message }}</p>
+    }
+    <ul class="log">
+      @for (account of accountsResource.value(); track account.id) {
+        <li>
+          <span>{{ account.label }}</span>
+          <span class="status-pill" [class.blocked]="account.status === 'blocked'">{{ account.status }}</span>
+        </li>
+      } @empty {
+        <li class="empty">Aucun compte</li>
+      }
+    </ul>
+  </section>
+
+</div>
