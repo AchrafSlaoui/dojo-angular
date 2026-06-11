@@ -19,14 +19,14 @@ import { getWeeklyClients } from '@clients/utils/clients-collection.util';
 export class DashboardComponent {
   private readonly clientsApi = inject(ClientsApiService);
   private readonly route = inject(ActivatedRoute);
-  // EXERCICE 9
+  // EXERCICE 8
   private readonly clientsState = signal<ClientActivity[]>([]);
   private readonly searchFromRoute: Signal<string> = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get('q') ?? '')),
     { initialValue: '' }
   );
   readonly search = signal('');
-  // EXERCICE 9
+  // EXERCICE 8
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -41,7 +41,7 @@ export class DashboardComponent {
     this.search.set(term ?? '');
   }
 
-  // EXERCICE 9
+  // EXERCICE 8
   async reload(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);

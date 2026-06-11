@@ -101,6 +101,8 @@ Le projet montre volontairement deux patterns : des Signals directement dans les
 
 Le détail du code mixte pendant la migration est documenté dans l'ADR 0001.
 
+Le support présente un panorama ciblé des APIs Signals et APIs Angular associées utilisées dans cette application. Il ne cherche pas à couvrir toute la surface d'API Angular.
+
 ---
 
 ## Mapping exercices / branches / fichiers
@@ -116,9 +118,8 @@ Le détail du code mixte pendant la migration est documenté dans l'ADR 0001.
 | 6B | `exercice-6-model` | `model()` | `account-list.component.ts`, `accounts.component.ts` |
 | 7 | `exercice-7` | `linkedSignal()` | `accounts.component.ts` |
 | 8 | `exercice-8` | `toSignal()` / `toObservable()` | `accounts.component.ts`, `dashboard.component.ts`, `dashboard.component.spec.ts`, `clients.component.ts` |
-| 9 | `exercice-9` | `rxResource()` | `dashboard.component.ts` |
-| 10 | `exercice-10` | `afterNextRender()` / `afterRender()` | `clients.component.ts` |
-| 11 | `exercice-11` | `computed()` en façade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html` |
+| 9 | `exercice-9` | `afterNextRender()` / `afterRender()` | `clients.component.ts` |
+| 10 | `exercice-10` | `computed()` en façade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html` |
 
 Les branches sont cumulatives : chaque branche ajoute uniquement la correction de son exercice par rapport à la branche précédente.
 
@@ -170,14 +171,6 @@ Dans le template : remplacer `adding` par `adding()`.
 ```bash
 npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.component.spec.ts
 ```
-
-### vs Zone.js
-
-| Zone.js + propriété classique | `signal()` |
-|---|---|
-| Angular re-rend tout le composant à chaque cycle | Re-rend seulement les lecteurs du signal |
-| Détection déclenchée par Zone.js après chaque async | Détection déclenchée par `.set()` |
-| Rien à déclarer — Zone.js devine | Déclarer `signal()` — Angular sait exactement |
 
 ### Quand utiliser `signal()` — et quand rester ailleurs
 
@@ -249,14 +242,6 @@ readonly accounts = this.accountsState.asReadonly(); // Signal<Account[]> en lec
 npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
 ```
 
-### vs Zone.js
-
-| Getter + Zone.js | `computed()` |
-|---|---|
-| Recalculé à chaque cycle de détection | Recalculé seulement si une dépendance change |
-| Angular ignore si la valeur a changé | Angular mémorise et invalide le cache |
-| Règle dans le composant | Règle dans la façade, partageable |
-
 ### Quand utiliser `computed()` — et quand rester ailleurs
 
 | Situation | Outil |
@@ -299,16 +284,16 @@ this.clampCurrentPage(); // ← retirer cette ligne
 private clampCurrentPage(): void { ... }
 ```
 
-Point d'attention : `this.page()` est lu uniquement pour comparer avant d'écrire. Sans `untracked()`, cette lecture crée une dépendance non intentionnelle : l'effet dépendrait à la fois de `pageSlice()` et de `page()`.
+Point d'attention : `this.page()` est lu uniquement pour comparer avant d'écrire. `untracked()` évite d'ajouter cette lecture directe aux dépendances de l'effet. La dépendance utile reste `pageSlice()`, qui porte la page recalculée.
 
 ```ts
-// Sans untracked() : page() devient une dépendance → l'effet peut se déclencher en boucle
+// Sans untracked() : page() est suivi directement en plus de pageSlice()
 effect(() => {
   const clamped = this.pageSlice().page;
   if (clamped !== this.page()) this.page.set(clamped);
 });
 
-// Avec untracked() : pageSlice() déclenche, page() est lu sans créer de dépendance
+// Avec untracked() : page() sert seulement à éviter une écriture inutile
 effect(() => {
   const clamped = this.pageSlice().page;
   if (clamped !== untracked(this.page)) this.page.set(clamped);
@@ -331,14 +316,6 @@ effect((onCleanup) => {
 ```
 
 Sans `onCleanup`, chaque ré-exécution de l'effet crée un nouveau timer sans supprimer le précédent.
-
-### vs Zone.js
-
-| Appel impératif après mutation | `effect()` |
-|---|---|
-| On doit penser à appeler la méthode | Déclenché automatiquement |
-| Logique dispersée dans plusieurs méthodes | Logique centralisée dans l'effet |
-| Bug si on oublie l'appel | Moins de risque — l'effet observe les dépendances |
 
 ### Quand utiliser `effect()` — et quand rester ailleurs
 
@@ -448,14 +425,6 @@ readonly visibleStatusLabel = computed(() => this.showStatus() ? this.statusLabe
 npm test -- --runTestsByPath src/app/features/accounts/components/account-card/account-card.component.spec.ts
 ```
 
-### vs Zone.js
-
-| `@Input()` classique | `input()` |
-|---|---|
-| Propriété TS mise à jour par Angular | Signal mis à jour par Angular |
-| Lu dans `computed()` sans créer de dépendance | Lu dans `computed()` → dépendance réelle |
-| Zone.js déclenche détection après chaque cycle | Re-render seulement si la valeur change |
-
 ### Quand utiliser `input()` — et quand rester ailleurs
 
 | Situation | Outil |
@@ -513,14 +482,6 @@ L'émission dans l'`effect()` reste identique : `this.selectedRequested.emit(acc
 ```bash
 npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
 ```
-
-### vs Zone.js
-
-| `@Output()` + `EventEmitter` | `output()` |
-|---|---|
-| Hérite historiquement d'un mécanisme de flux | Pas d'Observable interne |
-| Souvent détourné comme flux applicatif | Contrat pensé pour le parent direct |
-| Zone.js déclenche détection après l'émission | Angular notifie directement le parent |
 
 ### Quand utiliser `output()` — et quand rester ailleurs
 
@@ -626,32 +587,6 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 | Contrat | Événement → action dans le parent | Valeur bidirectionnelle |
 | Usage typique | Intentions (clic, soumission) | Sélections, filtres, toggles |
 | Binding parent | `(editRequested)="startEdit($event)"` | `[(editingAccountId)]="editingAccountId"` |
-
----
-
-## Rappel RxJS — Avant `toSignal()`
-
-**RxJS** sert à modéliser et composer des flux de données dans le temps : HTTP, WebSocket, événements, `debounceTime`, `switchMap`, `combineLatest`, etc.
-
-RxJS ne remplace pas Zone.js. RxJS organise les flux asynchrones ; Zone.js déclenche la détection de changement ; Signals rend l'état et ses dépendances explicites.
-
-`toSignal()` ne remplace pas RxJS : il permet de **consommer la dernière valeur d'un Observable sous forme de signal** dans un composant.
-
-```
-RxJS    : un flux émet dans le temps → on compose/transforme ce flux
-toSignal: Observable → Signal        → on lit la dernière valeur avec ()
-```
-
-```ts
-readonly clientId = toSignal(
-  this.route.paramMap.pipe(map(params => params.get('id'))),
-  { initialValue: null }
-);
-
-clientId() // lecture côté composant/template
-```
-
----
 
 ## Exercice 7 — `linkedSignal()`
 
@@ -816,21 +751,6 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 npm test -- --runTestsByPath src/app/features/clients/pages/dashboard/dashboard.component.spec.ts
 ```
 
-### vs Zone.js
-
-| Observable + `.subscribe()` | `toSignal()` |
-|---|---|
-| `takeUntilDestroyed` requis | Abonnement géré automatiquement |
-| Copie manuelle dans un signal | `toSignal()` crée et alimente le signal |
-| Zone.js détecte l'émission, re-rend tout | Angular re-rend seulement les dépendants du signal |
-
-### vs RxJS
-
-| `BehaviorSubject` exposé | `toSignal()` |
-|---|---|
-| Source mutable, `.next()` depuis plusieurs endroits | Alimenté uniquement par l'Observable source |
-| Adapté à l'état partagé entre services | Adapté à consommer un Observable dans un composant |
-
 ### Quand utiliser `toSignal()` / `toObservable()` — et quand rester en RxJS pur
 
 | Situation | Outil |
@@ -844,84 +764,7 @@ npm test -- --runTestsByPath src/app/features/clients/pages/dashboard/dashboard.
 
 ---
 
-## Exercice 9 — `rxResource()`
-
-### Définition
-
-> `rxResource()` crée un **signal async** alimenté par un Observable. Il expose automatiquement `value()`, `isLoading()` et `error()` sans gérer manuellement le cycle de vie de la requête.
-
-```ts
-private readonly resource = rxResource({
-  loader: () => this.api.getAll()
-});
-readonly loading = resource.isLoading;
-readonly error   = computed(() => resource.error()?.message ?? null);
-readonly data    = computed(() => resource.value() ?? []);
-```
-
-### Fichier à modifier
-
-`src/app/features/clients/pages/dashboard/dashboard.component.ts`
-
-### Consigne
-
-Remplacer `reload()` et les signaux manuels `loading`, `error`, `clientsState` par `rxResource()`.
-
-```ts
-// Avant
-private readonly clientsState = signal<ClientActivity[]>([]);
-readonly loading = signal(false);
-readonly error = signal<string | null>(null);
-
-async reload(): Promise<void> {
-  this.loading.set(true);
-  this.error.set(null);
-  try {
-    const data = await firstValueFrom(this.clientsApi.getAll());
-    this.clientsState.set(data);
-  } catch (err) {
-    this.error.set(err instanceof Error ? err.message : 'Erreur');
-    this.clientsState.set([]);
-  } finally { this.loading.set(false); }
-}
-
-// Après
-private readonly clientsResource = rxResource({
-  loader: () => this.clientsApi.getAll()
-});
-readonly loading = this.clientsResource.isLoading;
-readonly error   = computed(() => this.clientsResource.error()?.message ?? null);
-weeklyClients    = computed(() =>
-  getWeeklyClients(this.clientsResource.value() ?? [], this.search())
-);
-```
-
-Retirer `reload()` et son appel dans le constructeur. Retirer `firstValueFrom` des imports si plus utilisé.
-
-```bash
-npm test -- --runTestsByPath src/app/features/clients/pages/dashboard/dashboard.component.spec.ts
-```
-
-### vs `toSignal()` + pipe
-
-| `toSignal()` + pipe | `rxResource()` |
-|---|---|
-| État loading / error géré manuellement | `isLoading()`, `error()`, `value()` exposés nativement |
-| Abonnement dans `toSignal()` | Abonnement géré automatiquement |
-| Flux continu ou composé (RxJS) | Requête ponctuelle avec état de chargement |
-
-### Quand utiliser `rxResource()`
-
-| Situation | Outil |
-|---|---|
-| Requête HTTP one-shot avec état loading / error | `rxResource()` |
-| Requête déclenchée par un paramètre signal | `rxResource()` avec `request` |
-| Flux continu (WebSocket, polling) | RxJS pur |
-| Requête POST / PUT / DELETE | `firstValueFrom()` dans une méthode async |
-
----
-
-## Exercice 10 — `afterNextRender()` / `afterRender()`
+## Exercice 9 — `afterNextRender()` / `afterRender()`
 
 ### Définition
 
@@ -977,7 +820,7 @@ private readonly injector = inject(Injector);
 ```
 
 ```ts
-// Dans saveAdd(), à la place du commentaire EXERCICE 10
+// Dans saveAdd(), à la place du commentaire EXERCICE 9
 afterNextRender(
   () => { this.viewport()?.scrollToIndex(0); },
   { injector: this.injector }
@@ -1001,27 +844,7 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 | Réaction continue à un changement d'état | `effect()` |
 | Opération DOM déclenchée par l'apparition d'un élément | `effect()` + `viewChild()` |
 
-### `afterRender()` vs `afterNextRender()`
-
-| | `afterNextRender()` | `afterRender()` |
-|---|---|---|
-| Fréquence | **Une seule fois** après le prochain rendu | **Après chaque** cycle de rendu |
-| Usage typique | Scroll one-shot, init librairie tierce | Mesures DOM continues, animations |
-| Risque | Aucun surcoût après l'exécution | Peut devenir coûteux si le rendu est fréquent |
-
-```ts
-// one-shot : scroll après ajout
-afterNextRender(() => viewport.scrollToIndex(0), { injector });
-
-// récurrent : mesure la hauteur à chaque rendu
-afterRender(() => {
-  this.height.set(this.el.nativeElement.offsetHeight);
-});
-```
-
----
-
-## Exercice 11 — Consolidation façade avec `computed()`
+## Exercice 10 — Consolidation façade avec `computed()`
 
 Cet exercice ne présente pas une nouvelle API. Il sert à consolider l'architecture : une règle métier dérivée doit vivre au bon endroit, avec un nom explicite et une surface testable.
 
@@ -1062,16 +885,7 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ### Pourquoi terminer par cet exercice
 
-Après avoir exploré les primitives avancées (`linkedSignal`, `rxResource`, `afterNextRender`), on revient à un geste simple mais structurant : placer la logique dérivée dans la façade. C'est le lien avec l'objectif architectural du dojo : des composants plus lisibles, une façade qui porte l'état partagé, et des règles métier nommées.
-
-### vs Zone.js / vs RxJS
-
-| Règle dans le template ou le composant | `computed()` dans la façade |
-|---|---|
-| Logique inline, intention illisible | Nom qui exprime l'intention métier |
-| Dupliquée si plusieurs composants en ont besoin | Partageable depuis la façade |
-| Non testable directement | Testable unitairement |
-| Recalculée à chaque cycle Zone.js | Mémorisée, recalculée seulement si nécessaire |
+Après les APIs avancées, on revient à une règle simple : une règle métier dérivée doit être nommée au bon endroit. Ici, `hasActiveFilter` appartient à la façade parce qu'il dépend de l'état de filtre partagé par la page.
 
 ---
 
@@ -1096,7 +910,7 @@ Observable HTTP         → pipe(map, catchError, startWith) → toSignal()
 
 ## Clôture du dojo — Règles à retenir
 
-Les conventions d'usage des primitives Signals et la décision de ne pas migrer vers
+Les conventions d'usage des APIs Signals utilisées ici et la décision de ne pas migrer vers
 le mode zoneless sont détaillées dans `docs/adr/0002-conventions-usage-signals-et-detection-changement.md`.
 
 ```
@@ -1109,17 +923,4 @@ le mode zoneless sont détaillées dans `docs/adr/0002-conventions-usage-signals
 7. toSignal() gère le désabonnement — ne pas ajouter takeUntilDestroyed en plus
 8. untracked()        pour lire sans s'abonner dans un effect()
 ```
-
----
-
-## Perspectives — Primitives à explorer
-
-- `untracked()` : lire un signal dans un `effect()` sans en devenir dépendant — voir exercice 3
-- `viewChildren()` : liste réactive de références, compagnon de `viewChild()` — voir exercice 4
-- `signal.asReadonly()` : exposer un état interne en lecture seule depuis une façade — voir exercice 2
-- `linkedSignal()` : signal writable dérivé d'un autre — voir exercice 7
-- `rxResource()` : signal async natif pour HTTP — voir exercice 9
-- `afterNextRender()` : opération DOM garantie après le prochain rendu — voir exercice 10
-
----
 

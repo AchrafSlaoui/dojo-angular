@@ -86,7 +86,6 @@ Chaque branche d'exercice ajoute uniquement la correction de son exercice par ra
 | `linkedSignal()` | Signal writable initialise depuis une source et modifiable localement. | `accounts.component.ts` |
 | `toSignal()` | Consomme la derniere valeur d'un Observable sous forme de signal. | `accounts.component.ts` |
 | `toObservable()` | Expose un signal en Observable pour utiliser les operateurs RxJS. | `clients.component.ts` |
-| `rxResource()` | Ressource async basee Observable, avec `value`, `isLoading` et `error`. | `dashboard.component.ts` |
 | `afterNextRender()` | Callback one-shot apres le prochain rendu DOM. Utile pour scroll ou focus post-action. | `clients.component.ts` |
 | `afterRender()` | Callback recurrent apres chaque rendu Angular. Utile pour mesures DOM continues. | `signals-demo.component.ts` |
 | `untracked()` | Lit un signal sans l'ajouter aux dependances d'un `effect()` ou `computed()`. | `clients.component.ts` |
@@ -107,13 +106,12 @@ Chaque branche d'exercice ajoute uniquement la correction de son exercice par ra
 | 6B — `model()` | `account-list.component.ts`, `accounts.component.ts` | Valeur bidirectionnelle input+output. Two-way binding signal. | Groupe B : remplacer `editingAccountId input` + `editRequested` + `cancelRequested` par un seul `model()`. L'enfant controle l'etat d'edition directement. |
 | 7 — `linkedSignal()` | `src/app/features/accounts/pages/accounts/accounts.component.ts` | Signal mutable qui se reinitialise quand sa source change. | Remplacer `editAccount` par un `linkedSignal()` derive du signal source. La valeur doit se remettre a zero quand le compte selectionne change. |
 | 8 — `toSignal()` / `toObservable()` | `src/app/features/accounts/pages/accounts/accounts.component.ts`, `src/app/features/clients/pages/dashboard/dashboard.component.ts`, `src/app/features/clients/pages/clients/clients.component.ts` | Pont entre Observable RxJS et signal Angular. | Remplacer la souscription manuelle a la route par `toSignal()`, exposer le chargement dashboard comme signal, et identifier le pont inverse `toObservable()` pour la recherche debouncee. |
-| 9 — `rxResource()` | `src/app/features/clients/pages/dashboard/dashboard.component.ts` | Chargement asynchrone reactif avec etat loading/error/value. | Remplacer le chargement imperatif du dashboard par `rxResource()`. Le composant doit exposer les signaux `loading`, `error` et `value` derives de la ressource. |
-| 10 — `afterNextRender()` / `afterRender()` | `src/app/features/clients/pages/clients/clients.component.ts` | Hook post-rendu DOM one-shot ou recurrent. | Ajouter la reference au viewport, puis scroller en haut de liste avec `afterNextRender()` apres l'ajout d'un client. |
-| 11 — `computed()` facade | `src/app/features/accounts/services/accounts.facade.ts`, `src/app/features/accounts/pages/accounts/accounts.component.*` | Vue derivee de l'etat metier dans une facade. | Ajouter `hasActiveFilter` comme valeur derivee de la facade. Le message vide doit dependre de cette regle exposee par la facade. |
+| 9 — `afterNextRender()` / `afterRender()` | `src/app/features/clients/pages/clients/clients.component.ts` | Hook post-rendu DOM one-shot ou recurrent. | Ajouter la reference au viewport, puis scroller en haut de liste avec `afterNextRender()` apres l'ajout d'un client. |
+| 10 — `computed()` facade | `src/app/features/accounts/services/accounts.facade.ts`, `src/app/features/accounts/pages/accounts/accounts.component.*` | Vue derivee de l'etat metier dans une facade. | Ajouter `hasActiveFilter` comme valeur derivee de la facade. Le message vide doit dependre de cette regle exposee par la facade. |
 
 ---
 
-## Extension avancée — Exercices 8 à 11
+## Extension avancée
 
 Ces exercices couvrent des primitives Angular avancées. Ils peuvent être traités en autonomie après les exercices socle (1 à 7).
 

@@ -1,39 +1,81 @@
-# ADR 0002 - Conventions d'usage des primitives Signals et stratégie de détection de changement
+# ADR 0002 - Conventions Signals et stratégie de détection de changement
 
 ## Contexte
 
-Le dojo introduit plusieurs primitives Signals (`signal()`, `computed()`, `effect()`, `toSignal()`). Sans conventions explicites, un apprenant peut les utiliser de manière interchangeable ou bridger RxJS et Signals par réflexe. Des règles d'usage claires évitent ces écueils pédagogiques.
+L'application utilise plusieurs APIs Angular liées aux Signals (`signal()`, `computed()`, `effect()`, `input()`, `output()`, `model()`, `toSignal()`), RxJS et la détection de changement Angular avec `zone.js` + `OnPush`.
 
-Par ailleurs, Angular 21 propose un mode zoneless stable. La question de supprimer Zone.js s'est posée lors de la préparation du dojo.
+Sans conventions explicites, ces APIs peuvent être utilisées de manière interchangeable alors qu'elles ne portent pas la même intention. Les décisions ci-dessous fixent les usages attendus et la stratégie de détection de changement.
 
 ## Décisions
 
-### `computed()` est un calcul pur — jamais d'effet de bord
+### `computed()` est un calcul pur, jamais un effet de bord
 
 `computed()` ne doit pas déclencher d'appel HTTP, écrire dans un signal, ou produire un effet observable. C'est une valeur dérivée mémorisée. Si un effet est nécessaire, `effect()` est l'outil adapté.
 
-### `effect()` est un effet de bord — jamais une valeur exposée
+### `effect()` est un effet de bord, jamais une valeur exposée
 
-`effect()` ne retourne rien d'utilisable. Il réagit à des changements pour produire un effet (focus, titre du document, log). Exposer une valeur via `effect()` indique que `computed()` était le bon choix.
+`effect()` ne retourne rien d'utilisable. Il réagit à des changements pour produire un effet : focus, titre du document, log, correction d'un état cohérent.
+
+Exposer une valeur via `effect()` indique que `computed()` était le bon choix.
 
 ### L'enfant émet une intention, le parent exécute l'action
 
-`output()` sert à signaler une intention (`deleteRequested`, `saveRequested`). La décision d'agir appartient au parent. Les enfants ne dépendent pas de services pour exécuter des actions.
+`output()` sert à signaler une intention (`deleteRequested`, `saveRequested`). La décision d'agir appartient au parent.
+
+Les enfants ne doivent pas dépendre directement de services applicatifs pour exécuter des actions métier qui appartiennent au parent ou à une façade.
+
+### `model()` est réservé aux valeurs réellement bidirectionnelles
+
+`model()` combine une entrée et une sortie. Il est adapté quand le parent et l'enfant partagent explicitement la propriété d'une valeur simple : sélection courante, filtre, toggle, état d'édition.
+
+Il ne doit pas remplacer `output()` pour une commande métier. Une suppression, une sauvegarde ou une mutation applicative reste une intention émise par l'enfant et traitée par le parent.
 
 ### Ne pas bridger Signals et RxJS systématiquement
 
-`toSignal()` et `toObservable()` sont des ponts ponctuels, pas une règle générale. Ils sont justifiés quand un opérateur temporel (debounce) ou un Observable HTTP doit être consommé dans un contexte signal. Rester dans un seul monde quand c'est possible.
+`toSignal()` et `toObservable()` sont des ponts ponctuels, pas une règle générale.
 
-### `toSignal()` gère le désabonnement — ne pas ajouter `takeUntilDestroyed`
+Ils sont justifiés quand un opérateur temporel (`debounceTime`, `distinctUntilChanged`) ou un Observable HTTP doit être consommé dans un contexte signal. Il faut rester dans un seul modèle réactif quand c'est possible.
 
-`toSignal()` souscrit et se désabonne automatiquement dans le contexte d'injection. Ajouter `takeUntilDestroyed` en plus est redondant et source de confusion.
+### `toSignal()` gère le désabonnement
 
-### `input()` dans un `computed()` crée une dépendance réelle — `@Input()` non
+`toSignal()` souscrit et se désabonne automatiquement dans le contexte d'injection.
 
-Un `@Input()` classique lu dans un `computed()` ne crée pas de dépendance réactive : Angular ne recalculera pas la valeur dérivée quand l'entrée change. `input()` dans un `computed()` est une dépendance réelle et sera réévalué si la valeur du parent change.
+Ajouter `takeUntilDestroyed` en plus est redondant et source de confusion.
 
-### Ne pas migrer vers le mode zoneless pour ce dojo
+RxJS reste préférable pour les flux continus, le polling, les WebSockets, ou les compositions temporelles complexes. Les commandes de mutation (`POST`, `PUT`, `DELETE`) restent des actions explicites, souvent déclenchées dans une méthode.
 
-Le mode zoneless (`provideZonelessChangeDetection()`) est stable en Angular 21, mais il exige que chaque changement passe par un déclencheur connu d'Angular. Supprimer Zone.js ici cacherait la réalité d'une migration progressive : la plupart des projets existants ont encore Zone.js et du code classique.
+### `input()` dans un `computed()` crée une dépendance réelle
 
-Le dojo conserve Zone.js + `OnPush` pour montrer que Signals peut coexister avec l'existant, sans forcer une réécriture complète. La migration vers le mode zoneless est la suite logique une fois l'état principal piloté par Signals, mais elle est hors périmètre de ce dojo.
+Un `@Input()` classique lu dans un `computed()` ne crée pas de dépendance réactive : Angular ne recalculera pas la valeur dérivée quand l'entrée change.
+
+`input()` dans un `computed()` est une dépendance réelle et sera réévalué si la valeur du parent change.
+
+### `untracked()` sert uniquement aux lectures non dépendantes
+
+Dans un `effect()` ou un `computed()`, lire un signal crée une dépendance.
+
+`untracked()` doit être utilisé quand la lecture sert à comparer, journaliser ou décider localement sans déclencher la réexécution.
+
+L'usage doit rester explicite et rare : si la valeur lue doit réellement piloter le recalcul, il ne faut pas la masquer avec `untracked()`.
+
+### Exposer l'état mutable avec `.asReadonly()`
+
+Une façade qui porte un état interne expose ses signals en lecture seule avec `.asReadonly()` quand les composants n'ont pas à modifier directement cet état.
+
+Les mutations passent par des méthodes nommées de la façade. Cela garde une surface publique lisible et évite que plusieurs composants écrivent dans le même état sans intention métier explicite.
+
+### Utiliser les hooks post-rendu pour les opérations DOM post-action
+
+`afterNextRender()` est adapté aux opérations DOM one-shot après une action utilisateur : scroll, focus après ajout, mesure ponctuelle.
+
+`afterRender()` est réservé aux traitements récurrents après chaque rendu. Il doit rester rare, car il peut devenir coûteux si le rendu est fréquent.
+
+Un `effect()` reste préférable quand l'objectif est de réagir à un changement d'état plutôt qu'à l'écriture effective du DOM.
+
+### Ne pas migrer vers le mode zoneless
+
+Le mode zoneless (`provideZonelessChangeDetection()`) est stable en Angular 21, mais il exige que chaque changement passe par un déclencheur connu d'Angular.
+
+Supprimer Zone.js trop tôt rendrait la migration plus risquée : l'application contient encore du code classique, des handlers template et des flux asynchrones qui s'appuient sur le comportement historique d'Angular.
+
+La base conserve donc `zone.js` + `OnPush`. La migration vers le mode zoneless reste possible plus tard, une fois l'état principal piloté par Signals et les déclencheurs de changement explicités.

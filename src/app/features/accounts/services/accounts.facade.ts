@@ -17,7 +17,7 @@ export class AccountsFacade {
 
   readonly search = signal('');
   readonly typeFilter = signal<AccountTypeFilter>('all');
-  // EXERCICE 11
+  // EXERCICE 10
   readonly loading = signal(false);
   readonly mutating = signal(false);
   readonly error = signal<string | null>(null);

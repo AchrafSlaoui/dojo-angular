@@ -1,40 +1,48 @@
-# ADR 0001 - Architecture pédagogique du dojo Angular Signals
+# ADR 0001 - Architecture Angular Signals progressive
 
 ## Contexte
 
-Le dojo enseigne Angular Signals dans une application Angular 21 existante. L'objectif n'est pas de montrer une application totalement migrée, mais une migration progressive et réaliste depuis un projet Angular avec `zone.js`, `OnPush`, RxJS et des composants standalone.
+L'application est une base Angular 21 existante avec `zone.js`, `OnPush`, RxJS et des composants standalone.
 
-Le support de présentation doit rester centré sur les exercices. Les intentions d'architecture du projet sont documentées ici pour éviter d'alourdir les slides.
+L'objectif est d'introduire Angular Signals sans imposer une réécriture complète. Les décisions ci-dessous cadrent la migration progressive, la place des façades et la frontière entre Signals, RxJS et la détection de changement Angular.
 
 ## Décisions
 
-### Garder `zone.js` et `OnPush` pendant le dojo
+### Garder `zone.js` et `OnPush`
 
-Le projet conserve `zone.js` et `OnPush` pour montrer que Signals peut être introduit progressivement. Le dojo ne force pas un passage immédiat en mode zoneless.
+Le projet conserve `zone.js` et `OnPush`.
 
-`zone.js` continue de déclencher la détection de changement après les événements asynchrones. Signals rend l'état et ses dépendances plus explicites.
+`zone.js` continue de déclencher la détection de changement après les événements asynchrones. `OnPush` limite les vérifications inutiles. Signals rend l'état et ses dépendances plus explicites sans obliger à supprimer immédiatement le fonctionnement historique d'Angular.
 
-### Montrer deux patterns Signals
+Cette combinaison permet une migration progressive : les composants peuvent adopter Signals là où cela apporte de la lisibilité ou une meilleure granularité, tout en gardant le code existant fonctionnel.
 
-Le projet montre volontairement deux styles :
+### Utiliser deux patterns Signals
 
-- Signals directement dans les composants pour les bases : `signal()`, `computed()`, `effect()`.
+Le projet utilise deux styles complémentaires :
+
+- Signals directement dans les composants pour l'état local : `signal()`, `computed()`, `effect()`.
 - Signals dans des façades pour l'état partagé et les règles métier dérivées.
 
-Cette asymétrie est intentionnelle. Elle sert de progression pédagogique : d'abord un composant simple, puis une extraction vers une façade quand l'état devient partagé ou plus riche.
+L'état local simple peut rester au niveau du composant. Quand l'état devient partagé, riche, ou porteur de règles métier, il doit être déplacé dans une façade.
+
+### Consolider les règles métier dérivées dans les façades
+
+Les règles métier dérivées doivent être nommées et exposées depuis la façade quand elles dépendent de l'état partagé ou quand elles peuvent être réutilisées.
+
+Cela évite les calculs inline dans les templates ou les composants, rend l'intention plus lisible et permet de tester directement la règle.
 
 ### Accepter un code mixte pendant la migration
 
-Le projet contient à la fois :
+Le projet contient volontairement :
 
 - des signals ;
 - des propriétés classiques ;
 - des façades ;
 - des flux RxJS.
 
-Ce mélange est volontaire. Tous les états locaux transitoires ne doivent pas être convertis mécaniquement en signals. Une propriété classique reste acceptable si elle est locale, simple, manipulée par des handlers de template et sans besoin d'être lue par un `computed()` ou un `effect()`.
+Tous les états locaux transitoires ne doivent pas être convertis mécaniquement en signals. Une propriété classique reste acceptable si elle est locale, simple, manipulée par des handlers de template et sans besoin d'être lue par un `computed()` ou un `effect()`.
 
-Certains fichiers montrent donc volontairement des états déjà migrés et des états classiques dans le même projet :
+Certains fichiers montrent donc des états déjà migrés et des états classiques dans la même application :
 
 ```ts
 // ClientCardComponent
@@ -63,11 +71,9 @@ Ce n'est pas une incohérence. C'est le reflet d'une migration progressive :
 - avec `zone.js` + `OnPush`, un clic template marque le composant à vérifier ;
 - convertir en signal devient intéressant quand l'état est lu par `computed()`, `effect()`, plusieurs composants, ou quand on veut expliciter ses dépendances.
 
-Dans ce dojo, on ne convertit donc pas tout mécaniquement. L'exercice 1 convertit `adding` dans `ClientsComponent` pour apprendre `signal()`, tandis que le `adding` de `AccountsComponent` reste volontairement classique pour illustrer une migration progressive.
-
 ### Scoper les façades stateful au composant
 
-Le projet contient deux types de façades qui n'ont pas le même rôle :
+Le projet contient deux types de façades qui n'ont pas le même rôle.
 
 **Façades stateful** (`AccountsFacade`, `MovementsFacade`) : déclarées dans `providers` du composant consommateur, pas dans `root`. Chaque page obtient sa propre instance. L'état ne fuit pas entre navigations et le cycle de vie est lié au composant.
 
@@ -83,22 +89,4 @@ Règle : une façade qui porte de l'état doit être scopée au composant. Une f
 
 RxJS reste l'outil adapté pour les flux dans le temps : debounce, combinaison de flux, WebSocket, polling, orchestration d'Observables.
 
-`toSignal()` est un pont vers le monde Signals. Il expose la dernière valeur d'un Observable sous forme de signal. Il ne remplace pas RxJS.
-
-### Organiser les branches d'exercices de manière cumulative
-
-Les branches d'exercices sont cumulatives :
-
-```text
-init
-└── exercice-1
-    └── exercice-2
-        └── exercice-3
-            └── exercice-4
-                └── exercice-5
-                    └── exercice-6
-                        └── exercice-7
-                            └── exercice-8
-```
-
-Chaque branche ajoute uniquement la correction de son exercice par rapport à la branche précédente.
+`toSignal()` est un pont vers le monde Signals. Il expose la dernière valeur d'un Observable sous forme de signal, mais il ne remplace pas RxJS.

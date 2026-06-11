@@ -34,7 +34,7 @@ export class AccountsComponent {
   readonly mutating = this.accountsFacade.mutating;
   readonly error = this.accountsFacade.error;
   readonly accounts = this.accountsFacade.filteredAccounts;
-  // EXERCICE 11
+  // EXERCICE 10
   readonly totalBalance = this.accountsFacade.totalBalance;
   // EXERCICE 2
   get blockedAccountsCount(): number {
