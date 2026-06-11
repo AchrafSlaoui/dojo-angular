@@ -24,11 +24,9 @@ export class AccountsFacade {
 
   readonly accounts = this.accountsState.asReadonly();
   readonly clientId = this.clientIdState.asReadonly();
-  // exemple à lire avant exercice 11
   readonly filteredAccounts = computed(() =>
     this.filterAccounts(this.accountsState(), this.search(), this.typeFilter())
   );
-  // exemple à lire avant exercice 2
   readonly totalBalance = computed(() =>
     Math.round(this.filteredAccounts().reduce((total, account) => total + account.balance, 0) * 100) / 100
   );

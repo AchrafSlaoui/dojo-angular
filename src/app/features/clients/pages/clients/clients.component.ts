@@ -25,7 +25,6 @@ export class ClientsComponent {
   private readonly notifications = inject(NotificationService);
   private readonly confirm = inject(ConfirmService);
 
-  // exemple à lire avant exercice 1
   private readonly clientsState = signal<ClientActivity[]>([]);
   readonly search = signal('');
   readonly sort = signal<ClientSort>('latestMovement');
@@ -58,8 +57,6 @@ export class ClientsComponent {
   readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
   constructor() {
-    // exemple à lire avant exercice 3
-    // exemple à lire avant exercice 4
     effect(() => {
       document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';
     });
