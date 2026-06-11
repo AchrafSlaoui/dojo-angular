@@ -1,0 +1,10 @@
+<section class="lab-card">
+  <div class="card-header">
+    @for (api of apis(); track api) {
+      <span class="api">{{ api }}</span>
+    }
+    <h3>{{ title() }}</h3>
+  </div>
+  <p class="risk">{{ risk() }}</p>
+  <ng-content />
+</section>

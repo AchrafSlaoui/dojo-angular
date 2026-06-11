@@ -1,0 +1,29 @@
+<app-primitive-lab-item
+  [apis]="['model()']"
+  title="Valeur bidirectionnelle — contrat simplifie"
+  risk="Sans model(), une meme valeur partagee necessite un @Input(), un @Output() et une convention de nommage. model() remplace les trois par une seule declaration avec liaison [(banana-in-box)]."
+>
+  <div class="compare">
+    <div>
+      <code>sans model()</code>
+      <p class="note">
+        Enfant : <code>@Input() value</code> + <code>@Output() valueChange</code><br>
+        Parent : <code>[value]="x" (valueChange)="x=$event"</code>
+      </p>
+      <app-lab-model-legacy-child
+        [value]="legacyValue"
+        (valueChange)="onLegacyChange($event)"
+      />
+      <p class="note">Valeur parent : <strong>{{ legacyValue }}</strong></p>
+    </div>
+    <div>
+      <code>avec model()</code>
+      <p class="note">
+        Enfant : <code>value = model(0)</code><br>
+        Parent : <code>[(value)]="modelValue"</code>
+      </p>
+      <app-lab-model-child [(value)]="modelValue" />
+      <p class="note">Valeur parent : <strong>{{ modelValue() }}</strong></p>
+    </div>
+  </div>
+</app-primitive-lab-item>

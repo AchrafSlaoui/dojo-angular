@@ -1,0 +1,39 @@
+<app-primitive-lab-item
+  [apis]="['computed()']"
+  title="Valeur derivee — fonction vs computed()"
+  risk="Une fonction recalcule a chaque appel. computed() calcule une fois et met le resultat en cache tant que les donnees sources ne changent pas."
+>
+  <div class="actions">
+    <button class="btn outline" type="button" (click)="readWithFunction()">Lire avec une fonction</button>
+    <button class="btn primary" type="button" (click)="readWithComputed()">Lire avec computed()</button>
+    <button class="btn outline" type="button" (click)="addBlockedAccount()">Ajouter un compte bloque</button>
+    <button class="btn ghost" type="button" (click)="reset()">Reset</button>
+  </div>
+  <ul class="log">
+    @for (account of accounts(); track account.id) {
+      <li>{{ account.label }} — {{ account.status }}</li>
+    }
+  </ul>
+  <div class="compare">
+    <div>
+      <code>fonction classique</code>
+      @if (functionCallCount === 0) {
+        <p class="note">Cliquez "Lire avec une fonction".</p>
+      } @else {
+        <strong>{{ functionResult }} bloque(s)</strong>
+        <span class="badge badge-err">{{ functionCallCount }} lecture(s), {{ functionCallCount }} recalcul(s)</span>
+        <p class="warn">Recalcule integralement a chaque appel.</p>
+      }
+    </div>
+    <div>
+      <code>computed()</code>
+      @if (!computedHasRun) {
+        <p class="note">Cliquez "Lire avec computed()".</p>
+      } @else {
+        <strong>{{ computedResult }} bloque(s)</strong>
+        <span class="badge badge-ok">{{ computedReadCount }} lecture(s), {{ computedCalcCount }} recalcul(s)</span>
+        <p class="ok">Cache valide tant que accounts() n'a pas change.</p>
+      }
+    </div>
+  </div>
+</app-primitive-lab-item>

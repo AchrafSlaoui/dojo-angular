@@ -1,0 +1,37 @@
+<app-primitive-lab-item
+  [apis]="['linkedSignal()']"
+  title="Formulaire pre-rempli depuis une selection"
+  risk="computed() est en lecture seule : impossible de laisser l'utilisateur modifier la valeur. signal() simple ne se remet pas a zero quand la selection change. linkedSignal() combine les deux : editable localement, reinitialise quand la source change."
+>
+  <p class="note">
+    Guide : ① Modifiez le nom dans le champ → ② Changez de personne →
+    observez que le champ se reinitialise sur la nouvelle selection.
+  </p>
+  <div class="actions">
+    @for (person of persons; track person.id) {
+      <button
+        class="btn"
+        [class.primary]="selected().id === person.id"
+        [class.outline]="selected().id !== person.id"
+        type="button"
+        (click)="select(person)"
+      >
+        {{ selected().id === person.id ? draftName() : person.name }} ({{ person.role }})
+      </button>
+    }
+  </div>
+  <div class="compare">
+    <div>
+      <code>computed()</code>
+      <strong>{{ computedName() }}</strong>
+      <span class="badge badge-warn">lecture seule</span>
+      <p class="warn">Impossible de laisser l'utilisateur modifier cette valeur.</p>
+    </div>
+    <div>
+      <code>linkedSignal()</code>
+      <input [ngModel]="draftName()" (ngModelChange)="draftName.set($event)" />
+      <span class="badge badge-ok">editable + reinitialise</span>
+      <p class="ok">Modifiable localement. Se remet a jour quand la selection change.</p>
+    </div>
+  </div>
+</app-primitive-lab-item>

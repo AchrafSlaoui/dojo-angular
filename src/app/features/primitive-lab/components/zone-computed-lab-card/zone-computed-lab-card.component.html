@@ -1,0 +1,42 @@
+<app-primitive-lab-item
+  [apis]="['computed()']"
+  title="Getter vs computed() avec Zone.js"
+  risk="Avec Zone.js, chaque evenement declenche un cycle de detection. Un getter dans le template est rappele a chaque cycle, meme si les donnees n'ont pas change. computed() ne recalcule que si une dependance signal a reellement change."
+>
+  <p class="note">
+    Guide : ① Cliquez <strong>Declencher CD</strong> plusieurs fois (sans changer les donnees) →
+    le getter est rappele a chaque fois, computed() ne bouge pas.
+    ② Cliquez <strong>Ajouter un element</strong> → les deux recalculent car items() a change.
+  </p>
+  <div class="actions">
+    <button class="btn outline" type="button" (click)="triggerCd()">
+      ① Declencher CD ({{ cdCount }})
+    </button>
+    <button class="btn primary" type="button" (click)="addItem()">
+      ② Ajouter un element
+    </button>
+    <button class="btn ghost" type="button" (click)="reset()">Reset</button>
+  </div>
+  <div class="compare">
+    <div>
+      <code>get shortLabels()</code>
+      <span class="badge badge-err">{{ getterCallCount }} calcul(s)</span>
+      <p class="warn">Recalcule a chaque cycle Zone.js, meme sans changement de donnees.</p>
+      <ul class="log">
+        @for (label of shortLabels; track label) {
+          <li>{{ label }}</li>
+        }
+      </ul>
+    </div>
+    <div>
+      <code>computed(() => ...)</code>
+      <span class="badge badge-ok">{{ computedCallCount }} calcul(s)</span>
+      <p class="ok">Recalcule seulement quand items() change.</p>
+      <ul class="log">
+        @for (label of shortLabelsComputed(); track label) {
+          <li>{{ label }}</li>
+        }
+      </ul>
+    </div>
+  </div>
+</app-primitive-lab-item>

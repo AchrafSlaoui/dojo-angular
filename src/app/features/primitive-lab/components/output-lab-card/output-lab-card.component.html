@@ -1,0 +1,20 @@
+<app-primitive-lab-item
+  [apis]="['output()']"
+  title="Evenement de composant — intention claire"
+  risk="EventEmitter herite de Subject (RxJS) : .pipe(), .subscribe() et .next() sont disponibles, ce qui peut encourager a traiter une sortie de composant comme un flux applicatif. output() n'expose que .emit()."
+>
+  <div class="compare">
+    <div>
+      <code>@Output() + EventEmitter</code>
+      <span class="badge badge-warn">API Observable exposee</span>
+      <p class="warn">legacySelected.pipe(...) disponible — heritage RxJS visible depuis l'exterieur.</p>
+      <code>@Output() selected = new EventEmitter&lt;Account&gt;()</code>
+    </div>
+    <div>
+      <code>output()</code>
+      <span class="badge badge-ok">Intention composant</span>
+      <p class="ok">Seul .emit() est accessible — pas de .pipe(), pas de .subscribe().</p>
+      <code>selected = output&lt;Account&gt;()</code>
+    </div>
+  </div>
+</app-primitive-lab-item>

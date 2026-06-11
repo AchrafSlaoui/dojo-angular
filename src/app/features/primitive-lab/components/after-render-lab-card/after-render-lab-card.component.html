@@ -1,0 +1,39 @@
+<app-primitive-lab-item
+  [apis]="['afterNextRender()']"
+  title="DOM mesure trop tot"
+  risk="Mesurer le DOM immediatement apres avoir change l'etat retourne 0 px : Angular n'a pas encore ecrit dans le DOM. afterNextRender() garantit que la mesure a lieu apres le rendu."
+>
+  <div class="actions">
+    <button class="btn primary" type="button" (click)="showPanelAndMeasure()">Afficher + mesurer</button>
+    <button class="btn ghost" type="button" (click)="hidePanel()">Masquer</button>
+  </div>
+  <div class="compare">
+    <div>
+      <code>mesure immediate</code>
+      @if (immediateMeasure() === 'Aucune mesure') {
+        <p class="note">Cliquez "Afficher + mesurer".</p>
+      } @else if (immediateMeasure().includes('absent')) {
+        <strong class="err">{{ immediateMeasure() }}</strong>
+        <span class="badge badge-err">RATE — panneau absent du DOM</span>
+        <p class="warn">Le DOM n'est pas encore ecrit au moment de la mesure.</p>
+      } @else {
+        <strong>{{ immediateMeasure() }}</strong>
+      }
+    </div>
+    <div>
+      <code>afterNextRender()</code>
+      @if (afterRenderMeasure() === 'Aucune mesure') {
+        <p class="note">En attente du rendu...</p>
+      } @else {
+        <strong>{{ afterRenderMeasure() }}</strong>
+        <span class="badge badge-ok">OK — mesure apres rendu DOM</span>
+        <p class="ok">Le panneau etait present et mesurable.</p>
+      }
+    </div>
+  </div>
+  @if (renderPanelVisible()) {
+    <div class="render-panel" #renderPanel>
+      Panneau rendu apres changement d'etat. Sa hauteur est disponible uniquement apres le rendu Angular.
+    </div>
+  }
+</app-primitive-lab-item>
