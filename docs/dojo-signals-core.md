@@ -201,7 +201,6 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 | État UI local : booléen, texte, page courante | `signal()` |
 | État local transitoire manipulé seulement par des handlers template | Propriété classique acceptable pendant la migration |
 | Valeur calculée à partir d'autres signals | `computed()` — pas `signal()` |
-| Valeur issue d'une route ou d'un appel HTTP | `toSignal()` |
 | État partagé entre composants via service | façade Signals ou store dédié |
 
 ---
@@ -286,7 +285,6 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 |---|---|
 | Total, compteur, libellé dérivé d'autres signals | `computed()` |
 | Règle qui dépend du temps (debounce, delay) | Flux asynchrone — `computed()` est synchrone |
-| Calcul déclenché par une source asynchrone | Source asynchrone puis `toSignal()` |
 | Effet de bord (appel HTTP, log, focus) | `effect()` — pas `computed()` |
 
 ---
@@ -383,7 +381,6 @@ Sans `onCleanup`, chaque ré-exécution de l'effet crée un nouveau timer sans s
 | Correction d'un état cohérent (clamping, reset) | `effect()` |
 | Chargement HTTP déclenché par un signal | Possible avec `effect()`, mais à encadrer |
 | Valeur calculée à partir d'autres signals | `computed()` — pas `effect()` |
-| Effet déclenché par une source asynchrone | Source asynchrone ou `toSignal()` selon le cas |
 
 ---
 
