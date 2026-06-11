@@ -48,7 +48,7 @@ Dans ce dojo, `OnPush` permet de montrer que Signals rend les dépendances plus 
 
 | Déclencheur | Zone.js (défaut) | Zone.js + OnPush | Zoneless |
 |---|---|---|---|
-| Événement async (`setTimeout`, `Promise`, XHR…) | Tout l'arbre | Sous-arbre marqué dirty | Aucun déclencheur automatique |
+| Événement async (`setTimeout`, `Promise`, XHR…) | Tout l'arbre | Cycle lancé, mais composant OnPush vérifié seulement s'il est marqué dirty | Aucun déclencheur automatique |
 | `@Input()` dont la référence change | ✓ | ✓ | Aucun effet — utiliser `input()` |
 | `input()` / signal lu dans le template | ✓ | ✓ | ✓ |
 | `async` pipe reçoit une valeur | ✓ | ✓ | Composant + parents vérifiés (`markForCheck`) |
@@ -132,15 +132,40 @@ Les branches sont cumulatives jusqu'à `exercice-5`.
 
 ---
 
+## Primitive Lab
+
+La page `/primitive-lab` permet d'expérimenter les problèmes décrits dans les exercices avant de modifier le code métier.
+
+Chaque carte isole une primitive ou une API Angular : le cas classique montre le risque, puis la version Signals montre le comportement attendu.
+
+---
+
 ## Exercice 1 — `signal()`
+
+### Problème
+
+Un état local reste une propriété TypeScript ordinaire. Il peut piloter le template, mais Angular ne sait pas que cette valeur est une source réactive. La modification peut donc être ignorée si aucun cycle de détection ne repasse sur le composant : par exemple avec `OnPush`, en zoneless, ou après une mutation déclenchée hors d'un événement template suivi par Angular.
+
+Reproduit dans `signal-lab-card.component.ts` :
+
+```ts
+classicAdding = false; // propriété TypeScript ordinaire
+
+launchClassicTimer(): void {
+  window.setTimeout(() => {
+    this.classicAdding = true;
+    // Angular OnPush ne voit pas ce changement : la vue reste figée à false
+    // → cliquer "Réveiller Angular" est nécessaire pour voir la mise à jour
+  }, 1000);
+}
+```
 
 ### Définition
 
 > `signal()` est une **primitive Signal** : une valeur réactive observable par Angular. Elle contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lue.
 
-Quand la valeur change, Angular sait précisément quelles dépendances invalider : les valeurs dérivées sont recalculées si nécessaire et les vues concernées sont mises à jour.
 
-`signal()` crée un signal mutable. `computed()` crée un signal dérivé en lecture seule. `effect()` observe des signals, mais n'est pas un signal.
+**À retenir :** utilisez `signal()` pour un état local synchrone qui doit être lu par le template ou servir de dépendance à d'autres primitives Signals.
 
 ```ts
 readonly adding = signal(false);  // déclarer
@@ -152,12 +177,6 @@ adding()                          // lire (template ou TS)
 Dans cet exercice, `.set(true)` et `.set(false)` sont préférables à `.update()` : la nouvelle valeur ne dépend pas de l'ancienne. `.update()` devient utile quand on calcule la nouvelle valeur à partir de la valeur courante, par exemple `this.adding.update(value => !value)`.
 
 Sur la branche `init`, `adding` est encore un booléen classique. Tant qu'il n'a pas été converti en `signal(false)`, il n'a donc pas de méthode `.set()` ou `.update()`.
-
-### Problématique corrigée
-
-Le composant manipule un état UI local avec une propriété classique (`adding`). Cette valeur pilote le template, mais elle n'exprime pas explicitement ses dépendances réactives : Angular ne voit qu'une propriété mutable ordinaire.
-
-`signal()` corrige ce point en transformant l'état local en source réactive explicite. Le template lit `adding()`, les changements passent par `.set()` ou `.update()`, et Angular sait précisément quelles vues invalider.
 
 ### Fichier à modifier
 
@@ -199,9 +218,26 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 
 ## Exercice 2 — `computed()`
 
+### Problème
+
+Une valeur dérivée finit souvent dans un getter, une méthode ou directement dans le template. Elle peut être recalculée trop souvent, être dupliquée à plusieurs endroits, ou rester difficile à identifier comme règle métier.
+
+Reproduit dans `computed-lab-card.component.ts` :
+
+```ts
+private computeBlockedCount(): number {
+  this.functionCallCount += 1;
+  return this.accounts().filter(a => a.status === 'blocked').length;
+  // filtre la liste entière à chaque appel
+  // → chaque lecture relance le calcul
+}
+```
+
 ### Définition
 
 > `computed()` est une **primitive Signal** : une valeur dérivée mémorisée. Le calcul ne se relance que si une dépendance lue a changé depuis la dernière lecture.
+
+**À retenir :** utilisez `computed()` pour une valeur pure dérivée d'autres signals. Si le code déclenche un effet de bord, ce n'est pas un `computed()`.
 
 ```ts
 readonly blockedAccountsCount = computed(() =>
@@ -210,12 +246,6 @@ readonly blockedAccountsCount = computed(() =>
 
 blockedAccountsCount()  // lecture
 ```
-
-### Problématique corrigée
-
-Le compteur de comptes bloqués est une règle dérivée de `filteredAccounts()`. Sous forme de getter, il est recalculé à chaque lecture et reste exposé comme une simple valeur, sans contrat réactif clair.
-
-`computed()` corrige ce problème en nommant la règle métier et en la mettant en cache. Le compteur devient un signal en lecture seule, recalculé uniquement quand les comptes filtrés changent.
 
 ### Fichiers à modifier
 
@@ -272,17 +302,31 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ---
 
-## Exercice 3 — `effect()` pour synchroniser un état
+## Exercice 3 — `effect()` + `untracked()` pour synchroniser un état
+
+### Problème
+
+Une règle de synchronisation peut être dispersée dans plusieurs handlers, hooks de cycle de vie ou subscriptions. Le code fonctionne tant qu'on pense à appeler la bonne méthode partout, mais il devient fragile dès qu'une nouvelle mutation est ajoutée.
+
+Reproduit dans `effect-lab-card.component.ts` : supprimer des lignes sans recaler `classicPage` laisse l'état en "page 2 / 1".
+
+```ts
+classicRows = ['Ada', 'Grace', 'Alan'];
+classicPage = 2;
+
+removeRows(): void {
+  this.classicRows = ['Ada'];
+  // classicPage oublié : reste à 2 alors que la liste n'a plus qu'une page
+  // → état invalide visible dans le lab : "page 2 / 1"
+}
+```
 
 ### Définition `effect()`
 
 > `effect()` est une **primitive Signal** : elle exécute un effet de bord quand les signals lus dans son corps changent. Elle s'exécute automatiquement, sans appel explicite.
 
-### Problématique corrigée
 
-La page courante doit rester cohérente avec le nombre de résultats. Sans réaction centralisée, chaque mutation de liste doit penser à appeler une méthode impérative de recalage, ce qui disperse la règle et crée un risque d'oubli.
-
-`effect()` corrige ce point en rendant la cohérence automatique : dès que la tranche paginée change, la page est recalée. `untracked()` évite que la lecture de comparaison de `page()` devienne une dépendance inutile de l'effet.
+**À retenir :** utilisez `effect()` pour synchroniser avec quelque chose qui n'est pas une valeur calculée : DOM, stockage, titre de page, recalage d'état, log, intégration externe.
 
 ### Fichier à modifier
 
@@ -356,9 +400,28 @@ Sans `onCleanup`, chaque ré-exécution de l'effet crée un nouveau timer sans s
 
 ## Exercice 4 — `viewChild()` + `effect()` pour le DOM
 
+### Problème
+
+Avec `@ViewChild`, une référence DOM conditionnelle dépend du cycle de vie de la vue. Le code doit vérifier manuellement si l'élément existe déjà, surtout avec un formulaire ou un bloc rendu conditionnellement.
+
+Reproduit dans `view-child-lab-card.component.ts` :
+
+```ts
+@ViewChild('classicField') private classicField?: ElementRef<HTMLInputElement>;
+
+showClassicInputAndFocus(): void {
+  this.classicShowInput = true;
+  this.classicField?.nativeElement.focus();
+  // classicField est undefined ici : le @if (classicShowInput) n'a pas encore été rendu
+  // → focus raté, badge "FOCUS RATÉ" visible dans le lab
+}
+```
+
 ### Définition `viewChild()`
 
 > `viewChild()` est une **API Angular de requête de vue** : elle expose une référence DOM ou composant enfant comme un signal. Elle retourne `undefined` quand l'élément est absent du DOM, `ElementRef` quand il est présent.
+
+**À retenir :** couplez `viewChild()` avec `effect()` quand une action DOM doit réagir à l'apparition réelle d'un élément.
 
 ```ts
 // Avant : ViewChild classique
@@ -367,12 +430,6 @@ Sans `onCleanup`, chaque ré-exécution de l'effet crée un nouveau timer sans s
 // Après : ViewChild signal
 private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
 ```
-
-### Problématique corrigée
-
-Le champ prénom n'existe dans le DOM que lorsque le formulaire d'ajout est affiché. Avec `@ViewChild`, il faut raisonner avec le cycle de vie Angular et vérifier manuellement si la référence est déjà disponible.
-
-`viewChild()` corrige ce problème en exposant la référence comme un signal : `undefined` quand l'élément est absent, `ElementRef` quand il apparaît. Couplé à `effect()`, le focus devient une réaction au DOM réellement rendu.
 
 ### Fichier à modifier
 
@@ -422,21 +479,35 @@ private readonly cards = viewChildren(ClientCardComponent);
 
 ## Exercice 5 — `input()`
 
+### Problème
+
+Une entrée `@Input()` classique peut être utilisée dans le template, mais si elle est lue dans un `computed()` ou un `effect()`, elle ne devient pas une dépendance signal. Une valeur dérivée peut donc rester basée sur une ancienne lecture ou demander du code de synchronisation en plus.
+
+Reproduit dans `input-lab-card.component.ts` (`LabInputChildComponent`) :
+
+```ts
+@Input() classicShowDetails = true;
+
+readonly classicLabel = computed(() =>
+  this.classicShowDetails ? 'details visibles' : 'details masques'
+);
+```
+
+`computed()` ne suit que les lectures de signals — celles qui s'écrivent `this.x()`. Ici, `classicShowDetails` est un `@Input()` ordinaire : le lire ne crée aucune dépendance. Angular considère ce `computed()` comme n'ayant rien à surveiller, et met son résultat en cache définitivement.
+
+Conséquence : le parent bascule `classicShowDetails` de `true` à `false`, mais `classicLabel()` retourne toujours `'details visibles'` — la valeur calculée lors de la première exécution.
+
 ### Définition
 
 > `input()` est une **API composant Angular** : elle déclare une entrée de composant sous forme de signal. La valeur passée par le parent devient une dépendance réelle dans les `computed()` et `effect()`.
+
+**À retenir :** utilisez `input()` quand une entrée doit participer à une dérivation ou à une réaction signal.
 
 ```ts
 showStatus = input(true);              // avec valeur par défaut
 account = input.required<Account>();   // requis
 showStatus()                           // lecture
 ```
-
-### Problématique corrigée
-
-Le composant calcule `visibleStatusLabel` à partir de `showStatus`. Avec un `@Input()` classique lu dans un `computed()`, Angular ne crée pas de dépendance réactive : si le parent change l'entrée, le calcul peut rester basé sur une ancienne valeur.
-
-`input()` corrige ce problème en exposant l'entrée comme un signal. Le `computed()` lit `showStatus()`, donc il est automatiquement invalidé quand le parent modifie l'entrée.
 
 ### Fichier à modifier
 
@@ -475,21 +546,30 @@ npm test -- --runTestsByPath src/app/features/accounts/components/account-card/a
 
 ## Exercice 6A — `output()`
 
+### Problème
+
+`@Output()` + `EventEmitter` fonctionne, mais l'API mélange l'idée d'événement composant avec une forme qui ressemble à un flux RxJS. Cela peut encourager à traiter une sortie simple comme une source de stream applicatif.
+
+Pattern classique :
+
+```ts
+@Output() selectedRequested = new EventEmitter<Account>();
+// EventEmitter hérite de Subject (RxJS)
+// → selectedRequested.pipe(...) et .subscribe(...) accessibles depuis l'extérieur
+// → l'API expose un flux là où seule une intention de composant est nécessaire
+```
+
 ### Définition
 
 > `output()` est une **API composant Angular** : elle déclare un événement sortant du composant. L'enfant émet une intention, le parent décide quoi faire. Ce n'est pas un Observable.
+
+**À retenir :** utilisez `output()` pour signaler une action ou une intention vers le parent direct, pas pour partager un état.
 
 ```ts
 selectedRequested = output<Account>();       // déclarer
 this.selectedRequested.emit(account);        // émettre
 (selectedRequested)="startEdit($event)"      // écouter dans le parent
 ```
-
-### Problématique corrigée
-
-`selectedRequested` est encore déclaré avec `@Output()` et `EventEmitter`, alors que le reste du composant utilise déjà les nouvelles sorties Angular. Le composant mélange donc deux styles pour exprimer le même contrat.
-
-`output()` corrige ce problème en déclarant clairement un événement sortant sans l'habiller comme un Observable RxJS. L'enfant émet une intention, le parent garde la décision métier.
 
 ### Fichier à modifier
 
@@ -538,9 +618,24 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ## Exercice 6B — `model()`
 
+### Problème
+
+Une même valeur logique peut être éclatée entre une entrée, une sortie de changement et plusieurs méthodes de synchronisation. Plus le composant enfant participe à l'édition de cette valeur, plus le contrat devient verbeux.
+
+Reproduit dans `model-lab-card.component.ts` (`LabModelLegacyChildComponent`) :
+
+```ts
+@Input() value = 0;
+@Output() valueChange = new EventEmitter<number>();
+// deux déclarations + convention de nommage pour une seule valeur bidirectionnelle
+// côté parent : [value]="x" (valueChange)="x = $event"
+```
+
 ### Définition
 
 > `model()` est une **API composant Angular** : elle déclare une valeur bidirectionnelle entre parent et enfant. L'enfant peut lire et modifier la valeur directement, sans émettre d'événements. Elle combine `input()` et `output()` en une seule déclaration.
+
+**À retenir :** utilisez `model()` quand parent et enfant partagent réellement le contrôle d'une même valeur UI : sélection, filtre, toggle, mode d'édition.
 
 ```ts
 editingAccountId = model<string | null>(null);
@@ -553,12 +648,6 @@ this.editingAccountId.set(null);         // fermer
 [(editingAccountId)]="editingAccountId"
 ```
 
-### Problématique corrigée
-
-L'état d'édition est une valeur partagée entre parent et enfant. Avec `input()` + `editRequested` + `cancelRequested`, une seule valeur logique est éclatée entre une entrée et plusieurs événements de synchronisation.
-
-`model()` corrige ce problème en déclarant explicitement une valeur bidirectionnelle. L'enfant peut ouvrir ou fermer l'édition avec `.set()`, tandis que le parent garde une liaison unique `[(editingAccountId)]`.
-
 ### Fichiers à modifier
 
 - `src/app/features/accounts/components/account-list/account-list.component.ts`
@@ -566,7 +655,7 @@ L'état d'édition est une valeur partagée entre parent et enfant. Avec `input(
 
 ### Consigne
 
-Dans `account-list.component.ts`, remplacer les trois déclarations par un seul `model()` :
+Dans `account-list.component.ts`, remplacer `editingAccountId` et `cancelRequested` par `model()`. `editRequested` est conservé car le parent en a encore besoin pour remplir `editAccount` :
 
 ```ts
 // Avant
@@ -576,22 +665,24 @@ cancelRequested  = output<void>();
 
 // Après
 editingAccountId = model<string | null>(null);
+editRequested    = output<Account>();  // conservé — parent doit connaître le compte complet
 ```
 
-Modifier `requestEdit()` pour appeler `.set()` directement, et ajouter `cancelEdit()` :
+Modifier `requestEdit()` et ajouter `cancelEdit()` :
 
 ```ts
 requestEdit(account: Account): void {
   this.selectedAccount.set(account);
-  this.editingAccountId.set(account.id);  // remplace editRequested.emit(account)
+  this.editingAccountId.set(account.id);
+  this.editRequested.emit(account);  // toujours nécessaire pour startEdit() parent
 }
 
 cancelEdit(): void {
-  this.editingAccountId.set(null);
+  this.editingAccountId.set(null);   // remplace cancelRequested.emit()
 }
 ```
 
-Dans `accounts.component.ts`, convertir `editingAccountId` en signal et simplifier `startEdit()` :
+Dans `accounts.component.ts`, convertir `editingAccountId` en signal et supprimer `cancelEdit()` :
 
 ```ts
 // Avant
@@ -605,13 +696,12 @@ cancelEdit(): void { this.editingAccountId = null; }
 // Après
 readonly editingAccountId = signal<string | null>(null);
 startEdit(account: Account): void {
-  // editingAccountId est désormais géré par l'enfant via model()
   this.editAccount = { id: account.id, label: account.label, type: account.type, status: account.status };
 }
-// cancelEdit() supprimée : l'enfant appelle .set(null) directement
+// cancelEdit() supprimée : l'enfant appelle editingAccountId.set(null) directement
 ```
 
-Dans le template `accounts.component.html`, remplacer les trois liaisons par une seule :
+Dans le template `accounts.component.html`, passer de trois liaisons à deux :
 
 ```html
 <!-- Avant -->
@@ -637,11 +727,30 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 | Usage typique | Intentions (clic, soumission) | Sélections, filtres, toggles |
 | Binding parent | `(editRequested)="startEdit($event)"` | `[(editingAccountId)]="editingAccountId"` |
 
+---
+
 ## Exercice 7 — `linkedSignal()`
+
+### Problème
+
+Pour un formulaire prérempli depuis une sélection, `computed()` est trop rigide car il est en lecture seule, tandis qu'un `signal()` simple peut se désynchroniser si on oublie de le réinitialiser quand la sélection change.
+
+Reproduit dans `linked-signal-lab-card.component.ts` :
+
+```ts
+readonly selected = signal<DemoPerson>(PERSONS[0]);
+
+// computed() — se synchronise automatiquement, mais lecture seule
+readonly computedName = computed(() => this.selected().name);
+// → l'utilisateur ne peut pas modifier cette valeur dans un champ input
+// computedName.set('Alice modifiée'); // ← ERREUR : computed() est en lecture seule
+```
 
 ### Définition
 
 > `linkedSignal()` est une **primitive Signal** : elle crée un signal writable dérivé d'un autre signal. Contrairement à `computed()` qui est en lecture seule, sa valeur peut être modifiée par `.set()` ou `.update()`. Elle est automatiquement recalculée quand la source change.
+
+**À retenir :** utilisez `linkedSignal()` quand une valeur vient d'une source réactive mais doit ensuite être éditable localement.
 
 ```ts
 readonly value = linkedSignal(() => this.source());
@@ -649,12 +758,6 @@ value()        // lecture
 value.set(x)   // écriture possible — contrairement à computed()
 // Quand source() change → value() est recalculée depuis la source
 ```
-
-### Problématique corrigée
-
-Le formulaire d'édition doit être initialisé depuis le compte sélectionné, puis rester modifiable localement. Un `computed()` serait recalculé mais non modifiable ; un `signal()` simple serait modifiable mais ne se réinitialiserait pas automatiquement quand la sélection change.
-
-`linkedSignal()` corrige cette tension : la valeur repart de la source quand le compte sélectionné change, mais elle reste writable entre deux changements pour porter les modifications du formulaire.
 
 ### Fichier à modifier
 
@@ -712,20 +815,29 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ## Exercice 8 — Interop RxJS progressive
 
+### Problème
+
+Un composant peut accumuler des subscriptions, du nettoyage manuel, des états `loading/error` séparés et des conversions ponctuelles. Le template veut lire une valeur, mais le composant porte toute la plomberie du flux.
+
+Reproduit dans `interop-lab-card.component.ts` : sans `debounceTime`, chaque frappe déclencherait immédiatement une opération — le lab comptabilise ce ratio avec `instantCount` vs `debouncedCount`.
+
+```ts
+readonly search = signal('');
+// sans toObservable() + debounceTime + toSignal(),
+// chaque mise à jour de search() déclencherait un appel HTTP immédiat
+// → taper "Alice" = 5 frappes = 5 requêtes potentielles
+```
+
 ### Définition
 
 > `toSignal()` et `toObservable()` sont des **APIs d'interop RxJS** : `toSignal()` convertit un Observable en signal (dernière valeur émise, abonnement géré automatiquement), `toObservable()` expose un signal comme Observable pour brancher des opérateurs RxJS.
+
+**À retenir :** gardez RxJS pour le temps, l'annulation et la composition de flux ; utilisez Signals pour exposer une valeur courante lisible par le template.
 
 ```ts
 // Signal → Observable pour opérateurs RxJS
 readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 ```
-
-### Problématique corrigée
-
-Le code initial mélange des souscriptions manuelles, du `takeUntilDestroyed`, des états `loading/error` gérés à la main et des conversions ponctuelles avec `firstValueFrom()`. Le composant porte trop de plomberie RxJS alors que le template a surtout besoin de lire des valeurs.
-
-`toSignal()` corrige ce problème en exposant la dernière valeur d'un Observable comme signal, avec abonnement géré par Angular. `toObservable()` couvre le besoin inverse : repasser temporairement par RxJS quand une temporalité comme `debounceTime()` est nécessaire.
 
 ### Fichiers à modifier
 
@@ -827,9 +939,30 @@ npm test -- --runTestsByPath src/app/features/clients/pages/dashboard/dashboard.
 
 ## Exercice 9 — `afterNextRender()` / `afterEveryRender()`
 
+### Problème
+
+Une action DOM qui doit attendre la mise à jour de la vue finit souvent avec un `setTimeout()`, un hook indirect ou une hypothèse fragile sur le moment où le DOM est prêt.
+
+Reproduit dans `after-render-lab-card.component.ts` : mesurer la hauteur d'un panneau immédiatement après `renderPanelVisible.set(true)` retourne toujours "panneau absent" — Angular n'a pas encore écrit l'élément dans le DOM.
+
+```ts
+showPanelAndMeasure(): void {
+  this.renderPanelVisible.set(true);
+  this.immediateMeasure.set(
+    this.renderPanel()
+      ? `${this.renderPanel()!.nativeElement.getBoundingClientRect().height}px`
+      : 'panneau absent'
+    // toujours "panneau absent" : le rendu DOM n'a pas encore eu lieu
+  );
+}
+```
+
 ### Définition
 
 > `afterNextRender()` et `afterEveryRender()` sont des **hooks de rendu Angular** : ils permettent d'exécuter du code après qu'Angular a écrit dans le DOM, quand les mesures et manipulations DOM sont sûres.
+
+
+**À retenir :** utilisez `afterNextRender()` pour une action DOM ponctuelle après une action utilisateur ; gardez `effect()` pour les réactions à un changement d'état.
 
 | | `afterNextRender()` | `afterEveryRender()` |
 |---|---|---|
@@ -857,12 +990,6 @@ effect()          → réactif : se relance à chaque changement de dépendance
 afterNextRender() → one-shot : s'exécute une fois après le prochain rendu
 afterEveryRender() → récurrent : s'exécute après chaque cycle de rendu
 ```
-
-### Problématique corrigée
-
-Le scroll en haut de liste doit se produire après l'ajout d'un client, mais seulement quand le rendu suivant a réellement créé ou réorganisé le DOM. Un `effect()` serait trop large : il observerait un état et pourrait se relancer au-delà de l'action concernée.
-
-`afterNextRender()` corrige ce problème en planifiant une action DOM one-shot après le prochain rendu Angular. `afterEveryRender()` couvre le cas différent des mesures récurrentes, mais il n'est pas nécessaire pour le scroll de cet exercice.
 
 ### Fichier à modifier
 
@@ -911,19 +1038,29 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 | Réaction continue à un changement d'état | `effect()` |
 | Opération DOM déclenchée par l'apparition d'un élément | `effect()` + `viewChild()` |
 
+---
+
 ## Exercice 10 — Consolidation façade avec `computed()`
 
-Cet exercice ne présente pas une nouvelle API. Il sert à consolider l'architecture : une règle métier dérivée doit vivre au bon endroit, avec un nom explicite et une surface testable.
+### Problème
+
+Une règle métier simple peut rester cachée dans le template ou dans la page. Elle devient moins visible, moins testable, et risque d'être recopiée ailleurs avec des variantes.
+
+Par exemple, dans `accounts.component.html` : la règle "est-ce qu'un filtre est actif ?" est exprimée en ligne, sans nom, sans test possible, et peut être dupliquée dans un autre template avec une légère différence.
+
+```html
+<!-- Règle métier anonyme enfouie dans le template -->
+{{ (search().trim().length > 0 || typeFilter() !== 'all')
+     ? 'Aucun compte ne correspond aux filtres.'
+     : 'Aucun compte trouvé.' }}
+```
 
 ### Définition
 
-> Cet exercice est une **consolidation d'architecture** : l'API utilisée est `computed()`, mais l'objectif principal est d'exposer une règle métier dérivée dans la façade plutôt que de la calculer en ligne dans le template ou le composant.
+> Cet exercice consolide l'architecture : l'API utilisée est `computed()`, mais l'objectif est d'exposer une règle métier dérivée dans la façade plutôt que de la calculer en ligne dans le template ou le composant.
 
-### Problématique corrigée
 
-Le message vide dépend d'une règle métier : savoir si l'utilisateur a activé un filtre. Si cette règle reste calculée dans le template ou dans la page, elle est difficile à nommer, à tester et à réutiliser.
-
-La consolidation corrige ce problème en déplaçant la règle dans la façade sous forme de `computed()`. La page consomme un signal nommé `hasActiveFilter`, et le template ne porte plus la logique métier.
+**À retenir :** quand une règle dérivée appartient au domaine de la page ou à l'état partagé, placez-la dans la façade plutôt que dans le template.
 
 ### Fichiers à modifier
 

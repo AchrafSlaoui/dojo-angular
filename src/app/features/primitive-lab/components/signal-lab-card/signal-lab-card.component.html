@@ -1,0 +1,39 @@
+<app-primitive-lab-item
+  [apis]="['signal()']"
+  title="Mutation non visible en OnPush"
+  risk="Une propriete booleenne modifiee dans un timer async ne reveille pas un composant OnPush. La vue reste figee jusqu'au prochain cycle de detection."
+>
+  <p class="note">
+    Guide : ① Cliquez <strong>Timer booleen</strong> → ② Attendez 1 s (rien ne bouge) →
+    ③ Cliquez <strong>Reveiller Angular</strong> pour voir la mise a jour retardee.
+    Puis ④ <strong>Reset</strong> et testez <strong>Timer signal()</strong> : la vue se met a jour sans reveil.
+  </p>
+  <div class="actions">
+    <button class="btn outline" type="button" (click)="launchClassicTimer()">① Timer booleen</button>
+    <button class="btn primary" type="button" (click)="launchSignalTimer()">Timer signal()</button>
+    <button class="btn outline" type="button" (click)="wakeAngular()">③ Reveiller Angular</button>
+    <button class="btn ghost" type="button" (click)="reset()">Reset</button>
+  </div>
+  <div class="compare">
+    <div>
+      <code>adding: boolean</code>
+      <strong>{{ classicAdding ? 'true' : 'false' }}</strong>
+      @if (classicAdding) {
+        <p class="ok">Formulaire visible — apres reveil manuel ({{ wakeCount() }} reveil(s)).</p>
+      }
+      @if (classicLog) {
+        <p class="warn">{{ classicLog }}</p>
+      }
+      @if (!classicAdding && classicLog) {
+        <span class="badge badge-err">VUE FIGEE</span>
+      }
+    </div>
+    <div>
+      <code>adding = signal(false)</code>
+      <strong>{{ signalAdding() ? 'true' : 'false' }}</strong>
+      @if (signalAdding()) {
+        <p class="ok">Formulaire visible — immediatement apres le timer.</p>
+      }
+    </div>
+  </div>
+</app-primitive-lab-item>

@@ -1,0 +1,30 @@
+<app-primitive-lab-item
+  [apis]="['effect()']"
+  title="Regle de coherence oubliee"
+  risk="Le risque est d'oublier de recalculer classicPage apres une mutation. Chaque endroit du code qui modifie la liste doit penser a recaler la page — avec effect(), c'est automatique et impossible a oublier."
+>
+  <div class="actions">
+    <button class="btn primary" type="button" (click)="removeRows()">Supprimer des lignes</button>
+    <button class="btn ghost" type="button" (click)="resetRows()">Reset</button>
+  </div>
+  <div class="compare">
+    <div>
+      <code>sans effect()</code>
+      <strong [class.err]="classicPage > classicTotalPages">page {{ classicPage }} / {{ classicTotalPages }}</strong>
+      @if (classicPage > classicTotalPages) {
+        <span class="badge badge-err">PAGE INVALIDE</span>
+        <p class="warn">La mutation n'a pas pense a recaler la page.</p>
+      } @else {
+        <p class="note">Supprimez des lignes pour voir l'etat invalide.</p>
+      }
+    </div>
+    <div>
+      <code>avec effect()</code>
+      <strong>page {{ signalPage() }} / {{ signalTotalPages() }}</strong>
+      @if (signalPage() <= signalTotalPages()) {
+        <span class="badge badge-ok">PAGE VALIDE</span>
+        <p class="ok">La page est recalee automatiquement par l'effect().</p>
+      }
+    </div>
+  </div>
+</app-primitive-lab-item>

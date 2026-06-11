@@ -1,0 +1,30 @@
+<app-primitive-lab-item
+  [apis]="['toSignal()', 'toObservable()']"
+  title="Frontiere RxJS / Signal"
+  risk="Sans debounce, chaque frappe declencherait une requete HTTP. toObservable() + debounceTime + toSignal() stabilise le flux avant de l'exposer comme signal au template."
+>
+  <label class="field">
+    Recherche (tapez vite)
+    <input [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="ex: Alice" />
+  </label>
+  <div class="compare">
+    <div>
+      <code>sans debounce</code>
+      <strong [class.err]="instantCount() > debouncedCount()">{{ instantCount() }} frappe(s)</strong>
+      @if (instantCount() > 0) {
+        <span class="badge badge-err">{{ instantCount() }} requete(s) HTTP potentielle(s)</span>
+        <p class="warn">Chaque frappe aurait declenche une requete.</p>
+      }
+    </div>
+    <div>
+      <code>avec debounceTime(500)</code>
+      <strong>{{ debouncedCount() }} recherche(s)</strong>
+      @if (debouncedCount() > 0) {
+        <span class="badge badge-ok">{{ instantCount() - debouncedCount() }} requete(s) evitee(s)</span>
+        <p class="ok">Recherche stabilisee : "{{ debouncedSearch() || '...' }}"</p>
+      } @else {
+        <p class="note">Attendez 500 ms apres la derniere frappe.</p>
+      }
+    </div>
+  </div>
+</app-primitive-lab-item>

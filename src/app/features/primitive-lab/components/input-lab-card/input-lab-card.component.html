@@ -1,0 +1,19 @@
+<app-primitive-lab-item
+  [apis]="['input()']"
+  title="@Input() non reactif dans un computed()"
+  risk="Un @Input() classique lu dans un computed() ne devient pas une dependance signal. Le computed() evalue une fois et ne se recalcule plus jamais, meme quand le parent change la valeur."
+>
+  <div class="actions">
+    <button class="btn primary" type="button" (click)="toggleInputDemo()">
+      Basculer l'entree ({{ toggleCount }} bascule(s))
+    </button>
+  </div>
+  <p class="note">
+    Attendu apres bascule : <strong>{{ classicShowDetails ? 'details visibles' : 'details masques' }}</strong>.
+    Observez la ligne "FIGE" ci-dessous qui ne suit pas.
+  </p>
+  <app-lab-input-child
+    [classicShowDetails]="classicShowDetails"
+    [signalShowDetails]="signalShowDetails()"
+  />
+</app-primitive-lab-item>

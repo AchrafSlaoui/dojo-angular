@@ -1,0 +1,43 @@
+<app-primitive-lab-item
+  [apis]="['viewChild()']"
+  title="Reference DOM disponible trop tard"
+  risk="Avec @ViewChild classique, un element conditionnel n'existe pas encore quand le code tente de le manipuler. viewChild() signal + effect() garantit que la reference est prete avant d'agir."
+>
+  <div class="actions">
+    <button class="btn outline" type="button" (click)="showClassicInputAndFocus()">Afficher + focus classique</button>
+    <button class="btn primary" type="button" (click)="showSignalInputAndFocus()">Afficher + focus signal</button>
+    <button class="btn ghost" type="button" (click)="reset()">Reset</button>
+  </div>
+  <div class="compare">
+    <div>
+      <code>@ViewChild classique</code>
+      @if (classicFocusStatus() === 'none') {
+        <p class="note">Cliquez "Afficher + focus classique".</p>
+      }
+      @if (classicFocusStatus() === 'failed') {
+        <span class="badge badge-err">FOCUS RATE</span>
+        <p class="warn">La reference etait absente au moment du focus — le champ vient d'etre rendu.</p>
+      }
+      @if (classicFocusStatus() === 'success') {
+        <span class="badge badge-ok">FOCUS OK</span>
+        <p class="ok">La reference etait deja disponible (champ deja rendu).</p>
+      }
+      @if (classicShowInput) {
+        <input #classicField placeholder="@ViewChild classique" />
+      }
+    </div>
+    <div>
+      <code>viewChild() signal</code>
+      @if (signalFocusStatus() === 'none') {
+        <p class="note">Cliquez "Afficher + focus signal".</p>
+      }
+      @if (signalFocusStatus() === 'applied') {
+        <span class="badge badge-ok">FOCUS APPLIQUE</span>
+        <p class="ok">L'effect() a attendu que le champ soit reellement dans le DOM avant d'agir.</p>
+      }
+      @if (signalShowInput()) {
+        <input #signalField placeholder="viewChild() signal" />
+      }
+    </div>
+  </div>
+</app-primitive-lab-item>
