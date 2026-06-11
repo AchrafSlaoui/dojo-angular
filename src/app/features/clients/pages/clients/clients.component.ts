@@ -25,6 +25,7 @@ export class ClientsComponent {
   private readonly notifications = inject(NotificationService);
   private readonly confirm = inject(ConfirmService);
 
+  // Exemple signal()
   private readonly clientsState = signal<ClientActivity[]>([]);
   readonly search = signal('');
   readonly sort = signal<ClientSort>('latestMovement');
@@ -34,6 +35,7 @@ export class ClientsComponent {
   readonly mutating = signal(false);
   readonly error = signal<string | null>(null);
 
+  // Exemple computed()
   private readonly pageSlice = computed(() =>
     paginateClients({
       clients: this.clientsState(),
@@ -54,9 +56,11 @@ export class ClientsComponent {
   newClient: Omit<Client, 'id'> = { firstName: '', lastName: '', email: '', phone: '', address: '' };
   // EXERCICE 4
   @ViewChild('firstNameRef') private firstNameInput?: ElementRef;
+  // Exemple toObservable()
   readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
   constructor() {
+    // Exemple effect()
     effect(() => {
       document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';
     });

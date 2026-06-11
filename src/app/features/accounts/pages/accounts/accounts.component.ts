@@ -22,6 +22,7 @@ export class AccountsComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly accountsFacade = inject(AccountsFacade);
   private readonly clientId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
+  // Exemple toSignal()
   private readonly initialTypeFilter: Signal<string> = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get('type') ?? 'all')),
     { initialValue: 'all' }

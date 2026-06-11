@@ -12,6 +12,7 @@ import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountCardComponent {
+  // Exemple input()
   account = input.required<Account>();
   clientId = input.required<string>();
   // EXERCICE 5

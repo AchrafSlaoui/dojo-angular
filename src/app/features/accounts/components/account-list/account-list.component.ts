@@ -18,6 +18,7 @@ export class AccountListComponent {
   editingAccountId = input<string | null>(null);
   editAccount = input.required<AccountUpdate>();
 
+  // Exemple output()
   editRequested = output<Account>();
   saveRequested = output<void>();
   cancelRequested = output<void>();

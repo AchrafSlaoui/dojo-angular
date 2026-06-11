@@ -22,11 +22,14 @@ export class AccountsFacade {
   readonly mutating = signal(false);
   readonly error = signal<string | null>(null);
 
+  // Exemple signal.asReadonly()
   readonly accounts = this.accountsState.asReadonly();
   readonly clientId = this.clientIdState.asReadonly();
+  // Exemple computed()
   readonly filteredAccounts = computed(() =>
     this.filterAccounts(this.accountsState(), this.search(), this.typeFilter())
   );
+  // Exemple computed()
   readonly totalBalance = computed(() =>
     Math.round(this.filteredAccounts().reduce((total, account) => total + account.balance, 0) * 100) / 100
   );
