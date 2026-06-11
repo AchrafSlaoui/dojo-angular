@@ -28,6 +28,8 @@ export class AccountsComponent {
 
   readonly search = this.accountsFacade.search;
   readonly typeFilter = this.accountsFacade.typeFilter;
+  // EXERCICE 10
+  readonly hasActiveFilter = this.accountsFacade.hasActiveFilter;
   readonly loading = this.accountsFacade.loading;
   readonly mutating = this.accountsFacade.mutating;
   readonly error = this.accountsFacade.error;

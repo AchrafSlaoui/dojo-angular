@@ -18,6 +18,9 @@ export class AccountsFacade {
   readonly search = signal('');
   readonly typeFilter = signal<AccountTypeFilter>('all');
   // EXERCICE 10
+  readonly hasActiveFilter = computed(() =>
+    this.search().trim().length > 0 || this.typeFilter() !== 'all'
+  );
   readonly loading = signal(false);
   readonly mutating = signal(false);
   readonly error = signal<string | null>(null);

@@ -76,6 +76,8 @@
     (deleteRequested)="deleteAccount($event)"
   ></app-account-list>
 } @else if (!loading()) {
-  <!-- EXERCICE 8 -->
-  <div class="empty">Aucun compte trouve.</div>
+  <!-- EXERCICE 10 -->
+  <div class="empty">
+    {{ hasActiveFilter() ? 'Aucun compte ne correspond aux filtres.' : 'Aucun compte trouve.' }}
+  </div>
 }
