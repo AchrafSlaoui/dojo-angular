@@ -280,13 +280,16 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ### Consigne
 
-Remplacer l'appel impératif `this.clampCurrentPage()` par un `effect()` dans le constructeur.
+Remplacer l'appel impératif `this.clampCurrentPage()` par un `effect()` dans le constructeur, en utilisant `untracked()` pour lire la page courante sans en faire une dépendance de l'effet.
 
 ```ts
+// Ajouter untracked aux imports
+import { effect, untracked } from '@angular/core';
+
 // Ajouter dans le constructeur
 effect(() => {
   const clamped = this.pageSlice().page;
-  if (clamped !== this.page()) this.page.set(clamped);
+  if (clamped !== untracked(this.page)) this.page.set(clamped);
 });
 
 // Supprimer dans deleteClient()
@@ -296,7 +299,7 @@ this.clampCurrentPage(); // ← retirer cette ligne
 private clampCurrentPage(): void { ... }
 ```
 
-Point d'attention : `this.page()` est lu dans l'effet pour la comparaison, ce qui crée une dépendance non intentionnelle. `untracked()` permet de lire un signal sans s'y abonner.
+Point d'attention : `this.page()` est lu uniquement pour comparer avant d'écrire. Sans `untracked()`, cette lecture crée une dépendance non intentionnelle : l'effet dépendrait à la fois de `pageSlice()` et de `page()`.
 
 ```ts
 // Sans untracked() : page() devient une dépendance → l'effet peut se déclencher en boucle

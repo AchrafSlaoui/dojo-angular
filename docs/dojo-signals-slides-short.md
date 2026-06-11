@@ -60,18 +60,10 @@ Zone.js (défaut)
 Les branches d'exercices sont cumulatives.
 
 ```text
-init
-`-- exercice-1
-    `-- exercice-2
-        `-- exercice-3
-            `-- exercice-4
-                `-- exercice-5
-                    `-- exercice-6
-                        `-- exercice-7
-                            `-- exercice-8
-                                `-- exercice-9
-                                    `-- exercice-10
-                                        `-- exercice-11
+main : support de présentation et documentation
+
+init -> ex1 -> ex2 -> ex3 -> ex4 -> ex5 -> ex6
+     -> ex6-model -> ex7 -> ex8 -> ex9 -> ex10 -> ex11
 ```
 
 Chaque branche d'exercice ajoute uniquement la correction de son exercice par rapport a la branche precedente.
@@ -80,24 +72,25 @@ Chaque branche d'exercice ajoute uniquement la correction de son exercice par ra
 
 ## Primitives Signal — Vue d'ensemble
 
-| Primitive | Role |
-|---|---|
-| `signal()` | Valeur reactive mutable. Source de verite de l'etat local. |
-| `computed()` | Valeur derivee en lecture seule, mise en cache automatiquement. |
-| `effect()` | Effet de bord execute a chaque changement de dependance. |
-| `effect(onCleanup)` | Libere une ressource avant la prochaine execution de l'effet. |
-| `viewChild()` | Reference reactive a un element DOM ou composant enfant. |
-| `input()` | Prop en lecture seule exposee comme signal. |
-| `output()` | Evenement sortant vers le parent. Pas un Observable. |
-| `model()` | Valeur bidirectionnelle input + output. Two-way binding signal. |
-| `linkedSignal()` | Signal mutable derive d'un autre. Se reinitialise quand la source change. |
-| `toSignal()` | Convertit un Observable en signal. Abonnement gere automatiquement. |
-| `toObservable()` | Expose un signal comme Observable pour les operateurs RxJS. |
-| `rxResource()` | Chargement async reactif avec value(), isLoading et error(). |
-| `afterNextRender()` | Callback execute une seule fois apres le prochain rendu DOM. |
-| `afterRender()` | Callback execute apres chaque cycle de rendu DOM. |
-| `untracked()` | Lit un signal sans creer de dependance dans un effet ou computed. |
-| `signal.asReadonly()` | Expose un signal interne sans son setter. |
+| Primitive | Role | Exemple fichier |
+|---|---|---|
+| `signal()` | Valeur reactive mutable. Source de verite locale. | `clients.component.ts` |
+| `computed()` | Valeur derivee en lecture seule. | `accounts.facade.ts` |
+| `effect()` | Effet de bord sur dependances signal. | `clients.component.ts` |
+| `effect(onCleanup)` | Libere timer, listener ou subscription. | `signals-demo.component.ts` |
+| `viewChild()` | Reference reactive a un element DOM. | `clients.component.ts` |
+| `viewChildren()` | Liste reactive de references rendues. | `signals-demo.component.ts` |
+| `input()` | Prop en lecture seule exposee comme signal. | `account-card.component.ts` |
+| `output()` | Evenement sortant vers le parent. | `account-list.component.ts` |
+| `model()` | Valeur bidirectionnelle input + output. | `account-list.component.ts` |
+| `linkedSignal()` | Signal mutable derive d'une source. | `accounts.component.ts` |
+| `toSignal()` | Observable vers signal. | `accounts.component.ts` |
+| `toObservable()` | Signal vers Observable RxJS. | `clients.component.ts` |
+| `rxResource()` | Chargement async avec loading/error/value. | `dashboard.component.ts` |
+| `afterNextRender()` | Callback one-shot apres prochain rendu. | `clients.component.ts` |
+| `afterRender()` | Callback apres chaque rendu Angular. | `signals-demo.component.ts` |
+| `untracked()` | Lecture sans dependance reactive. | `signals-demo.component.ts` |
+| `signal.asReadonly()` | Etat interne expose sans setter. | `accounts.facade.ts` |
 
 ---
 
@@ -107,7 +100,7 @@ Chaque branche d'exercice ajoute uniquement la correction de son exercice par ra
 |---|---|---|---|
 | 1 — `signal()` | `src/app/features/clients/pages/clients/clients.component.ts` | Valeur reactive mutable lue avec `()`. | Convertir l'etat `adding` en signal. Le template doit afficher le formulaire a partir de ce nouvel etat reactif. |
 | 2 — `computed()` | `src/app/features/accounts/services/accounts.facade.ts`, `src/app/features/accounts/pages/accounts/accounts.component.*` | Valeur derivee en lecture seule. | Transformer `blockedAccountsCount` en valeur derivee de la facade. La page accounts doit afficher ce compteur sans recalculer elle-meme la regle. |
-| 3 — `effect()` | `src/app/features/clients/pages/clients/clients.component.ts` | Effet de bord declenche par les signals lus. | Remplacer le recalage imperatif de la page courante par une reaction automatique. Quand la liste change, la page selectionnee doit rester valide. |
+| 3 — `effect()` + `untracked()` | `src/app/features/clients/pages/clients/clients.component.ts` | Effet de bord declenche par les signals lus, avec lecture non suivie. | Remplacer le recalage imperatif de la page courante par une reaction automatique. Lire la page courante avec `untracked()` pour ne pas l'ajouter aux dependances de l'effet. |
 | 4 — `viewChild()` + `effect()` | `src/app/features/clients/pages/clients/clients.component.ts` | Reference DOM exposee comme signal, puis effet DOM. | Remplacer la reference DOM classique du champ prenom par une reference signal, puis declencher le focus quand ce champ apparait. |
 | 5 — `input()` | `src/app/features/accounts/components/account-card/account-card.component.ts` | Entree de composant exposee comme signal. | Convertir `showStatus` en input signal. Le libelle de statut doit reagir correctement quand le parent choisit d'afficher ou masquer ce statut. |
 | 6A — `output()` | `account-list.component.ts` | Evenement sortant vers le parent. Pas un Observable. | Groupe A : remplacer `selectedRequested` EventEmitter par `output()`. |
@@ -123,6 +116,18 @@ Chaque branche d'exercice ajoute uniquement la correction de son exercice par ra
 ## Extension avancée — Exercices 8 à 11
 
 Ces exercices couvrent des primitives Angular avancées. Ils peuvent être traités en autonomie après les exercices socle (1 à 7).
+
+---
+
+## Références code — primitives avancées
+
+`src/app/features/signals-demo/signals-demo.component.ts` contient des références rapides pour les primitives citées mais non exercées directement :
+
+- `untracked()` : lire un signal sans créer de dépendance réactive.
+- `signal.asReadonly()` : exposer un signal interne sans setter public.
+- `viewChildren()` : récupérer toutes les instances rendues sous forme de signal.
+- `effect(onCleanup)` : libérer timer, listener ou subscription.
+- `afterRender()` : exécuter une mesure DOM après chaque rendu Angular.
 
 ---
 

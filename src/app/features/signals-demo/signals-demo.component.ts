@@ -59,4 +59,11 @@ export class SignalsDemoComponent {
 
   // model()
   readonly targetAmount = signal(500);
+
+  // References rapides pour les primitives avancees citees dans les slides :
+  // - untracked(() => this.balance()) : lire un signal sans creer de dependance reactive.
+  // - signal.asReadonly() : exposer un signal interne sans donner acces a .set() / .update().
+  // - viewChildren(ClientCardComponent) : recuperer toutes les instances rendues sous forme de Signal<readonly T[]>.
+  // - effect((onCleanup) => { onCleanup(() => cleanup()); }) : liberer timer, listener ou subscription.
+  // - afterRender(() => measureDom()) : executer une mesure DOM apres chaque rendu Angular.
 }
