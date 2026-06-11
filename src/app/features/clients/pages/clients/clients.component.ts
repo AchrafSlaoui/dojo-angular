@@ -1,6 +1,6 @@
-import { Component, ChangeDetectionStrategy, ElementRef, Signal, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ElementRef, Injector, Signal, afterNextRender, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ScrollingModule } from '@angular/cdk/scrolling';
+import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { debounceTime, firstValueFrom } from 'rxjs';
 import { Client } from '@clients/models/client';
@@ -59,6 +59,9 @@ export class ClientsComponent {
   private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
   // Exemple toObservable()
   readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
+  // EXERCICE 9
+  private readonly viewport = viewChild(CdkVirtualScrollViewport);
+  private readonly injector = inject(Injector);
 
   constructor() {
     // Exemple effect()
@@ -114,6 +117,12 @@ export class ClientsComponent {
       this.clientsState.update((list) => [{ ...created, recentMovements: [] }, ...list.filter((c) => c.id !== created.id)]);
       this.page.set(1);
       // EXERCICE 9
+      afterNextRender(
+        () => {
+          this.viewport()?.scrollToIndex(0);
+        },
+        { injector: this.injector }
+      );
       this.notifications.success(`Client ${firstName} ${lastName} cree.`);
       this.adding.set(false);
     } catch {
