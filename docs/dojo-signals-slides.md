@@ -153,6 +153,12 @@ Dans cet exercice, `.set(true)` et `.set(false)` sont préférables à `.update(
 
 Sur la branche `init`, `adding` est encore un booléen classique. Tant qu'il n'a pas été converti en `signal(false)`, il n'a donc pas de méthode `.set()` ou `.update()`.
 
+### Problématique corrigée
+
+Le composant manipule un état UI local avec une propriété classique (`adding`). Cette valeur pilote le template, mais elle n'exprime pas explicitement ses dépendances réactives : Angular ne voit qu'une propriété mutable ordinaire.
+
+`signal()` corrige ce point en transformant l'état local en source réactive explicite. Le template lit `adding()`, les changements passent par `.set()` ou `.update()`, et Angular sait précisément quelles vues invalider.
+
 ### Fichier à modifier
 
 `src/app/features/clients/pages/clients/clients.component.ts`
@@ -204,6 +210,12 @@ readonly blockedAccountsCount = computed(() =>
 
 blockedAccountsCount()  // lecture
 ```
+
+### Problématique corrigée
+
+Le compteur de comptes bloqués est une règle dérivée de `filteredAccounts()`. Sous forme de getter, il est recalculé à chaque lecture et reste exposé comme une simple valeur, sans contrat réactif clair.
+
+`computed()` corrige ce problème en nommant la règle métier et en la mettant en cache. Le compteur devient un signal en lecture seule, recalculé uniquement quand les comptes filtrés changent.
 
 ### Fichiers à modifier
 
@@ -265,6 +277,12 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 ### Définition `effect()`
 
 > `effect()` est une **primitive Signal** : elle exécute un effet de bord quand les signals lus dans son corps changent. Elle s'exécute automatiquement, sans appel explicite.
+
+### Problématique corrigée
+
+La page courante doit rester cohérente avec le nombre de résultats. Sans réaction centralisée, chaque mutation de liste doit penser à appeler une méthode impérative de recalage, ce qui disperse la règle et crée un risque d'oubli.
+
+`effect()` corrige ce point en rendant la cohérence automatique : dès que la tranche paginée change, la page est recalée. `untracked()` évite que la lecture de comparaison de `page()` devienne une dépendance inutile de l'effet.
 
 ### Fichier à modifier
 
@@ -350,6 +368,12 @@ Sans `onCleanup`, chaque ré-exécution de l'effet crée un nouveau timer sans s
 private readonly firstNameInput = viewChild<ElementRef>('firstNameRef');
 ```
 
+### Problématique corrigée
+
+Le champ prénom n'existe dans le DOM que lorsque le formulaire d'ajout est affiché. Avec `@ViewChild`, il faut raisonner avec le cycle de vie Angular et vérifier manuellement si la référence est déjà disponible.
+
+`viewChild()` corrige ce problème en exposant la référence comme un signal : `undefined` quand l'élément est absent, `ElementRef` quand il apparaît. Couplé à `effect()`, le focus devient une réaction au DOM réellement rendu.
+
 ### Fichier à modifier
 
 `src/app/features/clients/pages/clients/clients.component.ts`
@@ -408,6 +432,12 @@ account = input.required<Account>();   // requis
 showStatus()                           // lecture
 ```
 
+### Problématique corrigée
+
+Le composant calcule `visibleStatusLabel` à partir de `showStatus`. Avec un `@Input()` classique lu dans un `computed()`, Angular ne crée pas de dépendance réactive : si le parent change l'entrée, le calcul peut rester basé sur une ancienne valeur.
+
+`input()` corrige ce problème en exposant l'entrée comme un signal. Le `computed()` lit `showStatus()`, donc il est automatiquement invalidé quand le parent modifie l'entrée.
+
 ### Fichier à modifier
 
 `src/app/features/accounts/components/account-card/account-card.component.ts`
@@ -454,6 +484,12 @@ selectedRequested = output<Account>();       // déclarer
 this.selectedRequested.emit(account);        // émettre
 (selectedRequested)="startEdit($event)"      // écouter dans le parent
 ```
+
+### Problématique corrigée
+
+`selectedRequested` est encore déclaré avec `@Output()` et `EventEmitter`, alors que le reste du composant utilise déjà les nouvelles sorties Angular. Le composant mélange donc deux styles pour exprimer le même contrat.
+
+`output()` corrige ce problème en déclarant clairement un événement sortant sans l'habiller comme un Observable RxJS. L'enfant émet une intention, le parent garde la décision métier.
 
 ### Fichier à modifier
 
@@ -516,6 +552,12 @@ this.editingAccountId.set(null);         // fermer
 // Parent : liaison bidirectionnelle
 [(editingAccountId)]="editingAccountId"
 ```
+
+### Problématique corrigée
+
+L'état d'édition est une valeur partagée entre parent et enfant. Avec `input()` + `editRequested` + `cancelRequested`, une seule valeur logique est éclatée entre une entrée et plusieurs événements de synchronisation.
+
+`model()` corrige ce problème en déclarant explicitement une valeur bidirectionnelle. L'enfant peut ouvrir ou fermer l'édition avec `.set()`, tandis que le parent garde une liaison unique `[(editingAccountId)]`.
 
 ### Fichiers à modifier
 
@@ -608,6 +650,12 @@ value.set(x)   // écriture possible — contrairement à computed()
 // Quand source() change → value() est recalculée depuis la source
 ```
 
+### Problématique corrigée
+
+Le formulaire d'édition doit être initialisé depuis le compte sélectionné, puis rester modifiable localement. Un `computed()` serait recalculé mais non modifiable ; un `signal()` simple serait modifiable mais ne se réinitialiserait pas automatiquement quand la sélection change.
+
+`linkedSignal()` corrige cette tension : la valeur repart de la source quand le compte sélectionné change, mais elle reste writable entre deux changements pour porter les modifications du formulaire.
+
 ### Fichier à modifier
 
 `src/app/features/accounts/pages/accounts/accounts.component.ts`
@@ -672,6 +720,12 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 // Signal → Observable pour opérateurs RxJS
 readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 ```
+
+### Problématique corrigée
+
+Le code initial mélange des souscriptions manuelles, du `takeUntilDestroyed`, des états `loading/error` gérés à la main et des conversions ponctuelles avec `firstValueFrom()`. Le composant porte trop de plomberie RxJS alors que le template a surtout besoin de lire des valeurs.
+
+`toSignal()` corrige ce problème en exposant la dernière valeur d'un Observable comme signal, avec abonnement géré par Angular. `toObservable()` couvre le besoin inverse : repasser temporairement par RxJS quand une temporalité comme `debounceTime()` est nécessaire.
 
 ### Fichiers à modifier
 
@@ -804,6 +858,12 @@ afterNextRender() → one-shot : s'exécute une fois après le prochain rendu
 afterEveryRender() → récurrent : s'exécute après chaque cycle de rendu
 ```
 
+### Problématique corrigée
+
+Le scroll en haut de liste doit se produire après l'ajout d'un client, mais seulement quand le rendu suivant a réellement créé ou réorganisé le DOM. Un `effect()` serait trop large : il observerait un état et pourrait se relancer au-delà de l'action concernée.
+
+`afterNextRender()` corrige ce problème en planifiant une action DOM one-shot après le prochain rendu Angular. `afterEveryRender()` couvre le cas différent des mesures récurrentes, mais il n'est pas nécessaire pour le scroll de cet exercice.
+
 ### Fichier à modifier
 
 `src/app/features/clients/pages/clients/clients.component.ts`
@@ -858,6 +918,12 @@ Cet exercice ne présente pas une nouvelle API. Il sert à consolider l'architec
 ### Définition
 
 > Cet exercice est une **consolidation d'architecture** : l'API utilisée est `computed()`, mais l'objectif principal est d'exposer une règle métier dérivée dans la façade plutôt que de la calculer en ligne dans le template ou le composant.
+
+### Problématique corrigée
+
+Le message vide dépend d'une règle métier : savoir si l'utilisateur a activé un filtre. Si cette règle reste calculée dans le template ou dans la page, elle est difficile à nommer, à tester et à réutiliser.
+
+La consolidation corrige ce problème en déplaçant la règle dans la façade sous forme de `computed()`. La page consomme un signal nommé `hasActiveFilter`, et le template ne porte plus la logique métier.
 
 ### Fichiers à modifier
 
