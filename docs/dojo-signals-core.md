@@ -83,8 +83,6 @@ provideZonelessChangeDetection()
 "polyfills": []
 ```
 
----
-
 ## Mapping exercices / branches / fichiers
 
 | Exercice | Branche | Concept | Fichiers principaux |
