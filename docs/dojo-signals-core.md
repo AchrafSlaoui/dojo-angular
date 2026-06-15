@@ -1,10 +1,9 @@
-# Angular 21 Signals — Support de présentation dojo (parcours essentiel)
+# Angular 21 Signals — Support de présentation dojo
 
 ---
 
+Angular peut recalculer des valeurs inchangées simplement parce qu’un cycle de détection s’est déclenché.
 ## Zone.js
-
-Ce dojo se déroule en **Angular 21**. Le projet garde volontairement `zone.js` pour montrer une migration progressive vers Signals.
 
 **Zone.js** aide Angular à savoir qu'un événement asynchrone a eu lieu. Il patche les APIs du navigateur (`setTimeout`, `Promise`, `addEventListener`, `XMLHttpRequest`, etc.) puis prévient Angular qu'un cycle de détection doit être lancé.
 
@@ -21,10 +20,6 @@ Zone.js ne modélise pas l'état de l'application : il sert surtout à **déclen
 Un **signal** est une valeur réactive observable par Angular. Il contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lu.
 
 Le problème résolu par Signals : rendre l'état local explicite et permettre à Angular de savoir précisément quelles vues ou valeurs dérivées dépendent de cet état.
-
-- Définition : valeur réactive lue avec `()`.
-- Rôle : mémoriser les lecteurs dépendants.
-- Problème résolu : état explicite et mises à jour plus ciblées.
 
 ```
 Zone.js : un événement async se produit → Angular lance la détection
@@ -43,16 +38,27 @@ Avec `OnPush`, Angular vérifie surtout un composant quand :
 - un événement du template se produit ;
 - un signal lu dans le template change ;
 - une vérification est demandée explicitement.
+```ts
+import { ChangeDetectorRef, inject } from '@angular/core';
+
+private readonly cdr = inject(ChangeDetectorRef);
+
+// Demande une vérification au prochain cycle
+this.cdr.markForCheck();
+
+// Vérifie immédiatement cette vue et ses enfants
+this.cdr.detectChanges();
+```
 
 Dans ce dojo, `OnPush` permet de montrer que Signals rend les dépendances plus précises sans imposer une migration immédiate en zoneless.
 
-| Déclencheur | Zone.js (défaut) | Zone.js + OnPush | Zoneless |
+| Déclencheur | Zone.js + stratégie par défaut | Zone.js + `OnPush` | Zoneless |
 |---|---|---|---|
-| Événement async (`setTimeout`, `Promise`, XHR…) | Tout l'arbre | Cycle lancé, mais composant OnPush vérifié seulement s'il est marqué dirty | Aucun déclencheur automatique |
-| `@Input()` dont la référence change | ✓ | ✓ | Aucun effet — utiliser `input()` |
-| `input()` / signal lu dans le template | ✓ | ✓ | ✓ |
-| `async` pipe reçoit une valeur | ✓ | ✓ | Composant + parents vérifiés (`markForCheck`) |
-| Événement template sans signal modifié | ✓ | ✓ | Aucun effet |
+| API async seule (`setTimeout`, `Promise`, XHR…) | Cycle déclenché, vues `Default` vérifiées | Cycle déclenché, vues `OnPush` non marquées ignorées | Aucun cycle sans notification Angular |
+| Nouvelle valeur transmise à un `@Input()` par un binding | Enfant vérifié | Enfant marqué puis vérifié | Fonctionne aussi si la vérification du parent est programmée |
+| Signal lu dans le template modifié | Vue consommatrice actualisée | Vue consommatrice marquée | Vue consommatrice marquée et cycle programmé |
+| `async` pipe reçoit une valeur | Vue actualisée | `markForCheck()` automatique | `markForCheck()` automatique et cycle programmé |
+| Événement lié au template, par exemple `(click)` | Cycle déclenché | Composant et ancêtres concernés vérifiés | Cycle déclenché, même sans modification de signal |
 
 ---
 
@@ -120,13 +126,11 @@ Chaque carte isole une primitive ou une API Angular : le cas classique montre le
 | 1 | `exercice-1` | `signal()` | `clients.component.ts`, `clients.component.html`, `clients.component.spec.ts` |
 | 2 | `exercice-2` | `computed()` en façade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html`, `accounts.component.spec.ts` |
 | 3 | `exercice-3` | `effect()` pour cohérence d'état | `clients.component.ts` |
-| 4 | `exercice-5` | `input()` | `account-card.component.ts` |
-| 5 | `exercice-6` | `output()` | `account-list.component.ts` |
-| 6 | `exercice-7` | `linkedSignal()` | `accounts.component.ts` |
+| 4 | `exercice-4` | `input()` | `account-card.component.ts` |
+| 5 | `exercice-5` | `output()` | `account-list.component.ts` |
+| 6 | `exercice-6` | `linkedSignal()` | `accounts.component.ts` |
 
 Les branches sont cumulatives : chaque branche intègre les solutions des exercices précédents.
-
-La branche de départ de l'exercice 4 est `exercice-5` — elle intègre déjà les exercices intermédiaires non traités dans ce parcours.
 
 ---
 
