@@ -50,18 +50,6 @@ this.cdr.markForCheck();
 this.cdr.detectChanges();
 ```
 
-Dans ce dojo, `OnPush` permet de montrer que Signals rend les dépendances plus précises sans imposer une migration immédiate en zoneless.
-
-| Déclencheur | Zone.js + stratégie par défaut | Zone.js + `OnPush` | Zoneless |
-|---|---|---|---|
-| API async seule (`setTimeout`, `Promise`, XHR…) | Cycle déclenché, vues `Default` vérifiées | Cycle déclenché, vues `OnPush` non marquées ignorées | Aucun cycle sans notification Angular |
-| Nouvelle valeur transmise à un `@Input()` par un binding | Enfant vérifié | Enfant marqué puis vérifié | Fonctionne aussi si la vérification du parent est programmée |
-| Signal lu dans le template modifié | Vue consommatrice actualisée | Vue consommatrice marquée | Vue consommatrice marquée et cycle programmé |
-| `async` pipe reçoit une valeur | Vue actualisée | `markForCheck()` automatique | `markForCheck()` automatique et cycle programmé |
-| Événement lié au template, par exemple `(click)` | Cycle déclenché | Composant et ancêtres concernés vérifiés | Cycle déclenché, même sans modification de signal |
-
----
-
 ## Zoneless
 
 Une application **zoneless** fonctionne sans `zone.js`. Angular ne s'appuie plus sur le patch automatique des APIs async pour lancer la détection de changement.
@@ -74,8 +62,6 @@ En zoneless, les mises à jour doivent venir de mécanismes explicites :
 - appels explicites de détection si nécessaire.
 
 En zoneless, signal et `async` pipe ne se comportent pas de la même façon : un signal met à jour uniquement ses lecteurs directs. `async` pipe appelle `markForCheck()` — le composant et ses parents sont vérifiés, le DOM est mis à jour seulement si quelque chose a effectivement changé.
-
-Ce dojo garde `zone.js` au départ. La migration zoneless est la suite naturelle une fois l'état principal piloté par Signals.
 
 ```
 Signals résout : l'état réactif local synchrone
@@ -96,26 +82,6 @@ provideZonelessChangeDetection()
 // angular.json — retirer zone.js des polyfills
 "polyfills": []
 ```
-
----
-
-## Intention d'architecture du dojo
-
-Les décisions d'architecture pédagogique sont détaillées dans `docs/adr/0001-architecture-pedagogique-dojo-signals.md`.
-
-Le projet montre volontairement deux patterns : des Signals directement dans les composants pour apprendre les bases, puis des Signals dans des façades pour l'état partagé et les règles métier. L'asymétrie est intentionnelle : on commence simple, puis on extrait quand l'état devient plus riche ou partagé.
-
-Le détail du code mixte pendant la migration est documenté dans l'ADR 0001.
-
-Le support présente un panorama ciblé des APIs Signals et APIs Angular associées utilisées dans cette application. Il ne cherche pas à couvrir toute la surface d'API Angular.
-
----
-
-## Primitive Lab
-
-La page `/primitive-lab` permet d'expérimenter les problèmes décrits dans les exercices avant de modifier le code métier.
-
-Chaque carte isole une primitive ou une API Angular : le cas classique montre le risque, puis la version Signals montre le comportement attendu.
 
 ---
 
