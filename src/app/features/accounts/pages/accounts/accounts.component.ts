@@ -34,7 +34,6 @@ export class AccountsComponent {
   readonly mutating = this.accountsFacade.mutating;
   readonly error = this.accountsFacade.error;
   readonly accounts = this.accountsFacade.filteredAccounts;
-  // EXERCICE 10
   readonly totalBalance = this.accountsFacade.totalBalance;
   // EXERCICE 2
   get blockedAccountsCount(): number {
@@ -44,12 +43,11 @@ export class AccountsComponent {
   adding = false;
   editingAccountId: string | null = null;
   newAccount: AccountCreate = { label: '', type: 'checking', status: 'active' };
-  // EXERCICE 7
+  // EXERCICE 5
   editAccount: AccountUpdate = { id: '', label: '', type: 'checking', status: 'active' };
 
   constructor() {
     this.accountsFacade.setTypeFilter(this.initialTypeFilter());
-    // EXERCICE 8
     this.clientId$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((clientId) => {
@@ -82,7 +80,7 @@ export class AccountsComponent {
     }
   }
 
-  // EXERCICE 7
+  // EXERCICE 5
   startEdit(account: Account): void {
     this.editingAccountId = account.id;
     this.editAccount = {

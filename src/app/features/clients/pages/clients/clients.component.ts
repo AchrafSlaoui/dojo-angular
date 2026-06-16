@@ -54,7 +54,6 @@ export class ClientsComponent {
   // EXERCICE 1
   adding = false;
   newClient: Omit<Client, 'id'> = { firstName: '', lastName: '', email: '', phone: '', address: '' };
-  // EXERCICE 4
   @ViewChild('firstNameRef') private firstNameInput?: ElementRef;
   // Exemple toObservable()
   readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
@@ -100,7 +99,6 @@ export class ClientsComponent {
       const created = await firstValueFrom(this.clientsApi.add({ firstName, lastName, email, phone, address }));
       this.clientsState.update((list) => [{ ...created, recentMovements: [] }, ...list.filter((c) => c.id !== created.id)]);
       this.page.set(1);
-      // EXERCICE 9
       this.notifications.success(`Client ${firstName} ${lastName} cree.`);
       this.adding = false;
     } catch {

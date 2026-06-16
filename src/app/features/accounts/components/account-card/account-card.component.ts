@@ -15,10 +15,10 @@ export class AccountCardComponent {
   // Exemple input()
   account = input.required<Account>();
   clientId = input.required<string>();
-  // EXERCICE 5
+  // EXERCICE 4
   @Input() showStatus = true;
 
-  // EXERCICE 5
+  // EXERCICE 4
   readonly visibleStatusLabel = computed(() => this.showStatus ? this.statusLabel() : null);
 
   readonly statusLabel = computed(() => {

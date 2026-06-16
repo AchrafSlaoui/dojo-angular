@@ -40,7 +40,6 @@ describe('DashboardComponent', () => {
 
   it('surfaces loading and error state', async () => {
     api.getAll.mockReturnValueOnce(throwError(() => new Error('oops')));
-    // EXERCICE 7b
     await component.reload();
     await fixture.whenStable();
     expect(component.error()).toBe('oops');

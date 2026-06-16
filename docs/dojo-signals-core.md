@@ -91,10 +91,9 @@ provideZonelessChangeDetection()
 | 2 | `exercice-2` | `computed()` en façade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html`, `accounts.component.spec.ts` |
 | 3 | `exercice-3` | `effect()` pour cohérence d'état | `clients.component.ts` |
 | 4 | `exercice-4` | `input()` | `account-card.component.ts` |
-| 5 | `exercice-5` | `output()` | `account-list.component.ts` |
-| 6 | `exercice-6` | `linkedSignal()` | `accounts.component.ts` |
+| 5 | `exercice-5` | `linkedSignal()` | `accounts.component.ts` |
 
-Les branches sont cumulatives : chaque branche intègre les solutions des exercices précédents.
+Les branches sont cumulatives : chaque branche intègre les solutions des exercices précédents. `output()` reste une parenthèse et `linkedSignal()` est le dernier exercice du parcours court.
 
 ---
 
@@ -417,81 +416,40 @@ npm test -- --runTestsByPath src/app/features/accounts/components/account-card/a
 | Entrée legacy dans un composant non migré | `@Input()` acceptable |
 | Valeur bidirectionnelle parent ↔ enfant | `model()` |
 
----
+### Parenthèse — `output()`
 
-## Exercice 5 — `output()`
-
-### Problème
-
-`@Output()` + `EventEmitter` fonctionne, mais l'API mélange l'idée d'événement composant avec une forme qui ressemble à un flux RxJS. Cela peut encourager à traiter une sortie simple comme une source de stream applicatif.
-
-Pattern classique :
+`output()` remplace `@Output()` + `EventEmitter` pour déclarer une intention envoyée au parent.
 
 ```ts
 @Output() selectedRequested = new EventEmitter<Account>();
-// EventEmitter hérite de Subject (RxJS)
-// → selectedRequested.pipe(...) et .subscribe(...) accessibles depuis l'extérieur
-// → l'API expose un flux là où seule une intention de composant est nécessaire
-```
 
-### Définition
+// devient
 
-> `output()` est une **API composant Angular** : elle déclare un événement sortant du composant. L'enfant émet une intention, le parent décide quoi faire. Ce n'est pas un Observable.
-
-**À retenir :** utilisez `output()` pour signaler une action ou une intention vers le parent direct, pas pour partager un état.
-
-```ts
 selectedRequested = output<Account>();       // déclarer
 this.selectedRequested.emit(account);        // émettre
 (selectedRequested)="startEdit($event)"      // écouter dans le parent
 ```
 
-### Fichier à modifier
+`output()` n'est pas un Observable : il sert à signaler un événement de composant.
 
-`src/app/features/accounts/components/account-list/account-list.component.ts`
+### Parenthèse — `model()`
 
-### Lecture guidée
-
-Le fichier contient déjà plusieurs sorties écrites avec `output()` :
+`model()` sert quand le parent et l'enfant partagent une valeur modifiable des deux côtés. Il remplace le couple `@Input()` + `@Output()` utilisé pour le two-way binding.
 
 ```ts
-editRequested = output<Account>();
-saveRequested = output<void>();
-cancelRequested = output<void>();
-deleteRequested = output<Account>();
+// Enfant
+quantity = model(1);
+this.quantity.update(q => q + 1);
+
+// Parent
+<app-counter [(quantity)]="quantity" />
 ```
 
-Elles servent de modèle local. L'exercice consiste à aligner la dernière sortie legacy, `selectedRequested`, sur le même style.
-
-### Consigne
-
-Transformer `@Output() selectedRequested = new EventEmitter<Account>()` en `output()`. Retirer `EventEmitter` et `Output` des imports.
-
-```ts
-// Avant
-@Output() selectedRequested = new EventEmitter<Account>();
-
-// Après
-selectedRequested = output<Account>();
-```
-
-L'émission dans l'`effect()` reste identique : `this.selectedRequested.emit(account)`.
-
-```bash
-npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
-```
-
-### Quand utiliser `output()` — et quand rester ailleurs
-
-| Situation | Outil |
-|---|---|
-| Événement vers le parent direct | `output()` |
-| Événement global ou cross-composant | Service dédié |
-| Valeur bidirectionnelle entrée + sortie | `model()` |
+À retenir : `output()` émet une intention ; `model()` partage une valeur éditable.
 
 ---
 
-## Exercice 6 — `linkedSignal()`
+## Exercice 5 — `linkedSignal()`
 
 ### Problème
 
