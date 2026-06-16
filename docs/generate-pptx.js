@@ -509,6 +509,88 @@ function renderTable(slide, item, y) {
   return h + 0.18;
 }
 
+function renderCompactTable(slide, item, y, rowH, fontSize, colW) {
+  const maxCols = Math.max(...item.rows.map((row) => row.length));
+  const normalizedRows = item.rows.map((row) => {
+    const cells = [...row];
+    while (cells.length < maxCols) cells.push('');
+    return cells;
+  });
+
+  let rowY = y;
+  normalizedRows.forEach((row, rowIndex) => {
+    let cellX = M;
+    row.forEach((cell, colIndex) => {
+      const cellW = colW[colIndex] ?? ((CONTENT_W) / maxCols);
+      const fill = rowIndex === 0 ? COLORS.primary : rowIndex % 2 ? COLORS.white : COLORS.light;
+      slide.addShape(pptx.ShapeType.rect, {
+        x: cellX,
+        y: rowY,
+        w: cellW,
+        h: rowH,
+        fill: { color: fill },
+        line: { color: COLORS.line, pt: 0.45 },
+      });
+      slide.addText(cell, {
+        x: cellX + 0.04,
+        y: rowY + 0.03,
+        w: Math.max(0.1, cellW - 0.08),
+        h: Math.max(0.1, rowH - 0.06),
+        fontSize,
+        bold: rowIndex === 0,
+        color: rowIndex === 0 ? COLORS.white : COLORS.text,
+        valign: 'mid',
+        margin: 0.01,
+        fit: 'shrink',
+      });
+      cellX += cellW;
+    });
+    rowY += rowH;
+  });
+  return normalizedRows.length * rowH;
+}
+
+function renderSignalsRecapSlide(signalsSection, apisSection) {
+  const signalsTable = signalsSection.items.find((item) => item.type === 'table');
+  const apisTable = apisSection.items.find((item) => item.type === 'table');
+  if (!signalsTable || !apisTable) return false;
+
+  const slide = pptx.addSlide();
+  addHeader(slide, signalsSection.title);
+
+  const signalsY = 1.05;
+  renderCompactTable(
+    slide,
+    signalsTable,
+    signalsY,
+    0.5,
+    9.5,
+    [1.35, 3.3, 2.35, CONTENT_W - 7.0]
+  );
+
+  slide.addText('APIs composant', {
+    x: M,
+    y: 3.92,
+    w: CONTENT_W,
+    h: 0.3,
+    fontSize: 15,
+    bold: true,
+    color: COLORS.dark,
+    margin: 0,
+  });
+
+  renderCompactTable(
+    slide,
+    apisTable,
+    4.35,
+    0.55,
+    10,
+    [1.4, 4.05, CONTENT_W - 5.45]
+  );
+
+  return true;
+}
+
 function shortenExerciseFiles(text) {
   return text
     .replace(/src\/app\/features\//g, '')
@@ -1095,7 +1177,21 @@ const markdown = mergeApiAndInstructionSections(
   removeCorrectionDetails(fs.readFileSync(SOURCE, 'utf8'))
 );
 const sections = parseMarkdown(markdown);
-sections.forEach(renderSection);
+for (let i = 0; i < sections.length; i += 1) {
+  const section = sections[i];
+  const nextSection = sections[i + 1];
+  if (
+    section.level === 2 &&
+    section.rawTitle === 'Récapitulatif — Primitives Signals' &&
+    nextSection?.level === 3 &&
+    nextSection.rawTitle === 'APIs composant' &&
+    renderSignalsRecapSlide(section, nextSection)
+  ) {
+    i += 1;
+    continue;
+  }
+  renderSection(section);
+}
 
 const total = pptx._slides.length;
 pptx._slides.forEach((slide, index) => addFooter(slide, index + 1, total));

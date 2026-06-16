@@ -456,6 +456,15 @@ value()        // lecture
 value.set(x)   // écriture possible — contrairement à computed()
 // Quand source() change → value() est recalculée depuis la source
 ```
+
+### `linkedSignal()` vs `computed()`
+
+| `computed()` | `linkedSignal()` |
+|---|---|
+| Lecture seule | Writable — `.set()` et `.update()` disponibles |
+| Recalculé quand les dépendances changent | Recalculé quand la source change, modifiable entre deux |
+| Adapté aux valeurs dérivées stables | Adapté aux formulaires pré-remplis depuis une sélection |
+
 ### Objectif et consigne
 
 Dans `src/app/features/accounts/pages/accounts/accounts.component.ts`, convertir `editAccount` en `linkedSignal()` pour créer une valeur dérivée depuis le compte sélectionné, mais modifiable localement par l'utilisateur. Ajouter un signal `accountForEdit` pour porter la sélection courante.
@@ -494,16 +503,6 @@ startEdit(account: Account): void {
 ```bash
 npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
 ```
-
-### `linkedSignal()` vs `computed()`
-
-| `computed()` | `linkedSignal()` |
-|---|---|
-| Lecture seule | Writable — `.set()` et `.update()` disponibles |
-| Recalculé quand les dépendances changent | Recalculé quand la source change, modifiable entre deux |
-| Adapté aux valeurs dérivées stables | Adapté aux formulaires pré-remplis depuis une sélection |
-
----
 
 ## Récapitulatif — Primitives Signals
 
