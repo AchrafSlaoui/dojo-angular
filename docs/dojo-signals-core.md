@@ -143,6 +143,9 @@ adding()                          // lire (template ou TS)
 
 Dans `src/app/features/clients/pages/clients/clients.component.ts`, convertir la propriété `adding = false` en signal pour faire de `adding` une source réactive lisible par le template.
 
+<details>
+<summary>Correctif proposé</summary>
+
 ```ts
 // Avant
 adding = false;
@@ -156,6 +159,8 @@ cancelAdd(): void { this.adding.set(false); }
 ```
 
 Dans le template : remplacer `adding` par `adding()`.
+
+</details>
 
 ### Test
 
@@ -200,6 +205,9 @@ blockedAccountsCount()  // lecture
 
 Dans `accounts.facade.ts`, `accounts.component.ts` et `accounts.component.html`, transformer `blockedAccountsCount` en valeur dérivée mémorisée avec `computed()`, puis exposer le signal dans le composant.
 
+<details>
+<summary>Correctif proposé</summary>
+
 ```ts
 // Avant — AccountsFacade
 get blockedAccountsCount(): number {
@@ -229,6 +237,8 @@ La façade protège ses états internes avec `.asReadonly()` : les composants pe
 private readonly accountsState = signal<Account[]>([]);
 readonly accounts = this.accountsState.asReadonly(); // Signal<Account[]> en lecture seule
 ```
+
+</details>
 
 ### Test
 
@@ -268,6 +278,9 @@ removeRows(): void {
 
 Dans `src/app/features/clients/pages/clients/clients.component.ts`, remplacer l'appel impératif `this.clampCurrentPage()` par un `effect()` afin de rendre la synchronisation automatique. Utiliser `untracked()` pour lire la page courante sans en faire une dépendance directe de l'effet.
 
+<details>
+<summary>Correctif proposé</summary>
+
 ```ts
 // Ajouter untracked aux imports
 import { effect, untracked } from '@angular/core';
@@ -300,6 +313,8 @@ effect(() => {
   if (clamped !== untracked(this.page)) this.page.set(clamped);
 });
 ```
+
+</details>
 
 ### Test
 
@@ -357,6 +372,9 @@ showStatus()                           // lecture
 
 Dans `src/app/features/accounts/components/account-card/account-card.component.ts`, transformer `@Input() showStatus = true` en `showStatus = input(true)` pour faire de cette entrée une vraie dépendance signal dans `visibleStatusLabel`. Retirer aussi `Input` des imports.
 
+<details>
+<summary>Correctif proposé</summary>
+
 ```ts
 // Avant
 @Input() showStatus = true;
@@ -368,6 +386,8 @@ readonly visibleStatusLabel = computed(() => this.showStatus() ? this.statusLabe
 ```
 
 > Point clé : `@Input()` dans un `computed()` ne crée **pas** de dépendance réelle. `input()` dans un `computed()` **est** une dépendance réelle.
+
+</details>
 
 ### Test
 
@@ -441,6 +461,9 @@ value.set(x)   // écriture possible — contrairement à computed()
 
 Dans `src/app/features/accounts/pages/accounts/accounts.component.ts`, convertir `editAccount` en `linkedSignal()` pour créer une valeur dérivée depuis le compte sélectionné, mais modifiable localement par l'utilisateur. Ajouter un signal `accountForEdit` pour porter la sélection courante.
 
+<details>
+<summary>Correctif proposé</summary>
+
 ```ts
 // Avant
 editAccount: AccountUpdate = { id: '', label: '', type: 'checking', status: 'active' };
@@ -464,6 +487,8 @@ startEdit(account: Account): void {
   this.accountForEdit.set(account);
 }
 ```
+
+</details>
 
 ### Test
 
