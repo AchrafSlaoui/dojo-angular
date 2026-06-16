@@ -101,18 +101,6 @@ provideZonelessChangeDetection()
 
 ---
 
-## Mapping exercices / branches / fichiers
-
-| Exercice | Branche | Concept | Fichiers principaux |
-|---|---|---|---|
-| 1 | `exercice-1` | `signal()` | `clients.component.ts`, `clients.component.html`, `clients.component.spec.ts` |
-| 2 | `exercice-2` | `computed()` en façade | `accounts.facade.ts`, `accounts.component.ts`, `accounts.component.html`, `accounts.component.spec.ts` |
-| 3 | `exercice-3` | `effect()` pour cohérence d'état | `clients.component.ts` |
-| 4 | `exercice-4` | `input()` | `account-card.component.ts` |
-| 5 | `exercice-5` | `linkedSignal()` | `accounts.component.ts` |
-
----
-
 ## Exercice 1 — `signal()`
 
 <details>
