@@ -15,6 +15,15 @@ Ce parcours vise les usages essentiels des Signals :
 
 ---
 
+## Sommaire
+
+- Rappels : Signal, Zone.js, OnPush, zoneless
+- Exercices 1 à 3 : `signal()`, `computed()`, `effect()`
+- Exercices 4 à 5 : `input()`, `linkedSignal()`
+- Récapitulatif et règles d'usage
+
+---
+
 ## Signal
 
 Un **signal** est une valeur réactive observable par Angular. Il contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lu.
@@ -127,16 +136,18 @@ launchClassicTimer(): void {
 
 </details>
 
-### API à utiliser
+### API Signal à utiliser
 
 > `signal()` est une **primitive Signal** : une valeur réactive observable par Angular. Elle contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lue.
 
 ```ts
-readonly adding = signal(false);  // déclarer
-this.adding.set(true);            // écrire
-this.adding.update(v => !v);      // mettre à jour depuis la valeur courante
-adding()                          // lire (template ou TS)
+readonly placeholder = signal('Rechercher un client'); // déclarer un signal string
+placeholder()                                          // lire
+this.placeholder.set('Rechercher par email');          // écrire
+this.placeholder.update(v => v + '...');               // mettre à jour depuis la valeur courante
 ```
+
+> NB : ne jamais écraser la référence d'un signal. `readonly` protège la référence, pas la valeur : `.set()` et `.update()` restent autorisés.
 
 
 ### Objectif et consigne
@@ -189,7 +200,7 @@ private computeBlockedCount(): number {
 
 </details>
 
-### API à utiliser
+### API Signal à utiliser
 
 > `computed()` est une **primitive Signal** : une valeur dérivée mémorisée. Le calcul ne se relance que si une dépendance lue a changé depuis la dernière lecture.
 
@@ -270,9 +281,10 @@ removeRows(): void {
 
 </details>
 
-### API à utiliser
+### APIs Signal à utiliser
 
 > `effect()` est une **primitive Signal** : elle exécute un effet de bord quand les signals lus dans son corps changent. Elle s'exécute automatiquement, sans appel explicite.
+> `untracked()` permet de lire un signal dans un `effect()` sans l'ajouter aux dépendances suivies.
 
 ### Objectif et consigne
 
@@ -358,9 +370,9 @@ Le parent bascule `classicShowDetails`, mais `classicLabel()` retourne toujours 
 
 </details>
 
-### API à utiliser
+### API Angular à utiliser
 
-> `input()` est une **API composant Angular** : elle déclare une entrée de composant sous forme de signal. La valeur passée par le parent devient une dépendance réelle dans les `computed()` et `effect()`.
+> `input()` est une **API Angular** : elle déclare une entrée de composant sous forme de signal. La valeur passée par le parent devient une dépendance réelle dans les `computed()` et `effect()`.
 
 ```ts
 showStatus = input(true);              // avec valeur par défaut
@@ -446,7 +458,7 @@ readonly computedName = computed(() => this.selected().name);
 
 </details>
 
-### API à utiliser
+### API Signal à utiliser
 
 > `linkedSignal()` est une **primitive Signal** : elle crée un signal writable dérivé d'un autre signal. Contrairement à `computed()` qui est en lecture seule, sa valeur peut être modifiée par `.set()` ou `.update()`. Elle est automatiquement recalculée quand la source change.
 
@@ -521,6 +533,7 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 |---|---|---|
 | `input()` | Entrée réactive (signal en lecture) | `@Input()` |
 | `output()` | Événement sortant (intention composant) | `@Output()` + `EventEmitter` |
+| `model()` | Valeur partagée modifiable des deux côtés | `@Input()` + `@Output()` pour le two-way binding |
 
 ---
 

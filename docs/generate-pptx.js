@@ -216,7 +216,7 @@ function addHeader(slide, title, accent = COLORS.primary) {
     y: 0.24,
     w: CONTENT_W - 2.2,
     h: 0.38,
-    fontSize: title.length > 80 ? 16 : 20,
+    fontSize: title.length > 80 ? 18 : 23,
     bold: true,
     color: COLORS.dark,
     fit: 'shrink',
@@ -374,13 +374,13 @@ function estimateTextHeight(text, charsPerLine, lineHeight, minHeight = 0.28) {
 }
 
 function renderParagraph(slide, item, y) {
-  const h = estimateTextHeight(item.text, 115, 0.21, 0.35);
+  const h = estimateTextHeight(item.text, 96, 0.25, 0.42);
   slide.addText(item.text, {
     x: M,
     y,
     w: CONTENT_W,
     h,
-    fontSize: 12.2,
+    fontSize: 14.2,
     color: COLORS.text,
     fit: 'shrink',
     valign: 'top',
@@ -391,13 +391,13 @@ function renderParagraph(slide, item, y) {
 }
 
 function renderBullet(slide, item, y) {
-  const h = estimateTextHeight(item.text, 105, 0.2, 0.28);
+  const h = estimateTextHeight(item.text, 88, 0.24, 0.36);
   slide.addText(item.text, {
     x: M + 0.18,
     y,
     w: CONTENT_W - 0.18,
     h,
-    fontSize: 11.6,
+    fontSize: 13.5,
     color: COLORS.text,
     bullet: { type: 'bullet' },
     fit: 'shrink',
@@ -407,13 +407,13 @@ function renderBullet(slide, item, y) {
 }
 
 function renderQuote(slide, item, y) {
-  const h = estimateTextHeight(item.text, 95, 0.21, 0.42);
+  const h = estimateTextHeight(item.text, 80, 0.25, 0.5);
   slide.addText(item.text, {
     x: M,
     y,
     w: CONTENT_W,
     h,
-    fontSize: 11.5,
+    fontSize: 13.6,
     color: COLORS.text,
     italic: true,
     fill: { color: COLORS.quote },
@@ -426,14 +426,14 @@ function renderQuote(slide, item, y) {
 
 function renderCode(slide, item, y) {
   const lines = item.text.split('\n');
-  const h = Math.min(5.9, Math.max(0.55, lines.length * 0.17 + 0.18));
+  const h = Math.min(5.9, Math.max(0.7, lines.length * 0.22 + 0.24));
   slide.addText(item.text, {
     x: M,
     y,
     w: CONTENT_W,
     h,
     fontFace: 'Courier New',
-    fontSize: lines.length > 18 ? 7.5 : 8.8,
+    fontSize: lines.length > 18 ? 8.8 : 10.3,
     color: COLORS.codeText,
     fill: { color: COLORS.code },
     fit: 'shrink',
@@ -453,8 +453,8 @@ function renderTable(slide, item, y) {
   });
   const rowCount = normalizedRows.length;
   const denseTable = rowCount > 6;
-  const fontSize = maxCols > 3 ? 7.8 : denseTable ? 7.4 : 10.2;
-  const h = Math.min(H - y - 0.45, Math.max(0.65, rowCount * (denseTable ? 0.58 : 0.34)));
+  const fontSize = maxCols > 3 ? 8.8 : denseTable ? 8.4 : 11.6;
+  const h = Math.min(H - y - 0.45, Math.max(0.75, rowCount * (denseTable ? 0.66 : 0.42)));
   const rowH = h / rowCount;
   const colW = maxCols === 3
     ? [1.55, 3.1, CONTENT_W - 4.65]
@@ -536,7 +536,7 @@ function renderExerciseCard(slide, row, index) {
     y: y + 0.12,
     w: 1.55,
     h: 0.2,
-    fontSize: 8.2,
+    fontSize: 9.4,
     bold: true,
     color: palette.accent,
     margin: 0,
@@ -547,7 +547,7 @@ function renderExerciseCard(slide, row, index) {
     y: y + 0.12,
     w: cardW - 1.95,
     h: 0.2,
-    fontSize: 6.8,
+    fontSize: 7.8,
     color: COLORS.muted,
     margin: 0,
     fit: 'shrink',
@@ -557,7 +557,7 @@ function renderExerciseCard(slide, row, index) {
     y: y + 0.4,
     w: 2.05,
     h: 0.56,
-    fontSize: 5.8,
+    fontSize: 6.7,
     color: COLORS.secondary,
     margin: 0,
     breakLine: false,
@@ -569,7 +569,7 @@ function renderExerciseCard(slide, row, index) {
     y: y + 0.39,
     w: cardW - 2.52,
     h: 0.72,
-    fontSize: 6.8,
+    fontSize: 7.8,
     color: COLORS.text,
     margin: 0.02,
     fit: 'shrink',
@@ -620,7 +620,7 @@ function renderExercisesSection(section) {
         y: 6.65,
         w: CONTENT_W - 0.36,
         h: 0.19,
-        fontSize: 7.8,
+        fontSize: 9,
         bold: true,
         color: COLORS.text,
         align: 'center',
@@ -969,13 +969,13 @@ function renderBranchesSection(section) {
 }
 
 function itemHeight(item) {
-  if (item.type === 'paragraph') return estimateTextHeight(item.text, 115, 0.21, 0.35) + 0.12;
-  if (item.type === 'bullet') return estimateTextHeight(item.text, 105, 0.2, 0.28) + 0.06;
-  if (item.type === 'quote') return estimateTextHeight(item.text, 95, 0.21, 0.42) + 0.14;
-  if (item.type === 'code') return Math.min(5.9, Math.max(0.55, item.text.split('\n').length * 0.17 + 0.18)) + 0.16;
+  if (item.type === 'paragraph') return estimateTextHeight(item.text, 96, 0.25, 0.42) + 0.12;
+  if (item.type === 'bullet') return estimateTextHeight(item.text, 88, 0.24, 0.36) + 0.06;
+  if (item.type === 'quote') return estimateTextHeight(item.text, 80, 0.25, 0.5) + 0.14;
+  if (item.type === 'code') return Math.min(5.9, Math.max(0.7, item.text.split('\n').length * 0.22 + 0.24)) + 0.16;
   if (item.type === 'table') {
     const denseTable = item.rows.length > 6;
-    return Math.min(5.9, Math.max(0.65, item.rows.length * (denseTable ? 0.58 : 0.34))) + 0.18;
+    return Math.min(5.9, Math.max(0.75, item.rows.length * (denseTable ? 0.66 : 0.42))) + 0.18;
   }
   return 0.3;
 }
