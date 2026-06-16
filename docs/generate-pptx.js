@@ -71,6 +71,21 @@ function splitTableRow(line) {
     .map((cell) => cleanInline(cell));
 }
 
+function removeCorrectionDetails(markdown) {
+  return markdown.replace(
+    /<details>\s*<summary>Correctif proposé<\/summary>[\s\S]*?<\/details>/g,
+    ''
+  );
+}
+
+function mergeApiAndInstructionSections(markdown) {
+  return markdown
+    .replace(/^### API Signal à utiliser$/gm, '### Consigne et API Signal à utiliser')
+    .replace(/^### APIs Signal à utiliser$/gm, '### Consigne et APIs Signal à utiliser')
+    .replace(/^### API Angular à utiliser$/gm, '### Consigne et API Angular à utiliser')
+    .replace(/^\s*### Objectif et consigne\s*$/gm, '');
+}
+
 function parseMarkdown(markdown) {
   const lines = markdown.replace(/\r\n/g, '\n').split('\n');
   const sections = [];
@@ -1076,7 +1091,9 @@ function renderSection(section) {
   }
 }
 
-const markdown = fs.readFileSync(SOURCE, 'utf8');
+const markdown = mergeApiAndInstructionSections(
+  removeCorrectionDetails(fs.readFileSync(SOURCE, 'utf8'))
+);
 const sections = parseMarkdown(markdown);
 sections.forEach(renderSection);
 

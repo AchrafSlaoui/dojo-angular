@@ -147,8 +147,7 @@ this.placeholder.set('Rechercher par email');          // écrire
 this.placeholder.update(v => v + '...');               // mettre à jour depuis la valeur courante
 ```
 
-> NB : ne jamais écraser la référence d'un signal. `readonly` protège la référence, pas la valeur : `.set()` et `.update()` restent autorisés.
-
+NB : ne jamais écraser la référence d'un signal. `readonly` protège la référence, pas la valeur : `.set()` et `.update()` restent autorisés.
 
 ### Objectif et consigne
 
@@ -211,7 +210,6 @@ readonly blockedAccountsCount = computed(() =>
 
 blockedAccountsCount()  // lecture
 ```
-
 ### Objectif et consigne
 
 Dans `accounts.facade.ts`, `accounts.component.ts` et `accounts.component.html`, transformer `blockedAccountsCount` en valeur dérivée mémorisée avec `computed()`, puis exposer le signal dans le composant.
@@ -379,7 +377,6 @@ showStatus = input(true);              // avec valeur par défaut
 account = input.required<Account>();   // requis
 showStatus()                           // lecture
 ```
-
 ### Objectif et consigne
 
 Dans `src/app/features/accounts/components/account-card/account-card.component.ts`, transformer `@Input() showStatus = true` en `showStatus = input(true)` pour faire de cette entrée une vraie dépendance signal dans `visibleStatusLabel`. Retirer aussi `Input` des imports.
@@ -468,7 +465,6 @@ value()        // lecture
 value.set(x)   // écriture possible — contrairement à computed()
 // Quand source() change → value() est recalculée depuis la source
 ```
-
 ### Objectif et consigne
 
 Dans `src/app/features/accounts/pages/accounts/accounts.component.ts`, convertir `editAccount` en `linkedSignal()` pour créer une valeur dérivée depuis le compte sélectionné, mais modifiable localement par l'utilisateur. Ajouter un signal `accountForEdit` pour porter la sélection courante.
@@ -545,9 +541,8 @@ le mode zoneless sont détaillées dans `docs/adr/0002-conventions-usage-signals
 ```
 1. computed()    ne fait jamais d'appel HTTP — calcul pur uniquement
 2. effect()      n'expose jamais de valeur    — effets de bord uniquement
-3. L'enfant émet une INTENTION, le parent exécute l'ACTION
-4. input() dans un computed() = dépendance réelle / @Input() dans computed() = non
-5. Zone.js peut coexister — migrer progressivement, pas tout d'un coup
-6. untracked()   pour lire sans s'abonner dans un effect()
+3. input() dans un computed() = dépendance réelle / @Input() dans computed() = non
+4. Zone.js peut coexister — migrer progressivement, pas tout d'un coup
+5. untracked()   pour lire sans s'abonner dans un effect()
 ```
 
