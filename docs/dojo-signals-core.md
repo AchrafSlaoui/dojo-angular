@@ -107,9 +107,9 @@ provideZonelessChangeDetection()
 ## Exercice 1 — `signal()`
 
 <details>
-<summary>Problème</summary>
+<summary>Cas d’erreur illustré</summary>
 
-Un état local reste une propriété TypeScript ordinaire. Il peut piloter le template, mais Angular ne sait pas que cette valeur est une source réactive. La modification peut donc être ignorée si aucun cycle de détection ne repasse sur le composant : par exemple avec `OnPush`, en zoneless, ou après une mutation déclenchée hors d'un événement template suivi par Angular.
+Un état local en propriété TypeScript peut piloter le template, mais Angular ne le suit pas comme source réactive. Avec `OnPush`, zoneless ou une mutation async, la vue peut rester figée si aucune vérification n'est déclenchée.
 
 Reproduit dans `signal-lab-card.component.ts` :
 
@@ -171,9 +171,9 @@ npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.comp
 ## Exercice 2 — `computed()`
 
 <details>
-<summary>Problème</summary>
+<summary>Cas d’erreur illustré</summary>
 
-Une valeur dérivée finit souvent dans un getter, une méthode ou directement dans le template. Elle peut être recalculée trop souvent, être dupliquée à plusieurs endroits, ou rester difficile à identifier comme règle métier.
+Une valeur dérivée placée dans un getter, une méthode ou le template peut être recalculée à chaque lecture et se retrouver dupliquée.
 
 Reproduit dans `computed-lab-card.component.ts` :
 
@@ -244,9 +244,9 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 ## Exercice 3 — `effect()` + `untracked()` pour synchroniser un état
 
 <details>
-<summary>Problème</summary>
+<summary>Cas d’erreur illustré</summary>
 
-Une règle de synchronisation peut être dispersée dans plusieurs handlers, hooks de cycle de vie ou subscriptions. Le code fonctionne tant qu'on pense à appeler la bonne méthode partout, mais il devient fragile dès qu'une nouvelle mutation est ajoutée.
+Une règle de synchronisation appelée à la main devient fragile : dès qu'une mutation oublie l'appel, l'état peut devenir incohérent.
 
 Reproduit dans `effect-lab-card.component.ts` : supprimer des lignes sans recaler `classicPage` laisse l'état en "page 2 / 1".
 
@@ -328,9 +328,9 @@ Sans `onCleanup`, chaque ré-exécution de l'effet crée un nouveau timer sans s
 ## Exercice 4 — `input()`
 
 <details>
-<summary>Problème</summary>
+<summary>Cas d’erreur illustré</summary>
 
-Une entrée `@Input()` classique peut être utilisée dans le template, mais si elle est lue dans un `computed()` ou un `effect()`, elle ne devient pas une dépendance signal. Une valeur dérivée peut donc rester basée sur une ancienne lecture ou demander du code de synchronisation en plus.
+Une entrée `@Input()` classique lue dans un `computed()` ne devient pas une dépendance signal. La valeur dérivée peut donc rester bloquée sur sa première lecture.
 
 Reproduit dans `input-lab-card.component.ts` (`LabInputChildComponent`) :
 
@@ -342,9 +342,7 @@ readonly classicLabel = computed(() =>
 );
 ```
 
-`computed()` ne suit que les lectures de signals — celles qui s'écrivent `this.x()`. Ici, `classicShowDetails` est un `@Input()` ordinaire : le lire ne crée aucune dépendance. Angular considère ce `computed()` comme n'ayant rien à surveiller, et met son résultat en cache définitivement.
-
-Conséquence : le parent bascule `classicShowDetails` de `true` à `false`, mais `classicLabel()` retourne toujours `'details visibles'` — la valeur calculée lors de la première exécution.
+Le parent bascule `classicShowDetails`, mais `classicLabel()` retourne toujours la valeur calculée lors de la première exécution.
 
 </details>
 
@@ -414,9 +412,9 @@ this.quantity.update(q => q + 1);
 ## Exercice 5 — `linkedSignal()`
 
 <details>
-<summary>Problème</summary>
+<summary>Cas d’erreur illustré</summary>
 
-Pour un formulaire prérempli depuis une sélection, `computed()` est trop rigide car il est en lecture seule, tandis qu'un `signal()` simple peut se désynchroniser si on oublie de le réinitialiser quand la sélection change.
+Pour un formulaire prérempli depuis une sélection, `computed()` est trop rigide car il est en lecture seule. Un `signal()` simple peut aussi se désynchroniser si on oublie de le réinitialiser.
 
 Reproduit dans `linked-signal-lab-card.component.ts` :
 
