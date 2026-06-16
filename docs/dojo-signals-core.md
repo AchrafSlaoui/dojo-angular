@@ -138,9 +138,6 @@ this.adding.update(v => !v);      // mettre à jour depuis la valeur courante
 adding()                          // lire (template ou TS)
 ```
 
-Dans cet exercice, `.set(true)` et `.set(false)` sont préférables à `.update()` : la nouvelle valeur ne dépend pas de l'ancienne. `.update()` devient utile quand on calcule la nouvelle valeur à partir de la valeur courante, par exemple `this.adding.update(value => !value)`.
-
-Sur la branche `init`, `adding` est encore un booléen classique. Tant qu'il n'a pas été converti en `signal(false)`, il n'a donc pas de méthode `.set()` ou `.update()`.
 
 ### Objectif et consigne
 
