@@ -1,17 +1,17 @@
 # Angular 21 Signals — Support de présentation dojo
 
 ---
-
 Angular peut recalculer des valeurs inchangées simplement parce qu’un cycle de détection s’est déclenché.
-## Zone.js
 
-**Zone.js** aide Angular à savoir qu'un événement asynchrone a eu lieu. Il patche les APIs du navigateur (`setTimeout`, `Promise`, `addEventListener`, `XMLHttpRequest`, etc.) puis prévient Angular qu'un cycle de détection doit être lancé.
+## Objectif du dojo
 
-Zone.js ne modélise pas l'état de l'application : il sert surtout à **déclencher** la détection de changement après un événement.
+Ce parcours vise les usages essentiels des Signals :
 
-- Définition : librairie qui intercepte les APIs async du navigateur.
-- Rôle : prévenir Angular qu'un cycle de détection doit être lancé.
-- Limite : il déclenche une vérification, mais ne dit pas quel état a changé.
+- rendre un état local réactif avec `signal()` ;
+- dériver une valeur sans recalcul inutile avec `computed()` ;
+- synchroniser un état avec `effect()` ;
+- transformer une entrée composant en dépendance signal avec `input()` ;
+- gérer une valeur dérivée mais éditable avec `linkedSignal()`.
 
 ---
 
@@ -19,7 +19,15 @@ Zone.js ne modélise pas l'état de l'application : il sert surtout à **déclen
 
 Un **signal** est une valeur réactive observable par Angular. Il contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lu.
 
-Le problème résolu par Signals : rendre l'état local explicite et permettre à Angular de savoir précisément quelles vues ou valeurs dérivées dépendent de cet état.
+Signals rend l'état local explicite et permet à Angular de savoir précisément quelles vues ou valeurs dérivées dépendent de cet état.
+
+---
+
+## Zone.js et détection de changement
+
+**Zone.js** aide Angular à savoir qu'un événement asynchrone a eu lieu. Il patche les APIs du navigateur (`setTimeout`, `Promise`, `addEventListener`, `XMLHttpRequest`, etc.) puis prévient Angular qu'un cycle de détection doit être lancé.
+
+Zone.js ne modélise pas l'état de l'application : il sert surtout à **déclencher** la détection de changement après un événement.
 
 ```
 Zone.js : un événement async se produit → Angular lance la détection
@@ -38,6 +46,7 @@ Avec `OnPush`, Angular vérifie surtout un composant quand :
 - un événement du template se produit ;
 - un signal lu dans le template change ;
 - une vérification est demandée explicitement.
+
 ```ts
 import { ChangeDetectorRef, inject } from '@angular/core';
 
@@ -50,9 +59,11 @@ this.cdr.markForCheck();
 this.cdr.detectChanges();
 ```
 
+---
+
 ## Zoneless
 
-Une application **zoneless** fonctionne sans `zone.js`. Angular ne s'appuie plus sur le patch automatique des APIs async pour lancer la détection de changement.
+Une application **zoneless** fonctionne sans `zone.js` : Angular ne s'appuie plus sur le patch automatique des APIs async pour lancer la détection de changement.
 
 En zoneless, les mises à jour doivent venir de mécanismes explicites :
 
@@ -63,10 +74,6 @@ En zoneless, les mises à jour doivent venir de mécanismes explicites :
 
 En zoneless, signal et `async` pipe ne se comportent pas de la même façon : un signal met à jour uniquement ses lecteurs directs. `async` pipe appelle `markForCheck()` — le composant et ses parents sont vérifiés, le DOM est mis à jour seulement si quelque chose a effectivement changé.
 
-```
-Signals résout : l'état réactif local synchrone
-Zone.js résout : le déclenchement automatique de la détection après async
-```
 
 ```
 Zone.js (défaut)
@@ -83,6 +90,8 @@ provideZonelessChangeDetection()
 "polyfills": []
 ```
 
+---
+
 ## Mapping exercices / branches / fichiers
 
 | Exercice | Branche | Concept | Fichiers principaux |
@@ -92,8 +101,6 @@ provideZonelessChangeDetection()
 | 3 | `exercice-3` | `effect()` pour cohérence d'état | `clients.component.ts` |
 | 4 | `exercice-4` | `input()` | `account-card.component.ts` |
 | 5 | `exercice-5` | `linkedSignal()` | `accounts.component.ts` |
-
-Les branches sont cumulatives : chaque branche intègre les solutions des exercices précédents. `output()` reste une parenthèse et `linkedSignal()` est le dernier exercice du parcours court.
 
 ---
 
@@ -416,7 +423,7 @@ npm test -- --runTestsByPath src/app/features/accounts/components/account-card/a
 | Entrée legacy dans un composant non migré | `@Input()` acceptable |
 | Valeur bidirectionnelle parent ↔ enfant | `model()` |
 
-### Parenthèse — `output()`
+### Parenthèse APIs composant — `output()` et `model()`
 
 `output()` remplace `@Output()` + `EventEmitter` pour déclarer une intention envoyée au parent.
 
@@ -431,8 +438,6 @@ this.selectedRequested.emit(account);        // émettre
 ```
 
 `output()` n'est pas un Observable : il sert à signaler un événement de composant.
-
-### Parenthèse — `model()`
 
 `model()` sert quand le parent et l'enfant partagent une valeur modifiable des deux côtés. Il remplace le couple `@Input()` + `@Output()` utilisé pour le two-way binding.
 
