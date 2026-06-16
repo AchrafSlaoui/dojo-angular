@@ -4,7 +4,9 @@
 
 L'application est une base Angular 21 existante avec `zone.js`, `OnPush`, RxJS et des composants standalone.
 
-L'objectif est d'introduire Angular Signals sans imposer une réécriture complète. Les décisions ci-dessous cadrent la migration progressive, la place des façades et la frontière entre Signals, RxJS et la détection de changement Angular.
+L'objectif est d'introduire Angular Signals sans imposer une réécriture complète. Le parcours principal du dojo couvre `signal()`, `computed()`, `effect()`, `input()` et `linkedSignal()`. `output()` et `model()` sont présentés comme parenthèse sur les APIs composant.
+
+Les décisions ci-dessous cadrent la migration progressive, la place des façades et la frontière entre Signals, RxJS et la détection de changement Angular.
 
 ## Décisions
 
@@ -20,7 +22,7 @@ Cette combinaison permet une migration progressive : les composants peuvent adop
 
 Le projet utilise deux styles complémentaires :
 
-- Signals directement dans les composants pour l'état local : `signal()`, `computed()`, `effect()`.
+- Signals directement dans les composants pour l'état local : `signal()`, `computed()`, `effect()`, `linkedSignal()`.
 - Signals dans des façades pour l'état partagé et les règles métier dérivées.
 
 L'état local simple peut rester au niveau du composant. Quand l'état devient partagé, riche, ou porteur de règles métier, il doit être déplacé dans une façade.
@@ -90,3 +92,5 @@ Règle : une façade qui porte de l'état doit être scopée au composant. Une f
 RxJS reste l'outil adapté pour les flux dans le temps : debounce, combinaison de flux, WebSocket, polling, orchestration d'Observables.
 
 `toSignal()` est un pont vers le monde Signals. Il expose la dernière valeur d'un Observable sous forme de signal, mais il ne remplace pas RxJS.
+
+Cette interopérabilité reste hors exercices principaux du support `dojo-signals-core.md`, qui se concentre sur les primitives Signals et les APIs composant essentielles.

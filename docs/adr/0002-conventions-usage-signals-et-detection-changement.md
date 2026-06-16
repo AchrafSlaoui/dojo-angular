@@ -2,7 +2,9 @@
 
 ## Contexte
 
-L'application utilise plusieurs APIs Angular liées aux Signals (`signal()`, `computed()`, `effect()`, `input()`, `output()`, `model()`, `toSignal()`), RxJS et la détection de changement Angular avec `zone.js` + `OnPush`.
+L'application utilise plusieurs APIs Angular liées aux Signals (`signal()`, `computed()`, `effect()`, `input()`, `linkedSignal()`, `output()`, `model()`), RxJS et la détection de changement Angular avec `zone.js` + `OnPush`.
+
+Le support principal `docs/dojo-signals-core.md` retient cinq exercices : `signal()`, `computed()`, `effect()` avec `untracked()`, `input()` et `linkedSignal()`. `output()` et `model()` restent une parenthèse courte sur les APIs composant.
 
 Sans conventions explicites, ces APIs peuvent être utilisées de manière interchangeable alors qu'elles ne portent pas la même intention. Les décisions ci-dessous fixent les usages attendus et la stratégie de détection de changement.
 
@@ -17,6 +19,12 @@ Sans conventions explicites, ces APIs peuvent être utilisées de manière inter
 `effect()` ne retourne rien d'utilisable. Il réagit à des changements pour produire un effet : focus, titre du document, log, correction d'un état cohérent.
 
 Exposer une valeur via `effect()` indique que `computed()` était le bon choix.
+
+### `linkedSignal()` sert aux valeurs dérivées mais éditables
+
+`linkedSignal()` est adapté quand une valeur est initialisée depuis une source réactive mais doit ensuite rester modifiable localement, par exemple un formulaire prérempli depuis une sélection.
+
+Si la valeur est seulement dérivée et ne doit pas être modifiée directement, `computed()` reste le meilleur choix.
 
 ### L'enfant émet une intention, le parent exécute l'action
 
@@ -35,6 +43,8 @@ Il ne doit pas remplacer `output()` pour une commande métier. Une suppression, 
 `toSignal()` et `toObservable()` sont des ponts ponctuels, pas une règle générale.
 
 Ils sont justifiés quand un opérateur temporel (`debounceTime`, `distinctUntilChanged`) ou un Observable HTTP doit être consommé dans un contexte signal. Il faut rester dans un seul modèle réactif quand c'est possible.
+
+Ces APIs ne font pas partie des exercices principaux du dojo core ; elles restent une convention d'architecture pour l'application.
 
 ### `toSignal()` gère le désabonnement
 
@@ -71,6 +81,8 @@ Les mutations passent par des méthodes nommées de la façade. Cela garde une s
 `afterEveryRender()` est réservé aux traitements récurrents après chaque rendu. Il doit rester rare, car il peut devenir coûteux si le rendu est fréquent.
 
 Un `effect()` reste préférable quand l'objectif est de réagir à un changement d'état plutôt qu'à l'écriture effective du DOM.
+
+Ces hooks ne font pas partie du parcours principal du dojo core.
 
 ### Ne pas migrer vers le mode zoneless
 

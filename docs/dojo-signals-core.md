@@ -106,7 +106,8 @@ provideZonelessChangeDetection()
 
 ## Exercice 1 — `signal()`
 
-### Problème
+<details>
+<summary>Problème</summary>
 
 Un état local reste une propriété TypeScript ordinaire. Il peut piloter le template, mais Angular ne sait pas que cette valeur est une source réactive. La modification peut donc être ignorée si aucun cycle de détection ne repasse sur le composant : par exemple avec `OnPush`, en zoneless, ou après une mutation déclenchée hors d'un événement template suivi par Angular.
 
@@ -124,12 +125,11 @@ launchClassicTimer(): void {
 }
 ```
 
-### Définition
+</details>
+
+### API à utiliser
 
 > `signal()` est une **primitive Signal** : une valeur réactive observable par Angular. Elle contient une valeur, se lit avec `()`, et Angular mémorise automatiquement les templates, `computed()` et `effect()` qui l'ont lue.
-
-
-**À retenir :** utilisez `signal()` pour un état local synchrone qui doit être lu par le template ou servir de dépendance à d'autres primitives Signals.
 
 ```ts
 readonly adding = signal(false);  // déclarer
@@ -142,13 +142,9 @@ Dans cet exercice, `.set(true)` et `.set(false)` sont préférables à `.update(
 
 Sur la branche `init`, `adding` est encore un booléen classique. Tant qu'il n'a pas été converti en `signal(false)`, il n'a donc pas de méthode `.set()` ou `.update()`.
 
-### Fichier à modifier
+### Objectif et consigne
 
-`src/app/features/clients/pages/clients/clients.component.ts`
-
-### Consigne
-
-Convertir la propriété `adding = false` en signal.
+Dans `src/app/features/clients/pages/clients/clients.component.ts`, convertir la propriété `adding = false` en signal pour faire de `adding` une source réactive lisible par le template.
 
 ```ts
 // Avant
@@ -164,24 +160,18 @@ cancelAdd(): void { this.adding.set(false); }
 
 Dans le template : remplacer `adding` par `adding()`.
 
+### Test
+
 ```bash
 npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.component.spec.ts
 ```
-
-### Quand utiliser `signal()` — et quand rester ailleurs
-
-| Situation | Outil |
-|---|---|
-| État UI local : booléen, texte, page courante | `signal()` |
-| État local transitoire manipulé seulement par des handlers template | Propriété classique acceptable pendant la migration |
-| Valeur calculée à partir d'autres signals | `computed()` — pas `signal()` |
-| État partagé entre composants via service | façade Signals ou store dédié |
 
 ---
 
 ## Exercice 2 — `computed()`
 
-### Problème
+<details>
+<summary>Problème</summary>
 
 Une valeur dérivée finit souvent dans un getter, une méthode ou directement dans le template. Elle peut être recalculée trop souvent, être dupliquée à plusieurs endroits, ou rester difficile à identifier comme règle métier.
 
@@ -195,11 +185,11 @@ private computeBlockedCount(): number {
 }
 ```
 
-### Définition
+</details>
+
+### API à utiliser
 
 > `computed()` est une **primitive Signal** : une valeur dérivée mémorisée. Le calcul ne se relance que si une dépendance lue a changé depuis la dernière lecture.
-
-**À retenir :** utilisez `computed()` pour une valeur pure dérivée d'autres signals. Si le code déclenche un effet de bord, ce n'est pas un `computed()`.
 
 ```ts
 readonly blockedAccountsCount = computed(() =>
@@ -209,15 +199,9 @@ readonly blockedAccountsCount = computed(() =>
 blockedAccountsCount()  // lecture
 ```
 
-### Fichiers à modifier
+### Objectif et consigne
 
-- `src/app/features/accounts/services/accounts.facade.ts`
-- `src/app/features/accounts/pages/accounts/accounts.component.ts`
-- `src/app/features/accounts/pages/accounts/accounts.component.html`
-
-### Consigne
-
-Transformer le getter `blockedAccountsCount` en `computed()` dans la façade, puis exposer le signal dans le composant.
+Dans `accounts.facade.ts`, `accounts.component.ts` et `accounts.component.html`, transformer `blockedAccountsCount` en valeur dérivée mémorisée avec `computed()`, puis exposer le signal dans le composant.
 
 ```ts
 // Avant — AccountsFacade
@@ -249,23 +233,18 @@ private readonly accountsState = signal<Account[]>([]);
 readonly accounts = this.accountsState.asReadonly(); // Signal<Account[]> en lecture seule
 ```
 
+### Test
+
 ```bash
 npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
 ```
-
-### Quand utiliser `computed()` — et quand rester ailleurs
-
-| Situation | Outil |
-|---|---|
-| Total, compteur, libellé dérivé d'autres signals | `computed()` |
-| Règle qui dépend du temps (debounce, delay) | Flux asynchrone — `computed()` est synchrone |
-| Effet de bord (appel HTTP, log, focus) | `effect()` — pas `computed()` |
 
 ---
 
 ## Exercice 3 — `effect()` + `untracked()` pour synchroniser un état
 
-### Problème
+<details>
+<summary>Problème</summary>
 
 Une règle de synchronisation peut être dispersée dans plusieurs handlers, hooks de cycle de vie ou subscriptions. Le code fonctionne tant qu'on pense à appeler la bonne méthode partout, mais il devient fragile dès qu'une nouvelle mutation est ajoutée.
 
@@ -282,20 +261,15 @@ removeRows(): void {
 }
 ```
 
-### Définition `effect()`
+</details>
+
+### API à utiliser
 
 > `effect()` est une **primitive Signal** : elle exécute un effet de bord quand les signals lus dans son corps changent. Elle s'exécute automatiquement, sans appel explicite.
 
+### Objectif et consigne
 
-**À retenir :** utilisez `effect()` pour synchroniser avec quelque chose qui n'est pas une valeur calculée : DOM, stockage, titre de page, recalage d'état, log, intégration externe.
-
-### Fichier à modifier
-
-`src/app/features/clients/pages/clients/clients.component.ts`
-
-### Consigne
-
-Remplacer l'appel impératif `this.clampCurrentPage()` par un `effect()` dans le constructeur, en utilisant `untracked()` pour lire la page courante sans en faire une dépendance de l'effet.
+Dans `src/app/features/clients/pages/clients/clients.component.ts`, remplacer l'appel impératif `this.clampCurrentPage()` par un `effect()` afin de rendre la synchronisation automatique. Utiliser `untracked()` pour lire la page courante sans en faire une dépendance directe de l'effet.
 
 ```ts
 // Ajouter untracked aux imports
@@ -330,6 +304,8 @@ effect(() => {
 });
 ```
 
+### Test
+
 ```bash
 npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.component.spec.ts
 ```
@@ -347,20 +323,12 @@ effect((onCleanup) => {
 
 Sans `onCleanup`, chaque ré-exécution de l'effet crée un nouveau timer sans supprimer le précédent.
 
-### Quand utiliser `effect()` — et quand rester ailleurs
-
-| Situation | Outil |
-|---|---|
-| Titre du document, focus, scroll après changement d'état | `effect()` |
-| Correction d'un état cohérent (clamping, reset) | `effect()` |
-| Chargement HTTP déclenché par un signal | Possible avec `effect()`, mais à encadrer |
-| Valeur calculée à partir d'autres signals | `computed()` — pas `effect()` |
-
 ---
 
 ## Exercice 4 — `input()`
 
-### Problème
+<details>
+<summary>Problème</summary>
 
 Une entrée `@Input()` classique peut être utilisée dans le template, mais si elle est lue dans un `computed()` ou un `effect()`, elle ne devient pas une dépendance signal. Une valeur dérivée peut donc rester basée sur une ancienne lecture ou demander du code de synchronisation en plus.
 
@@ -378,11 +346,11 @@ readonly classicLabel = computed(() =>
 
 Conséquence : le parent bascule `classicShowDetails` de `true` à `false`, mais `classicLabel()` retourne toujours `'details visibles'` — la valeur calculée lors de la première exécution.
 
-### Définition
+</details>
+
+### API à utiliser
 
 > `input()` est une **API composant Angular** : elle déclare une entrée de composant sous forme de signal. La valeur passée par le parent devient une dépendance réelle dans les `computed()` et `effect()`.
-
-**À retenir :** utilisez `input()` quand une entrée doit participer à une dérivation ou à une réaction signal.
 
 ```ts
 showStatus = input(true);              // avec valeur par défaut
@@ -390,13 +358,9 @@ account = input.required<Account>();   // requis
 showStatus()                           // lecture
 ```
 
-### Fichier à modifier
+### Objectif et consigne
 
-`src/app/features/accounts/components/account-card/account-card.component.ts`
-
-### Consigne
-
-Transformer `@Input() showStatus = true` en `showStatus = input(true)` et retirer `Input` des imports.
+Dans `src/app/features/accounts/components/account-card/account-card.component.ts`, transformer `@Input() showStatus = true` en `showStatus = input(true)` pour faire de cette entrée une vraie dépendance signal dans `visibleStatusLabel`. Retirer aussi `Input` des imports.
 
 ```ts
 // Avant
@@ -410,18 +374,11 @@ readonly visibleStatusLabel = computed(() => this.showStatus() ? this.statusLabe
 
 > Point clé : `@Input()` dans un `computed()` ne crée **pas** de dépendance réelle. `input()` dans un `computed()` **est** une dépendance réelle.
 
+### Test
+
 ```bash
 npm test -- --runTestsByPath src/app/features/accounts/components/account-card/account-card.component.spec.ts
 ```
-
-### Quand utiliser `input()` — et quand rester ailleurs
-
-| Situation | Outil |
-|---|---|
-| Entrée lue dans un `computed()` ou `effect()` | `input()` |
-| Entrée requise sans valeur par défaut | `input.required<T>()` |
-| Entrée legacy dans un composant non migré | `@Input()` acceptable |
-| Valeur bidirectionnelle parent ↔ enfant | `model()` |
 
 ### Parenthèse APIs composant — `output()` et `model()`
 
@@ -456,7 +413,8 @@ this.quantity.update(q => q + 1);
 
 ## Exercice 5 — `linkedSignal()`
 
-### Problème
+<details>
+<summary>Problème</summary>
 
 Pour un formulaire prérempli depuis une sélection, `computed()` est trop rigide car il est en lecture seule, tandis qu'un `signal()` simple peut se désynchroniser si on oublie de le réinitialiser quand la sélection change.
 
@@ -471,11 +429,11 @@ readonly computedName = computed(() => this.selected().name);
 // computedName.set('Alice modifiée'); // ← ERREUR : computed() est en lecture seule
 ```
 
-### Définition
+</details>
+
+### API à utiliser
 
 > `linkedSignal()` est une **primitive Signal** : elle crée un signal writable dérivé d'un autre signal. Contrairement à `computed()` qui est en lecture seule, sa valeur peut être modifiée par `.set()` ou `.update()`. Elle est automatiquement recalculée quand la source change.
-
-**À retenir :** utilisez `linkedSignal()` quand une valeur vient d'une source réactive mais doit ensuite être éditable localement.
 
 ```ts
 readonly value = linkedSignal(() => this.source());
@@ -484,13 +442,9 @@ value.set(x)   // écriture possible — contrairement à computed()
 // Quand source() change → value() est recalculée depuis la source
 ```
 
-### Fichier à modifier
+### Objectif et consigne
 
-`src/app/features/accounts/pages/accounts/accounts.component.ts`
-
-### Consigne
-
-Convertir `editAccount` en `linkedSignal()` dérivé du compte sélectionné. Ajouter un signal `accountForEdit` pour porter la sélection courante.
+Dans `src/app/features/accounts/pages/accounts/accounts.component.ts`, convertir `editAccount` en `linkedSignal()` pour créer une valeur dérivée depuis le compte sélectionné, mais modifiable localement par l'utilisateur. Ajouter un signal `accountForEdit` pour porter la sélection courante.
 
 ```ts
 // Avant
@@ -516,6 +470,8 @@ startEdit(account: Account): void {
 }
 ```
 
+### Test
+
 ```bash
 npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.component.spec.ts
 ```
@@ -527,14 +483,6 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 | Lecture seule | Writable — `.set()` et `.update()` disponibles |
 | Recalculé quand les dépendances changent | Recalculé quand la source change, modifiable entre deux |
 | Adapté aux valeurs dérivées stables | Adapté aux formulaires pré-remplis depuis une sélection |
-
-### Quand utiliser `linkedSignal()`
-
-| Situation | Outil |
-|---|---|
-| Valeur dérivée en lecture seule | `computed()` |
-| Formulaire pré-rempli depuis une sélection, modifiable par l'utilisateur | `linkedSignal()` |
-| État local sans dérivation | `signal()` |
 
 ---
 
@@ -569,3 +517,4 @@ le mode zoneless sont détaillées dans `docs/adr/0002-conventions-usage-signals
 5. Zone.js peut coexister — migrer progressivement, pas tout d'un coup
 6. untracked()   pour lire sans s'abonner dans un effect()
 ```
+
