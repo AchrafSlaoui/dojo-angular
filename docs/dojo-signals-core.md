@@ -392,7 +392,8 @@ readonly visibleStatusLabel = computed(() => this.showStatus() ? this.statusLabe
 npm test -- --runTestsByPath src/app/features/accounts/components/account-card/account-card.component.spec.ts
 ```
 
-### Parenthèse APIs composant — `output()` et `model()`
+<details>
+<summary>Parenthèse APIs composant — `output()` et `model()`</summary>
 
 `output()` remplace `@Output()` + `EventEmitter` pour déclarer une intention envoyée au parent.
 
@@ -420,6 +421,8 @@ this.quantity.update(q => q + 1);
 ```
 
 À retenir : `output()` émet une intention ; `model()` partage une valeur éditable.
+
+</details>
 
 ---
 
