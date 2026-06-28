@@ -39,6 +39,8 @@ export class AccountsComponent {
   }
   readonly clientId = input.required<string>();
   adding = false;
+  // EXERCICE 4 - valeur bindee par la case "Afficher le statut".
+  showStatus = true;
   editingAccountId: string | null = null;
   newAccount: AccountCreate = { label: '', type: 'checking', status: 'active' };
   // EXERCICE 5

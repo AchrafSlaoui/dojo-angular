@@ -18,6 +18,10 @@
     <option value="saving">Epargne</option>
     <option value="joint">Compte joint</option>
   </select>
+  <label class="status-filter">
+    <input type="checkbox" [ngModel]="showStatus" (ngModelChange)="showStatus = $event" />
+    Afficher le statut
+  </label>
   @if (!adding) {
     <button class="icon-btn plus" type="button" (click)="startAdd()" title="Ajouter un compte" aria-label="Ajouter un compte">
       <span class="icon i-plus icon-lg"></span>
@@ -66,6 +70,7 @@
     [accounts]="accounts()"
     [clientId]="clientId()"
     [mutating]="mutating()"
+    [showStatus]="showStatus"
     [editingAccountId]="editingAccountId"
     [editAccount]="editAccount"
     (editRequested)="startEdit($event)"

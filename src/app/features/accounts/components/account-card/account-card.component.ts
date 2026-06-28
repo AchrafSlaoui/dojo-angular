@@ -19,7 +19,9 @@ export class AccountCardComponent {
   @Input() showStatus = true;
 
   // EXERCICE 4
-  readonly visibleStatusLabel = computed(() => this.showStatus ? this.statusLabel() : null);
+  readonly visibleStatusLabel = computed(
+    () => this.showStatus ? this.statusLabel() : null
+  );
 
   readonly statusLabel = computed(() => {
     switch (this.account().status) {

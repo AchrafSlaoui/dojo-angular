@@ -1,5 +1,10 @@
+:host {
+  display: block;
+}
+
 .account-card {
   display: grid;
+  grid-template-rows: auto minmax(1.25rem, auto);
   gap: 10px;
   padding: 12px 14px 6px;
   border: 1px solid var(--border);
@@ -44,5 +49,10 @@ h3 {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  min-height: 1.25rem;
   padding-right: 92px;
+}
+
+.meta-placeholder {
+  visibility: hidden;
 }

@@ -37,6 +37,17 @@
   max-width: 480px;
 }
 
+.status-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.status-filter input {
+  width: auto;
+}
+
 .accounts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));

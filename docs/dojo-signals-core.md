@@ -20,6 +20,7 @@ Ce parcours vise les usages essentiels des Signals :
 
 - Rappels : Signal, Zone.js, OnPush, zoneless
 - Exercices 1 à 3 : `signal()`, `computed()`, `effect()`
+- Exercice Bonus : `effect()` avec une API non réactive
 - Exercices 4 à 5 : `input()`, `linkedSignal()`
 - Récapitulatif et règles d'usage
 
@@ -246,7 +247,87 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ---
 
-## Exercice 3 — `effect()` pour synchroniser une API non réactive
+## Exercice 3 — `effect()` + `untracked()` pour synchroniser un état
+
+<details>
+<summary>Cas d’erreur illustré</summary>
+
+Une règle de synchronisation appelée à la main devient fragile : dès qu'une mutation oublie l'appel, l'état peut devenir incohérent.
+
+Reproduit dans `effect-lab-card.component.ts` : supprimer des lignes sans recaler `classicPage` laisse l'état en "page 2 / 1".
+
+```ts
+classicRows = ['Ada', 'Grace', 'Alan'];
+classicPage = 2;
+
+removeRows(): void {
+  this.classicRows = ['Ada'];
+  // classicPage oublié : reste à 2 alors que la liste n'a plus qu'une page
+  // → état invalide visible dans le lab : "page 2 / 1"
+}
+```
+
+</details>
+
+### Exemple à consulter avant l'exercice
+
+`EffectLabCardComponent` contient déjà un `effect()` qui recale automatiquement sa page quand le nombre de lignes change :
+
+```ts
+effect(() => {
+  const maxPage = this.signalTotalPages();
+  if (this.signalPage() > maxPage) {
+    this.signalPage.set(maxPage);
+  }
+});
+```
+
+Cet exemple sert de modèle sans résoudre directement le cas de `ClientsComponent`.
+
+### APIs Signal à utiliser
+
+> `effect()` est une **primitive Signal** : elle exécute un effet de bord quand les signals lus dans son corps changent. Elle s'exécute automatiquement, sans appel explicite.
+> `untracked()` permet de lire un signal dans un `effect()` sans l'ajouter aux dépendances suivies.
+
+### Objectif et consigne
+
+Dans `src/app/features/clients/pages/clients/clients.component.ts`, remplacer l'appel impératif `this.clampCurrentPage()` par un `effect()` afin de rendre la synchronisation automatique. Utiliser `untracked()` pour lire la page courante sans en faire une dépendance directe de l'effet.
+
+<details>
+<summary>Correctif proposé</summary>
+
+```ts
+// Ajouter effect et untracked aux imports
+import { effect, untracked } from '@angular/core';
+
+// Ajouter dans le constructeur
+effect(() => {
+  const clamped = this.pageSlice().page;
+  if (clamped !== untracked(this.page)) {
+    this.page.set(clamped);
+  }
+});
+
+// Supprimer dans deleteClient()
+this.clampCurrentPage();
+
+// Supprimer la méthode
+private clampCurrentPage(): void { ... }
+```
+
+`pageSlice()` est la dépendance suivie. La lecture de `page()` sert uniquement à éviter une écriture inutile ; `untracked()` empêche donc d'en faire une dépendance directe supplémentaire.
+
+</details>
+
+### Test
+
+```bash
+npm test -- --runTestsByPath src/app/features/clients/pages/clients/clients.component.spec.ts
+```
+
+---
+
+## Exercice Bonus — `effect()` pour synchroniser une API non réactive
 
 <details>
 <summary>Cas d’erreur illustré</summary>
@@ -275,19 +356,6 @@ Le risque est d'oublier un appel lorsqu'un nouveau chemin de mutation est ajout�
 ### API Signal à utiliser
 
 > `effect()` permet de synchroniser automatiquement un état Signal avec une API qui n'est pas réactive. Angular suit les Signals lus par l'effet et le réexécute lorsqu'une de leurs valeurs change.
-
-Le composant contient déjà un premier exemple d'`effect()` qui maintient la page courante dans les limites de la pagination :
-
-```ts
-effect(() => {
-  const clamped = this.pageSlice().page;
-  if (clamped !== untracked(this.page)) {
-    this.page.set(clamped);
-  }
-});
-```
-
-`pageSlice()` est la dépendance suivie. La lecture de `page()` sert uniquement à éviter une écriture inutile ; `untracked()` empêche donc d'en faire une dépendance directe supplémentaire.
 
 ### Objectif et consigne
 
@@ -387,6 +455,14 @@ showStatus()                           // lecture
 ### Objectif et consigne
 
 Dans `src/app/features/accounts/components/account-card/account-card.component.ts`, transformer `@Input() showStatus = true` en `showStatus = input(true)` pour faire de cette entrée une vraie dépendance signal dans `visibleStatusLabel`. Retirer aussi `Input` des imports.
+
+### Démonstration IHM
+
+Depuis la fiche d'un client, utiliser la case **Afficher le statut** située au-dessus des comptes :
+
+1. décocher la case avant la correction : les statuts restent visibles, car le `computed()` a mémorisé la lecture du `@Input()` classique ;
+2. convertir `showStatus` avec `input()` ;
+3. cocher et décocher de nouveau : les statuts apparaissent et disparaissent immédiatement.
 
 <details>
 <summary>Correctif proposé</summary>

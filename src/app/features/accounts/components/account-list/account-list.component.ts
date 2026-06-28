@@ -15,6 +15,8 @@ export class AccountListComponent {
   accounts = input.required<Account[]>();
   clientId = input.required<string>();
   mutating = input(false);
+  // EXERCICE 4 - transmet la valeur aux cartes de compte.
+  showStatus = input(true);
   editingAccountId = input<string | null>(null);
   editAccount = input.required<AccountUpdate>();
 

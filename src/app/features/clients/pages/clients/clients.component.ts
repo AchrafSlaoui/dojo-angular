@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, ElementRef, Signal, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ElementRef, Signal, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { toObservable } from '@angular/core/rxjs-interop';
@@ -59,14 +59,6 @@ export class ClientsComponent {
   readonly debouncedSearch$ = toObservable(this.search).pipe(debounceTime(300));
 
   constructor() {
-    // Exemple pour l'EXERCICE 3 : synchronisation automatique d'un etat derive.
-    effect(() => {
-      const clamped = this.pageSlice().page;
-      if (clamped !== untracked(this.page)) {
-        this.page.set(clamped);
-      }
-    });
-
     this.loadClients();
   }
 
@@ -77,7 +69,7 @@ export class ClientsComponent {
       const data = await firstValueFrom(this.clientsApi.getAll());
       this.clientsState.set(data);
       this.page.set(1);
-      this.updateDocumentTitle(); // EXERCICE 3 - appel manuel
+      this.updateDocumentTitle(); // EXERCICE BONUS - appel manuel
     } catch (err) {
       this.clientsState.set([]);
       const message = err instanceof Error ? err.message : 'Impossible de charger les clients.';
@@ -102,7 +94,7 @@ export class ClientsComponent {
       const created = await firstValueFrom(this.clientsApi.add({ firstName, lastName, email, phone, address }));
       this.clientsState.update((list) => [{ ...created, recentMovements: [] }, ...list.filter((c) => c.id !== created.id)]);
       this.page.set(1);
-      this.updateDocumentTitle(); // EXERCICE 3 - appel manuel
+      this.updateDocumentTitle(); // EXERCICE BONUS - appel manuel
       this.notifications.success(`Client ${firstName} ${lastName} cree.`);
       this.adding = false;
     } catch {
@@ -121,7 +113,7 @@ export class ClientsComponent {
       this.mutating.set(true);
       const updated = await firstValueFrom(this.clientsApi.update(update));
       this.clientsState.update((list) => list.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)));
-      this.updateDocumentTitle(); // EXERCICE 3 - requis si une recherche est active
+      this.updateDocumentTitle(); // EXERCICE BONUS - requis si une recherche est active
       this.notifications.success('Client mis a jour.');
     } catch {
       this.notifications.error('La mise a jour du client a echoue.');
@@ -141,7 +133,8 @@ export class ClientsComponent {
       this.mutating.set(true);
       await firstValueFrom(this.clientsApi.remove(client.id));
       this.clientsState.update((list) => list.filter((c) => c.id !== client.id));
-      this.updateDocumentTitle(); // EXERCICE 3 - appel manuel
+      this.clampCurrentPage(); // EXERCICE 3
+      this.updateDocumentTitle(); // EXERCICE BONUS - appel manuel
       this.notifications.success('Client supprime.');
     } catch {
       this.notifications.error('La suppression du client a echoue.');
@@ -176,7 +169,7 @@ export class ClientsComponent {
   setSearch(term: string): void {
     this.search.set(term ?? '');
     this.page.set(1);
-    this.updateDocumentTitle(); // EXERCICE 3 - appel manuel
+    this.updateDocumentTitle(); // EXERCICE BONUS - appel manuel
   }
 
   setSort(sort: string): void {
@@ -188,6 +181,14 @@ export class ClientsComponent {
   }
 
   // EXERCICE 3
+  private clampCurrentPage(): void {
+    const clamped = this.pageSlice().page;
+    if (clamped !== this.page()) {
+      this.page.set(clamped);
+    }
+  }
+
+  // EXERCICE BONUS
   // Cette synchronisation manuelle sera remplacee par un effect().
   private updateDocumentTitle(): void {
     document.title = this.totalClients() > 0 ? `Clients (${this.totalClients()})` : 'Clients';

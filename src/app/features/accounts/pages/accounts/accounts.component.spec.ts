@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AccountsComponent } from './accounts.component';
 import { Account } from '@accounts/models/account';
+import { AccountListComponent } from '@accounts/components/account-list/account-list.component';
 import { AccountsApiService } from '@accounts/services/accounts-api.service';
 import { ConfirmService } from '@shared/services/confirm.service';
 import { NotificationService } from '@shared/services/notification.service';
@@ -67,6 +69,20 @@ describe('AccountsComponent', () => {
     await settleAccounts();
 
     expect(fixture.componentInstance.accounts().map((account) => account.id)).toEqual(['a2']);
+  });
+
+  it('binds the status visibility checkbox to the account list', async () => {
+    await settleAccounts();
+
+    const checkbox = fixture.nativeElement.querySelector('.status-filter input') as HTMLInputElement;
+    checkbox.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const accountList = fixture.debugElement.query(By.directive(AccountListComponent))
+      .componentInstance as AccountListComponent;
+    expect(fixture.componentInstance.showStatus).toBe(false);
+    expect(accountList.showStatus()).toBe(false);
   });
 
   it('exposes an error when accounts cannot be loaded', async () => {

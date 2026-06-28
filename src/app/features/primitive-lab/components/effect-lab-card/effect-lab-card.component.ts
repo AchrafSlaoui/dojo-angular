@@ -17,6 +17,7 @@ export class EffectLabCardComponent {
   readonly signalTotalPages = computed(() => Math.max(1, Math.ceil(this.signalRows().length / 2)));
 
   constructor() {
+    // EXEMPLE POUR L'EXERCICE 3 : un effect() synchronise automatiquement la page.
     effect(() => {
       const maxPage = this.signalTotalPages();
       if (this.signalPage() > maxPage) {

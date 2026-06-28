@@ -24,7 +24,11 @@
           </div>
         </form>
       } @else {
-        <app-account-card [account]="account" [clientId]="clientId()" [showStatus]="true"></app-account-card>
+        <app-account-card
+          [account]="account"
+          [clientId]="clientId()"
+          [showStatus]="showStatus()"
+        ></app-account-card>
         <div class="account-actions">
           <button class="icon-btn lg" type="button" title="Modifier le compte" aria-label="Modifier le compte" (click)="requestEdit(account)" [disabled]="mutating()">
             <span class="icon i-edit icon-lg"></span>
