@@ -10,6 +10,7 @@ Ce parcours vise les usages essentiels des Signals :
 - rendre un état local réactif avec `signal()` ;
 - dériver une valeur sans recalcul inutile avec `computed()` ;
 - synchroniser un état avec `effect()` ;
+- synchroniser une API non réactive avec `effect()` ;
 - transformer une entrée composant en dépendance signal avec `input()` ;
 - gérer une valeur dérivée mais éditable avec `linkedSignal()`.
 
@@ -245,74 +246,92 @@ npm test -- --runTestsByPath src/app/features/accounts/pages/accounts/accounts.c
 
 ---
 
-## Exercice 3 — `effect()` + `untracked()` pour synchroniser un état
+## Exercice 3 — `effect()` pour synchroniser une API non réactive
 
 <details>
 <summary>Cas d’erreur illustré</summary>
 
-Une règle de synchronisation appelée à la main devient fragile : dès qu'une mutation oublie l'appel, l'état peut devenir incohérent.
-
-Reproduit dans `effect-lab-card.component.ts` : supprimer des lignes sans recaler `classicPage` laisse l'état en "page 2 / 1".
+Une API non réactive comme `document.title` ne connaît pas les Signals. Sans `effect()`, une méthode de synchronisation doit être appelée manuellement après chaque action susceptible de modifier le nombre de clients affichés.
 
 ```ts
-classicRows = ['Ada', 'Grace', 'Alan'];
-classicPage = 2;
-
-removeRows(): void {
-  this.classicRows = ['Ada'];
-  // classicPage oublié : reste à 2 alors que la liste n'a plus qu'une page
-  // → état invalide visible dans le lab : "page 2 / 1"
+private updateDocumentTitle(): void {
+  document.title = this.totalClients() > 0
+    ? `Clients (${this.totalClients()})`
+    : 'Clients';
 }
+
+// Appels manuels dispersés dans le composant
+this.updateDocumentTitle(); // après le chargement
+this.updateDocumentTitle(); // après un ajout
+this.updateDocumentTitle(); // après une modification qui affecte la recherche
+this.updateDocumentTitle(); // après une suppression
+this.updateDocumentTitle(); // après une recherche
 ```
+
+Le risque est d'oublier un appel lorsqu'un nouveau chemin de mutation est ajouté. Le titre de l'onglet reste alors basé sur un ancien état.
 
 </details>
 
-### APIs Signal à utiliser
+### API Signal à utiliser
 
-> `effect()` est une **primitive Signal** : elle exécute un effet de bord quand les signals lus dans son corps changent. Elle s'exécute automatiquement, sans appel explicite.
-> `untracked()` permet de lire un signal dans un `effect()` sans l'ajouter aux dépendances suivies.
+> `effect()` permet de synchroniser automatiquement un état Signal avec une API qui n'est pas réactive. Angular suit les Signals lus par l'effet et le réexécute lorsqu'une de leurs valeurs change.
+
+Le composant contient déjà un premier exemple d'`effect()` qui maintient la page courante dans les limites de la pagination :
+
+```ts
+effect(() => {
+  const clamped = this.pageSlice().page;
+  if (clamped !== untracked(this.page)) {
+    this.page.set(clamped);
+  }
+});
+```
+
+`pageSlice()` est la dépendance suivie. La lecture de `page()` sert uniquement à éviter une écriture inutile ; `untracked()` empêche donc d'en faire une dépendance directe supplémentaire.
 
 ### Objectif et consigne
 
-Dans `src/app/features/clients/pages/clients/clients.component.ts`, remplacer l'appel impératif `this.clampCurrentPage()` par un `effect()` afin de rendre la synchronisation automatique. Utiliser `untracked()` pour lire la page courante sans en faire une dépendance directe de l'effet.
+Dans `src/app/features/clients/pages/clients/clients.component.ts`, remplacer les appels manuels à `updateDocumentTitle()` par un unique `effect()`.
 
 <details>
 <summary>Correctif proposé</summary>
 
 ```ts
-// Ajouter untracked aux imports
-import { effect, untracked } from '@angular/core';
+constructor() {
+  effect(() => {
+    this.updateDocumentTitle();
+  });
 
-// Ajouter dans le constructeur
-effect(() => {
-  const clamped = this.pageSlice().page;
-  if (clamped !== untracked(this.page)) this.page.set(clamped);
-});
-
-// Supprimer dans deleteClient()
-this.clampCurrentPage(); // ← retirer cette ligne
-
-// Supprimer la méthode
-private clampCurrentPage(): void { ... }
+  this.loadClients();
+}
 ```
 
-Point d'attention : `this.page()` est lu uniquement pour comparer avant d'écrire. `untracked()` évite d'ajouter cette lecture directe aux dépendances de l'effet. La dépendance utile reste `pageSlice()`, qui porte la page recalculée.
+La méthode lit `totalClients()`. Cette lecture devient la dépendance de l'effet : un chargement, une recherche, un ajout ou une suppression qui modifie le total affiché déclenche automatiquement la synchronisation du titre.
+
+Après avoir créé l'effet, supprimer tous les appels manuels à `updateDocumentTitle()`.
+
+La version peut également être écrite directement :
 
 ```ts
-// Sans untracked() : page() est suivi directement en plus de pageSlice()
 effect(() => {
-  const clamped = this.pageSlice().page;
-  if (clamped !== this.page()) this.page.set(clamped);
-});
-
-// Avec untracked() : page() sert seulement à éviter une écriture inutile
-effect(() => {
-  const clamped = this.pageSlice().page;
-  if (clamped !== untracked(this.page)) this.page.set(clamped);
+  document.title = this.totalClients() > 0
+    ? `Clients (${this.totalClients()})`
+    : 'Clients';
 });
 ```
 
 </details>
+
+### Démonstration IHM
+
+Depuis la page `/clients` :
+
+1. observer le nombre de clients dans le titre de l'onglet ;
+2. rechercher un client ;
+3. ajouter ou supprimer un client ;
+4. vérifier que le titre suit chaque changement sans appel manuel dans les handlers.
+
+`untracked()` n'est pas nécessaire ici : toutes les valeurs lues par l'effet doivent réellement déclencher la mise à jour du titre.
 
 ### Test
 
