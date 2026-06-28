@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, Signal, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, effect, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { Account, AccountCreate, AccountUpdate } from '@accounts/models/account';
 import { AccountListComponent } from '@accounts/components/account-list/account-list.component';
@@ -11,7 +11,7 @@ import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
 @Component({
   selector: 'app-accounts',
   standalone: true,
-  imports: [FormsModule, RouterLink, AccountListComponent, FormatValuePipe],
+  imports: [FormsModule, AccountListComponent, FormatValuePipe],
   templateUrl: './accounts.component.html',
   styleUrl: './accounts.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,9 +19,7 @@ import { FormatValuePipe } from '@shared/pipes/format-value.pipe';
 })
 export class AccountsComponent {
   private readonly route = inject(ActivatedRoute);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly accountsFacade = inject(AccountsFacade);
-  private readonly clientId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
   // Exemple toSignal()
   private readonly initialTypeFilter: Signal<string> = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get('type') ?? 'all')),
@@ -39,7 +37,7 @@ export class AccountsComponent {
   get blockedAccountsCount(): number {
     return this.accountsFacade.blockedAccountsCount;
   }
-  readonly clientId = signal<string | null>(null);
+  readonly clientId = input.required<string>();
   adding = false;
   editingAccountId: string | null = null;
   newAccount: AccountCreate = { label: '', type: 'checking', status: 'active' };
@@ -48,12 +46,9 @@ export class AccountsComponent {
 
   constructor() {
     this.accountsFacade.setTypeFilter(this.initialTypeFilter());
-    this.clientId$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((clientId) => {
-        this.clientId.set(clientId);
-        this.accountsFacade.load(clientId);
-      });
+    effect(() => {
+      void this.accountsFacade.load(this.clientId());
+    });
   }
 
   setSearch(term: string): void {

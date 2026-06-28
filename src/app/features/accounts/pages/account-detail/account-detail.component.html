@@ -2,7 +2,7 @@
   <div class="status error">{{ message }}</div>
 } @else {
   @if (account(); as account) {
-    <a class="back-link" [routerLink]="['/clients', clientId(), 'accounts']">Retour aux comptes</a>
+    <a class="back-link" [routerLink]="['/clients', clientId()]">Retour au client</a>
 
     <header class="account-header">
       <div>

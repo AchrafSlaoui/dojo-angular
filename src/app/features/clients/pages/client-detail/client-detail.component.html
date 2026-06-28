@@ -22,74 +22,9 @@
       <div class="cell cell-email"><strong>Email:</strong> {{ client.email | formatValue }}</div>
       <div class="cell cell-phone"><strong>Telephone:</strong> {{ client.phone | formatValue:"phone" }}</div>
       <div class="cell cell-address"><strong>Adresse:</strong> {{ client.address | formatValue }}</div>
-      <div class="cell cell-balance"><strong>Solde:</strong> {{ clientBalance() | formatValue:"currency" }}</div>
     </section>
 
-    <section class="accounts-entry">
-      <div class="section-heading">
-        <h3>Comptes</h3>
-      </div>
-      <p class="muted">Selectionne un compte pour consulter ses mouvements.</p>
-
-      <section class="account-filters">
-        <input type="text" [ngModel]="accountSearch()" (ngModelChange)="setAccountSearch($event)" placeholder="Rechercher un compte..." />
-        <select [ngModel]="accountTypeFilter()" (ngModelChange)="setAccountTypeFilter($event)" aria-label="Filtrer par type">
-          <option value="all">Tous les types</option>
-          <option value="checking">Compte courant</option>
-          <option value="saving">Epargne</option>
-          <option value="joint">Compte joint</option>
-        </select>
-        @if (!addingAccount) {
-          <button class="icon-btn plus" type="button" (click)="startAddAccount()" title="Ajouter un compte" aria-label="Ajouter un compte">
-            <span class="icon i-plus icon-lg"></span>
-          </button>
-        }
-      </section>
-
-      @if (mutating()) {
-        <div class="status">Traitement en cours...</div>
-      }
-
-      @if (addingAccount) {
-        <form class="account-form" (ngSubmit)="saveAddAccount()">
-          <input type="text" [(ngModel)]="newAccount.label" name="label" placeholder="Libelle du compte" required />
-          <select [(ngModel)]="newAccount.type" name="type" aria-label="Type de compte">
-            <option value="checking">Compte courant</option>
-            <option value="saving">Epargne</option>
-            <option value="joint">Compte joint</option>
-          </select>
-          <select [(ngModel)]="newAccount.status" name="status" aria-label="Statut du compte">
-            <option value="active">Actif</option>
-            <option value="blocked">Bloque</option>
-            <option value="closed">Cloture</option>
-          </select>
-          <div class="actions">
-            <button type="submit" class="icon-btn lg" title="Enregistrer" aria-label="Enregistrer" [disabled]="mutating()">
-              <span class="icon i-check icon-lg"></span>
-            </button>
-            <button type="button" class="icon-btn lg danger" (click)="cancelAddAccount()" title="Annuler" aria-label="Annuler" [disabled]="mutating()">
-              <span class="icon i-close icon-lg"></span>
-            </button>
-          </div>
-        </form>
-      }
-
-      @if (filteredAccounts().length) {
-        <app-account-list
-          [accounts]="filteredAccounts()"
-          [clientId]="client.id"
-          [mutating]="mutating()"
-          [editingAccountId]="editingAccountId"
-          [editAccount]="editAccount"
-          (editRequested)="startEditAccount($event)"
-          (saveRequested)="saveEditAccount()"
-          (cancelRequested)="cancelEditAccount()"
-          (deleteRequested)="deleteAccount($event)"
-        ></app-account-list>
-      } @else {
-        <div>Aucun compte trouve.</div>
-      }
-    </section>
+    <app-accounts [clientId]="client.id" />
   } @else {
     @if (loading()) {
       <div>Chargement...</div>

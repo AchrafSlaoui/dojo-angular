@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AccountsComponent } from './accounts.component';
 import { Account } from '@accounts/models/account';
 import { AccountsApiService } from '@accounts/services/accounts-api.service';
@@ -15,7 +15,6 @@ const accounts: Account[] = [
 describe('AccountsComponent', () => {
   let fixture: ComponentFixture<AccountsComponent>;
   let api: { getByClientId: jest.Mock; add: jest.Mock; update: jest.Mock; remove: jest.Mock };
-  let paramMap$: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let confirm: { confirm: jest.Mock };
   let notifications: { success: jest.Mock; error: jest.Mock };
 
@@ -33,7 +32,6 @@ describe('AccountsComponent', () => {
       update: jest.fn((_clientId, account) => of({ ...accounts[0], ...account })),
       remove: jest.fn(() => of(undefined)),
     };
-    paramMap$ = new BehaviorSubject(convertToParamMap({ id: 'c1' }));
     confirm = { confirm: jest.fn(() => Promise.resolve(true)) };
     notifications = { success: jest.fn(), error: jest.fn() };
 
@@ -41,17 +39,18 @@ describe('AccountsComponent', () => {
       imports: [AccountsComponent],
       providers: [
         { provide: AccountsApiService, useValue: api },
-        { provide: ActivatedRoute, useValue: { paramMap: paramMap$, queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({})) } },
         { provide: ConfirmService, useValue: confirm },
         { provide: NotificationService, useValue: notifications },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AccountsComponent);
+    fixture.componentRef.setInput('clientId', 'c1');
     fixture.detectChanges();
   });
 
-  it('loads accounts from the current client route', async () => {
+  it('loads accounts from the client input', async () => {
     await settleAccounts();
 
     expect(api.getByClientId).toHaveBeenCalledWith('c1');
@@ -72,7 +71,8 @@ describe('AccountsComponent', () => {
 
   it('exposes an error when accounts cannot be loaded', async () => {
     api.getByClientId.mockReturnValueOnce(throwError(() => new Error('Network error')));
-    paramMap$.next(convertToParamMap({ id: 'c2' }));
+    fixture.componentRef.setInput('clientId', 'c2');
+    fixture.detectChanges();
     await settleAccounts();
 
     expect(fixture.componentInstance.accounts()).toEqual([]);

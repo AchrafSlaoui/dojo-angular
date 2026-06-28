@@ -28,11 +28,8 @@ export const routes = [
   },
   {
     path: 'clients/:id/accounts',
-    title: 'Comptes Client',
-    loadComponent: () =>
-      import('./features/accounts/pages/accounts/accounts.component').then(
-        (m) => m.AccountsComponent
-      ),
+    redirectTo: 'clients/:id',
+    pathMatch: 'full',
   },
   {
     path: 'clients/:id',

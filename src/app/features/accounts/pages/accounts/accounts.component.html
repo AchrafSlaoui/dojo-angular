@@ -1,6 +1,3 @@
-<a class="back-link" [routerLink]="['/clients', clientId()]">Retour au client</a>
-
-
 <header class="page-header">
   <div>
     <h2>Comptes</h2>
@@ -67,7 +64,7 @@
 @if (accounts().length) {
   <app-account-list
     [accounts]="accounts()"
-    [clientId]="clientId() ?? ''"
+    [clientId]="clientId()"
     [mutating]="mutating()"
     [editingAccountId]="editingAccountId"
     [editAccount]="editAccount"
